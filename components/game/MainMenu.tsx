@@ -16,14 +16,6 @@ const { width, height } = Dimensions.get('window');
 const screenWidth = width;
 const maxWidth = Math.min(screenWidth * 0.9, 400);
 
-interface MainMenuProps {
-  onStartGame: (controlMode: ControlMode) => void;
-  onSelectGame: () => void;
-  onUserModeSelected?: (mode: string) => void;
-  userModeSelected?: boolean;
-  onViewStats?: () => void;
-}
-
 const FloatingFood: React.FC<{ emoji: string; delay: number; isAlly: boolean }> = ({ emoji, delay, isAlly }) => {
   const translateY = useRef(new Animated.Value(0)).current;
   const translateX = useRef(new Animated.Value(Math.random() * screenWidth)).current;
@@ -113,6 +105,14 @@ export const MainMenu: React.FC<MainMenuProps> = ({ onStartGame, onSelectGame, o
     { emoji: '🥤', isAlly: false },
   ];
 
+  const getStreakStatus = () => {
+    if (progress.gamesPlayed === 0) return { streak: 0, emoji: '🔥', message: 'Start your journey' };
+    if (progress.gamesPlayed < 3) return { streak: progress.gamesPlayed, emoji: '🔥', message: 'Gaining momentum' };
+    return { streak: Math.floor(progress.gamesPlayed / 2), emoji: '🔥', message: 'On a roll!' };
+  };
+
+  const streakStatus = getStreakStatus();
+
   const progressInfo = (
     <ProgressIndicator 
       currentTier={progress.currentTier || 'tier1'}
@@ -125,7 +125,6 @@ export const MainMenu: React.FC<MainMenuProps> = ({ onStartGame, onSelectGame, o
   if (showUserModeSelector) {
     return (
       <View className="flex-1" style={{ backgroundColor: COLORS.BG_DARK }}>
-        {/* Animated background foods */}
         {floatingFoods.map((food, i) => (
           <FloatingFood 
             key={i} 
@@ -135,16 +134,13 @@ export const MainMenu: React.FC<MainMenuProps> = ({ onStartGame, onSelectGame, o
           />
         ))}
 
-        {/* Dark overlay */}
         <View className="absolute inset-0 bg-gradient-to-b from-purple-900/30 to-black/50" />
 
-        {/* User Mode Selector - Scrollable */}
         <ScrollView 
           className="flex-1 z-10" 
-          contentContainerStyle={{ alignItems: 'center', paddingVertical: 24, paddingHorizontal: 16 }}
+          contentContainerStyle={{ paddingVertical: 24, paddingHorizontal: 16 }}
           showsVerticalScrollIndicator={false}
         >
-          {/* Hero Title with Medieval Theme */}
           <View className="items-center mb-6">
             <Text className="text-6xl mb-3">👑</Text>
             <Text className="text-amber-400 text-4xl font-bold text-center">
@@ -153,17 +149,13 @@ export const MainMenu: React.FC<MainMenuProps> = ({ onStartGame, onSelectGame, o
             <Text className="text-white text-xl text-center mt-1">
               Choose Your Path to Mastery
             </Text>
-            <Text className="text-purple-300 text-sm text-center mt-3">
-              Each journey teaches valuable glucose management skills
-            </Text>
           </View>
 
-          {/* Enhanced Role Cards with Educational Previews */}
           <ScrollView 
             horizontal 
             showsHorizontalScrollIndicator={false} 
             contentContainerStyle={{ gap: 16, paddingHorizontal: 8 }} 
-            className="mb-6"
+            className="mb-6 h-80"
           >
             {(Object.keys(USER_MODE_CONFIGS) as UserMode[]).map((mode) => {
               const config = USER_MODE_CONFIGS[mode];
@@ -199,29 +191,24 @@ export const MainMenu: React.FC<MainMenuProps> = ({ onStartGame, onSelectGame, o
                   }}
                   className={`w-64 h-72 rounded-2xl border-2 p-4 ${roleData.color} ${roleData.bg}`}
                 >
-                  {/* Role Emblem */}
                   <View className="items-center mb-3">
                     <Text className="text-5xl mb-2">{roleData.emblem}</Text>
                     <Text className="text-2xl">{config.icon}</Text>
                   </View>
 
-                  {/* Role Title */}
                   <Text className={`text-xl font-bold text-center mb-2 ${mode === 'personal' ? 'text-red-300' : mode === 'caregiver' ? 'text-blue-300' : 'text-purple-300'}`}>
                     {config.name}
                   </Text>
 
-                  {/* Description */}
                   <Text className="text-white text-sm text-center mb-3">
                     {config.description}
                   </Text>
 
-                  {/* Learning Focus */}
                   <View className="bg-black/40 p-2 rounded-lg border border-white/20 mt-2">
                     <Text className="text-green-300 text-xs font-bold">LEARNING FOCUS:</Text>
                     <Text className="text-white text-xs mt-1">{roleData.learningFocus}</Text>
                   </View>
 
-                  {/* CTA */}
                   <View className="mt-3 items-center">
                     <Text className="text-amber-300 text-sm font-bold">→ Choose This Path</Text>
                   </View>
@@ -230,66 +217,40 @@ export const MainMenu: React.FC<MainMenuProps> = ({ onStartGame, onSelectGame, o
             })}
           </ScrollView>
 
-          {/* Educational Context */}
-          <View style={{ width: maxWidth }} className="bg-black/60 p-4 rounded-xl border border-cyan-700 mb-4">
-            <Text className="text-cyan-400 text-xs font-bold mb-2">💡 WHY CHOOSE A ROLE?</Text>
-            <View className="flex-row items-start">
-              <Text className="text-cyan-300 mr-2">•</Text>
-              <Text className="text-white text-xs flex-1">
-                Personalizes your educational journey and unlocks role-specific achievements
-              </Text>
+          <View className="items-center">
+            <View style={{ width: maxWidth }} className="bg-black/60 p-4 rounded-xl border border-cyan-700 mb-4">
+              <Text className="text-cyan-400 text-xs font-bold mb-2">💡 WHY CHOOSE A ROLE?</Text>
+              <Text className="text-white text-xs mb-1">• Personalizes your educational journey</Text>
+              <Text className="text-white text-xs mb-1">• Tailors glucose management lessons</Text>
+              <Text className="text-white text-xs">• Connects you with others on similar journeys</Text>
             </View>
-            <View className="flex-row items-start mt-1">
-              <Text className="text-cyan-300 mr-2">•</Text>
-              <Text className="text-white text-xs flex-1">
-                Tailors glucose management lessons to your needs and goals
-              </Text>
-            </View>
-            <View className="flex-row items-start mt-1">
-              <Text className="text-cyan-300 mr-2">•</Text>
-              <Text className="text-white text-xs flex-1">
-                Connects you with others on similar health journeys
-              </Text>
-            </View>
-          </View>
 
-          {/* Settings Note */}
-          <Text style={{ width: maxWidth }} className="text-gray-500 text-xs text-center mb-4">
-            🔧 You can explore other roles anytime in settings
-          </Text>
+            <Text style={{ width: maxWidth }} className="text-gray-500 text-xs text-center mb-4">
+              🔧 You can explore other roles anytime in settings
+            </Text>
 
-          {/* Optional Onchain Badge (only show if wallet connected) */}
-          {isConnected && (
-            <View style={{ width: maxWidth }} className="bg-black/60 p-4 rounded-xl border border-amber-700">
-              <Text className="text-amber-400 text-xs font-bold mb-2">🏅 OPTIONAL BADGE</Text>
-              <Text className="text-white text-xs text-center mb-3">
-                Mint your role as an onchain badge to carry through your journey
-              </Text>
-              <TouchableOpacity
-                onPress={() => setShowMintModal(true)}
-                className="px-4 py-2 rounded-lg border border-amber-400 bg-amber-600/20"
-              >
-                <Text className="text-amber-300 text-xs text-center">
-                  {selectedRole ? 'Mint Selected Role' : 'Learn About Badges'}
-                </Text>
-              </TouchableOpacity>
-              <Text className="text-gray-500 text-xs text-center mt-2">
-                Completely optional - works without minting!
-              </Text>
-            </View>
+            {isConnected && (
+              <View style={{ width: maxWidth }} className="bg-black/60 p-4 rounded-xl border border-amber-700">
+                <Text className="text-amber-400 text-xs font-bold mb-2">🏅 OPTIONAL BADGE</Text>
+                <TouchableOpacity
+                  onPress={() => setShowMintModal(true)}
+                  className="px-4 py-2 rounded-lg border border-amber-400 bg-amber-600/20"
+                >
+                  <Text className="text-amber-300 text-xs text-center">
+                    {selectedRole ? 'Mint Selected Role' : 'Learn About Badges'}
+                  </Text>
+                </TouchableOpacity>
+              </View>
             )}
+          </View>
         </ScrollView>
 
-        {/* Onchain Badge Minting Modal */}
         <RoleBadgeModal
           visible={showMintModal}
           onClose={() => setShowMintModal(false)}
           role={selectedRole}
           userMode={progress.userMode}
-          onMintSuccess={() => {
-            setShowMintModal(false);
-            // Role selection continues normally
-          }}
+          onMintSuccess={() => setShowMintModal(false)}
         />
       </View>
     );
@@ -297,7 +258,6 @@ export const MainMenu: React.FC<MainMenuProps> = ({ onStartGame, onSelectGame, o
 
   return (
     <View className="flex-1 items-center justify-center" style={{ backgroundColor: COLORS.BG_DARK }}>
-      {/* Animated background foods */}
       {floatingFoods.map((food, i) => (
         <FloatingFood 
           key={i} 
@@ -307,191 +267,118 @@ export const MainMenu: React.FC<MainMenuProps> = ({ onStartGame, onSelectGame, o
         />
       ))}
 
-      {/* Dark overlay */}
       <View className="absolute inset-0 bg-gradient-to-b from-purple-900/30 to-black/50" />
 
-      {/* Content */}
-      <View className="items-center z-10 px-6">
-        {/* Title */}
-        <View className="items-center mb-6">
-          <Text className="text-6xl mb-2">🏰</Text>
-          <Text className="text-amber-400 text-4xl font-bold text-center tracking-wider">
-            GLUCOSE
-          </Text>
-          <Text className="text-white text-4xl font-bold text-center tracking-wider">
-            WARS
-          </Text>
-          <Text className="text-purple-300 text-base text-center italic mt-1">
-            Defend Your Kingdom
-          </Text>
-        </View>
+      <ScrollView 
+        className="flex-1 z-10 w-full" 
+        contentContainerStyle={{ alignItems: 'center', paddingVertical: 48 }}
+      >
+         <View className="items-center mb-6">
+           <Text className="text-6xl mb-2">🏰</Text>
+           <Text className="text-amber-400 text-4xl font-bold text-center tracking-wider">GLUCOSE</Text>
+           <Text className="text-white text-4xl font-bold text-center tracking-wider">WARS</Text>
+           <Text className="text-purple-300 text-base text-center italic mt-1">Defend Your Kingdom</Text>
+         </View>
 
-        {/* Wallet Connection Button (in content area) - cross-platform */}
-        <View className="mb-6">
-          <WalletConnectionButton />
-        </View>
+         {progress.gamesPlayed > 0 && (
+           <View style={{ width: maxWidth }} className="bg-gradient-to-r from-orange-600/30 to-red-600/20 p-4 rounded-xl border-2 border-orange-500 mb-6 items-center">
+             <View className="flex-row items-center justify-center gap-2 mb-2">
+               <Text className="text-3xl animate-bounce">{streakStatus.emoji}</Text>
+               <Text className="text-white text-2xl font-bold">{streakStatus.streak}</Text>
+               <Text className="text-orange-300 text-sm font-bold">GAME STREAK</Text>
+             </View>
+             <Text className="text-orange-200 text-xs">{streakStatus.message} 🎯</Text>
+           </View>
+         )}
 
-        {/* Progress Info (only for returning players) */}
-        {progressInfo}
+         <View className="mb-6">
+           <WalletConnectionButton />
+         </View>
 
-        {/* Privacy Controls */}
-        <View style={{ width: maxWidth }} className="bg-black/60 p-3 rounded-xl border border-cyan-700 mb-4">
+         {progressInfo}
+
+        <View style={{ width: maxWidth }} className="bg-black/60 p-3 rounded-xl border border-cyan-700 mb-4 mt-6">
           <View className="flex-row justify-between items-center">
             <View className="flex-1">
-              <Text className="text-cyan-400 text-xs font-bold mb-1">
-                🔐 PRIVACY
-              </Text>
+              <Text className="text-cyan-400 text-xs font-bold mb-1">🔐 PRIVACY</Text>
               <PrivacyToggle
                 currentMode={progress.privacyMode}
-                onToggle={(mode) => {
-                  setPrivacyMode(mode);
-                }}
+                onToggle={(mode) => setPrivacyMode(mode)}
               />
             </View>
             <TouchableOpacity
               className="p-2 ml-2 active:bg-cyan-400/20 rounded"
               onPress={() => setShowPrivacySettings(true)}
-              hitSlop={8}
             >
               <Text className="text-cyan-400 text-2xl">⚙️</Text>
             </TouchableOpacity>
           </View>
         </View>
 
-        {/* Control Mode Selector */}
         <View style={{ width: maxWidth }} className="bg-black/60 p-3 rounded-2xl border-2 border-purple-700 mb-4">
-          <Text className="text-amber-400 text-xs font-bold text-center mb-2">
-            🎮 CONTROLS
-          </Text>
-          
+          <Text className="text-amber-400 text-xs font-bold text-center mb-2">🎮 CONTROLS</Text>
           <View className="flex-row gap-2">
             <TouchableOpacity
               onPress={() => setSelectedMode('swipe')}
-              className={`flex-1 p-2 rounded-lg border ${
-                selectedMode === 'swipe' 
-                  ? 'bg-green-600/30 border-green-500' 
-                  : 'bg-gray-800/50 border-gray-600'
-              }`}
+              className={`flex-1 p-2 rounded-lg border ${selectedMode === 'swipe' ? 'bg-green-600/30 border-green-500' : 'bg-gray-800/50 border-gray-600'}`}
             >
               <Text className="text-xl text-center">👆</Text>
-              <Text className={`text-center font-bold text-xs ${
-                selectedMode === 'swipe' ? 'text-green-400' : 'text-gray-400'
-              }`}>
-                SWIPE
-              </Text>
+              <Text className={`text-center font-bold text-xs ${selectedMode === 'swipe' ? 'text-green-400' : 'text-gray-400'}`}>SWIPE</Text>
             </TouchableOpacity>
 
             <TouchableOpacity
               onPress={() => setSelectedMode('tap')}
-              className={`flex-1 p-2 rounded-lg border ${
-                selectedMode === 'tap' 
-                  ? 'bg-blue-600/30 border-blue-500' 
-                  : 'bg-gray-800/50 border-gray-600'
-              }`}
+              className={`flex-1 p-2 rounded-lg border ${selectedMode === 'tap' ? 'bg-blue-600/30 border-blue-500' : 'bg-gray-800/50 border-gray-600'}`}
             >
               <Text className="text-xl text-center">🖱️</Text>
-              <Text className={`text-center font-bold text-xs ${
-                selectedMode === 'tap' ? 'text-blue-400' : 'text-gray-400'
-              }`}>
-                TAP
-              </Text>
+              <Text className={`text-center font-bold text-xs ${selectedMode === 'tap' ? 'text-blue-400' : 'text-gray-400'}`}>TAP</Text>
             </TouchableOpacity>
           </View>
         </View>
 
-        {/* Quick tips */}
-        <View style={{ width: maxWidth }} className="bg-black/60 p-3 rounded-2xl border-2 border-amber-700 mb-4">
-          <View className="flex-row items-center justify-between">
-            <View className="flex-row items-center flex-1">
-              <Text className="text-lg mr-1">👆</Text>
-              <Text className="text-green-400 text-xs font-bold">RALLY</Text>
-              <Text className="text-gray-400 text-xs ml-1">🥦🥕</Text>
-            </View>
-            <View className="flex-row items-center flex-1">
-              <Text className="text-lg mr-1">👇</Text>
-              <Text className="text-red-400 text-xs font-bold">BANISH</Text>
-              <Text className="text-gray-400 text-xs ml-1">🍩🍔</Text>
-            </View>
-          </View>
-        </View>
-
-        {/* Start buttons - now with two options */}
-        <View className="w-full max-w-[350px] space-y-3">
-          {/* Quick Start button */}
+        <View className="w-full max-w-[350px] space-y-3 mt-4">
           <Animated.View style={{ transform: [{ scale: pulseAnim }] }}>
             <TouchableOpacity
               onPress={() => onStartGame(selectedMode)}
-              className={`px-6 py-4 rounded-2xl border-4 bg-green-600 border-green-400 w-full`}
+              className="px-6 py-5 rounded-2xl border-4 bg-green-600 border-green-400 w-full"
               style={{
-                shadowColor: COLORS.ZONES.balanced,
+                shadowColor: '#22c55e',
                 shadowOffset: { width: 0, height: 0 },
-                shadowOpacity: 0.8,
-                shadowRadius: 20,
-                elevation: 10,
+                shadowOpacity: 0.9,
+                shadowRadius: 25,
+                elevation: 15,
               }}
-              activeOpacity={0.8}
             >
               <View className="flex-row items-center justify-center">
                 <Text className="text-2xl mr-2">⚡</Text>
-                <Text className="text-white text-base font-bold">
-                  QUICK START
-                </Text>
+                <Text className="text-white text-base font-bold">QUICK START</Text>
               </View>
             </TouchableOpacity>
           </Animated.View>
 
-          {/* Game Selection button */}
           <TouchableOpacity
             onPress={() => onSelectGame?.()}
-            className={`px-6 py-4 rounded-2xl border-4 bg-amber-600 border-amber-400 w-full`}
+            className="px-6 py-4 rounded-2xl border-4 bg-amber-600 border-amber-400 w-full mt-3"
             style={{
               shadowColor: COLORS.ZONES.warningHigh,
               shadowOffset: { width: 0, height: 0 },
-              shadowOpacity: 0.8,
-              shadowRadius: 20,
-              elevation: 10,
+              shadowOpacity: 0.7,
+              shadowRadius: 15,
+              elevation: 8,
             }}
-            activeOpacity={0.8}
           >
             <View className="flex-row items-center justify-center">
               <Text className="text-2xl mr-2">🎮</Text>
-              <Text className="text-white text-base font-bold">
-                SELECT GAME MODE
-              </Text>
+              <Text className="text-white text-base font-bold">CUSTOMIZE BATTLE</Text>
             </View>
           </TouchableOpacity>
-
-          {/* Stats button */}
-          {onViewStats && (
-            <TouchableOpacity
-              onPress={() => onViewStats?.()}
-              className="px-6 py-3 rounded-2xl border-2 border-purple-500 bg-purple-600/20 mt-3"
-              activeOpacity={0.7}
-            >
-              <View className="flex-row items-center justify-center">
-                <Text className="text-xl mr-2">📊</Text>
-                <Text className="text-purple-300 text-sm font-bold">YOUR STATS</Text>
-              </View>
-            </TouchableOpacity>
-          )}
         </View>
 
-        {/* Tip */}
-        <View className="mt-3 px-4">
-          <Text className="text-purple-400 text-xs text-center">
-            💡 Chain correct actions for COMBO bonuses!
-          </Text>
+        <View className="mt-6">
+          <Text className="text-purple-400 text-xs text-center">💡 Chain correct actions for COMBO bonuses!</Text>
         </View>
-      </View>
+      </ScrollView>
 
-      {/* Footer */}
-      <View className="absolute bottom-4">
-        <Text className="text-gray-600 text-xs text-center">
-          A 60-Second Medieval Battle
-        </Text>
-      </View>
-
-      {/* Privacy Settings Modal */}
       <PrivacySettingsModal
         settings={progress.privacySettings || {
           mode: 'standard',
@@ -513,23 +400,17 @@ export const MainMenu: React.FC<MainMenuProps> = ({ onStartGame, onSelectGame, o
   );
 };
 
-// Cross-platform wallet connection button
 const WalletConnectionButton = () => {
   const { isConnected, address, connectWallet, disconnectWallet } = useWeb3();
 
   if (isConnected && address) {
-    // Show connected state with truncated address
     const truncatedAddress = `${address.substring(0, 6)}...${address.substring(address.length - 4)}`;
-
     return (
       <TouchableOpacity
         className="bg-purple-600 px-3 py-2 rounded-full min-h-[36px] justify-center min-w-[100px]"
         onPress={disconnectWallet}
-        activeOpacity={0.7}
       >
-        <Text className="text-white text-xs font-bold truncate text-center">
-          {truncatedAddress}
-        </Text>
+        <Text className="text-white text-xs font-bold text-center">{truncatedAddress}</Text>
       </TouchableOpacity>
     );
   }
@@ -538,7 +419,6 @@ const WalletConnectionButton = () => {
     <TouchableOpacity
       className="bg-amber-600 px-3 py-2 rounded-full min-h-[36px] justify-center min-w-[80px]"
       onPress={connectWallet}
-      activeOpacity={0.7}
     >
       <Text className="text-white font-bold text-xs text-center">
         {Platform.OS === 'web' ? 'Connect' : 'Wallet'}
@@ -546,3 +426,11 @@ const WalletConnectionButton = () => {
     </TouchableOpacity>
   );
 };
+
+interface MainMenuProps {
+  onStartGame: (controlMode: ControlMode) => void;
+  onSelectGame: () => void;
+  onUserModeSelected?: (mode: string) => void;
+  userModeSelected?: boolean;
+  onViewStats?: () => void;
+}

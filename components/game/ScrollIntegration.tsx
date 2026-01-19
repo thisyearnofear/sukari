@@ -22,7 +22,7 @@ export const ScrollIntegration: React.FC<ScrollIntegrationProps> = ({
 
   if (!visible) return null;
 
-  const unlockedAchievements = achievements.filter(a => a.unlocked);
+  const unlockedAchievements = achievements.filter((a: OnchainAchievement) => a.unlocked);
 
   return (
     <View className="flex-1 bg-black/95 border border-cyan-500/30 rounded-lg p-4 mb-4">
@@ -78,7 +78,7 @@ export const ScrollIntegration: React.FC<ScrollIntegrationProps> = ({
             nestedScrollEnabled
             className="bg-slate-900/30 rounded-lg border border-slate-700 max-h-40"
           >
-            {achievements.map((achievement, idx) => (
+            {achievements.map((achievement: OnchainAchievement, idx: number) => (
               <AchievementItem
                 key={achievement.id}
                 achievement={achievement}

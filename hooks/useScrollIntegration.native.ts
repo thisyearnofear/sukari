@@ -291,6 +291,32 @@ export const useScrollIntegration = () => {
     }, 0);
   }, [achievements]);
 
+  const evaluateAchievements = useCallback((gameState: GameState): string[] => {
+    // Evaluate which achievements should be unlocked based on game state
+    const unlockedAchievementIds: string[] = [];
+
+    // Victory achievements
+    if (gameState.gameResult === 'victory') {
+      if (gameState.gameMode === 'classic') {
+        unlockedAchievementIds.push('victory_classic');
+      } else if (gameState.gameMode === 'life') {
+        unlockedAchievementIds.push('victory_life');
+      }
+    }
+
+    // Perfect stability
+    if (gameState.stability && gameState.stability >= 95) {
+      unlockedAchievementIds.push('perfect_stability');
+    }
+
+    // High combo
+    if (gameState.comboCount && gameState.comboCount >= 10) {
+      unlockedAchievementIds.push('high_combo');
+    }
+
+    return unlockedAchievementIds;
+  }, []);
+
   return {
     userAddress,
     isConnected,
@@ -300,6 +326,7 @@ export const useScrollIntegration = () => {
     mintAchievementNFT,
     writeContract,
     submitAchievement,
+    evaluateAchievements,
     isFetching: isLoading,
     error,
     txHash,
