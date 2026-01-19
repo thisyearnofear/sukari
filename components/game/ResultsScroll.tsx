@@ -1,3 +1,5 @@
+/* eslint-disable import/no-unresolved */
+// useScrollIntegration is resolved at runtime via Metro's platform-specific file resolution
 import React, { useEffect, useRef, useState } from 'react';
 import { View, Text, TouchableOpacity, Animated, Share } from 'react-native';
 import { BodyMetrics, GameMode, MorningCondition, GameState, UserMode } from '@/types/game';
