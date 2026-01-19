@@ -4,6 +4,7 @@ import { usePlayerProgress } from '@/hooks/usePlayerProgress';
 import { useHealthProfile } from '@/hooks/useHealthProfile';
 import { GameMode } from '@/types/game';
 import { Ionicons } from '@expo/vector-icons';
+import { BREAKFAST_MEALS, LUNCH_MEALS, DINNER_MEALS, Meal } from '@/constants/mealDatabase';
 
 const { width } = Dimensions.get('window');
 const maxWidth = Math.min(width * 0.9, 400);
@@ -11,43 +12,55 @@ const maxWidth = Math.min(width * 0.9, 400);
 interface SlowMoModeProps {
   onStartGame: (mode: GameMode) => void;
   onBack: () => void;
+  onComplete?: () => void;
 }
 
-export const SlowMoMode: React.FC<SlowMoModeProps> = ({ onStartGame, onBack }) => {
-  const { progress } = usePlayerProgress();
-  const { healthProfile } = useHealthProfile(progress.userMode || undefined);
+export const SlowMoMode: React.FC<SlowMoModeProps> = ({ onStartGame, onBack, onComplete }) => {
+  const { progress, recordSlowMoSession } = usePlayerProgress();
+  const { healthProfile } = useHealthProfile();
   const [phase, setPhase] = useState<'morning' | 'simulation' | 'evening'>('morning');
-  const [plannedMeals, setPlannedMeals] = useState<any[]>([]);
-  const [actualMeals, setActualMeals] = useState<any[]>([]);
+  const [plannedMeals, setPlannedMeals] = useState<Meal[]>([]);
+  const [actualMeals, setActualMeals] = useState<Meal[]>([]);
   const [simulationResults, setSimulationResults] = useState<any>(null);
+  const [adjustedMeals, setAdjustedMeals] = useState<Meal[]>([]);
   
-  // Sample meal data for prototyping
-  const mealOptions = [
-    { id: 'breakfast1', name: 'Oatmeal with Berries', type: 'healthy', glucoseImpact: 40 },
-    { id: 'breakfast2', name: 'Pancakes with Syrup', type: 'unhealthy', glucoseImpact: 80 },
-    { id: 'lunch1', name: 'Grilled Chicken Salad', type: 'healthy', glucoseImpact: 30 },
-    { id: 'lunch2', name: 'Burger and Fries', type: 'unhealthy', glucoseImpact: 90 },
-    { id: 'dinner1', name: 'Baked Salmon with Veggies', type: 'healthy', glucoseImpact: 25 },
-    { id: 'dinner2', name: 'Pasta Carbonara', type: 'unhealthy', glucoseImpact: 75 },
-  ];
+  // Use real meal database
+  const mealOptions = {
+    breakfast: BREAKFAST_MEALS,
+    lunch: LUNCH_MEALS,
+    dinner: DINNER_MEALS,
+  };
 
   const handlePlanMeal = (mealType: string, mealId: string) => {
-    const meal = mealOptions.find(m => m.id === mealId);
+    // Find meal across all meal types
+    const allMeals = [...BREAKFAST_MEALS, ...LUNCH_MEALS, ...DINNER_MEALS];
+    const meal = allMeals.find(m => m.id === mealId);
     if (meal) {
-      setPlannedMeals(prev => [...prev.filter(m => m.mealType !== mealType), { ...meal, mealType }]);
+      setPlannedMeals((prev: Meal[]) => [
+        ...prev.filter(m => m.mealType !== (mealType as any)),
+        meal
+      ]);
     }
   };
 
   const handleActualMeal = (mealType: string, mealId: string) => {
-    const meal = mealOptions.find(m => m.id === mealId);
+    const allMeals = [...BREAKFAST_MEALS, ...LUNCH_MEALS, ...DINNER_MEALS];
+    const meal = allMeals.find(m => m.id === mealId);
     if (meal) {
-      setActualMeals(prev => [...prev.filter(m => m.mealType !== mealType), { ...meal, mealType }]);
+      setActualMeals((prev: Meal[]) => [
+        ...prev.filter(m => m.mealType !== (mealType as any)),
+        meal
+      ]);
+    }
+    // Trigger comparison when all meals are entered
+    if (actualMeals.length === 2) {
+      compareWithReality();
     }
   };
 
   const simulateGlucoseImpact = () => {
     // Calculate total predicted glucose impact
-    const totalImpact = plannedMeals.reduce((sum, meal) => sum + meal.glucoseImpact, 0);
+    const totalImpact = plannedMeals.reduce((sum: number, meal: any) => sum + meal.glucoseImpact, 0);
     const averageImpact = totalImpact / plannedMeals.length;
     
     // Generate simulation data
@@ -75,69 +88,10 @@ export const SlowMoMode: React.FC<SlowMoModeProps> = ({ onStartGame, onBack }) =
       insights: getComparisonInsights(plannedMeals, actualMeals),
     };
     
-    setSimulationResults(prev => ({ ...prev, comparison }));
+    setSimulationResults((prev: any) => ({ ...prev, comparison }));
     setPhase('evening');
   };
 
-  const generateGlucoseCurve = (meals: any[]) => {
-    // Enhanced glucose curve simulation with realistic physiology
-    const curve: any[] = [];
-    let currentGlucose = 80; // Starting fasting glucose
-    let currentTime = 8; // Start at 8am
-
-    // Add fasting baseline
-    curve.push({
-      time: currentTime,
-      glucoseLevel: currentGlucose,
-      meal: 'Fasting',
-      note: 'Baseline fasting glucose'
-    });
-
-    // Process each meal with realistic timing
-    meals.forEach((meal, index) => {
-      // Time between meals (2-3 hours)
-      const hoursSinceLast = index === 0 ? 0 : (index * 2 + Math.random());
-      currentTime += hoursSinceLast;
-      
-      // Glucose rise based on meal type and impact
-      const glucoseRise = meal.glucoseImpact * (0.7 + Math.random() * 0.3);
-      currentGlucose += glucoseRise;
-      
-      // Add meal point
-      curve.push({
-        time: Math.round(currentTime),
-        glucoseLevel: Math.round(currentGlucose),
-        meal: meal.name,
-        type: meal.type,
-        impact: glucoseRise
-      });
-      
-      // Natural glucose decrease over time (simulate insulin effect)
-      if (index < meals.length - 1) {
-        currentTime += 1; // 1 hour later
-        currentGlucose -= glucoseRise * 0.3; // Natural decrease
-        curve.push({
-          time: Math.round(currentTime),
-          glucoseLevel: Math.round(Math.max(70, currentGlucose)), // Don't go below 70
-          meal: 'Natural decrease',
-          note: 'Insulin effect'
-        });
-      }
-    });
-
-    // Add evening baseline
-    currentTime = 22;
-    currentGlucose = Math.max(70, currentGlucose - 20);
-    curve.push({
-      time: currentTime,
-      glucoseLevel: Math.round(currentGlucose),
-      meal: 'Evening',
-      note: 'End of day baseline'
-    });
-
-    return curve;
-  };
-=======
   const generateGlucoseCurve = (meals: any[]) => {
     // Enhanced glucose curve simulation with realistic physiology
     const curve: any[] = [];
@@ -246,32 +200,82 @@ export const SlowMoMode: React.FC<SlowMoModeProps> = ({ onStartGame, onBack }) =
         `This reduced your glucose impact by ${Math.abs(difference)} mg/dL compared to your plan.`,
         'This demonstrates great real-world decision making and flexibility!',
         `Consider what helped you make these better choices and try to replicate it:
-        • Were you more mindful of hunger cues?
-        • Did you have healthier options available?
-        • Were you in a less stressful environment?`
+         • Were you more mindful of hunger cues?
+         • Did you have healthier options available?
+         • Were you in a less stressful environment?`
       ];
     } else if (actualHealthy === plannedHealthy) {
       return [
         `✅ Perfect consistency! You maintained your planned ${plannedHealthy} healthy meal(s).`,
         'This predictability is excellent for glucose management and planning.',
         `Your actual impact (${actualImpact} mg/dL) closely matched your prediction (${plannedImpact} mg/dL).`,
-        'For your next challenge, try experimenting with:
-        • Adding a short walk after one meal
-        • Drinking water before meals to help with portion control
-        • Trying one new healthy recipe'
+        `For your next challenge, try experimenting with:
+         • Adding a short walk after one meal
+         • Drinking water before meals to help with portion control
+         • Trying one new healthy recipe`
       ];
     } else {
       return [
         `📚 Learning opportunity! Your actual choices had ${Math.abs(difference)} mg/dL higher impact than planned.`,
         'This is completely normal and part of the learning process. Let\'s analyze what happened:',
         `You had ${plannedHealthy} healthy meals planned but ${actualHealthy} in reality.`,
-        'Reflection questions to consider:
-        • What unexpected situations arose?
-        • Were healthier options not available?
-        • How were you feeling emotionally at meal times?
-        • What could make it easier to stick to your plan next time?'
+        `Reflection questions to consider:
+         • What unexpected situations arose?
+         • Were healthier options not available?
+         • How were you feeling emotionally at meal times?
+         • What could make it easier to stick to your plan next time?`
       ];
     }
+  };
+
+  const handleAddExercise = () => {
+    // Exercise reduces glucose impact by ~15%
+    const adjusted = simulationResults.predictedCurve.map((point: any) => {
+      if (point.meal && point.meal !== 'Fasting' && point.meal !== 'Evening' && point.meal !== 'Natural decrease') {
+        return {
+          ...point,
+          glucoseLevel: Math.max(70, Math.round(point.glucoseLevel * 0.85)),
+          note: 'With 15min exercise'
+        };
+      }
+      return point;
+    });
+    setSimulationResults((prev: any) => ({
+      ...prev,
+      predictedCurve: adjusted,
+      adjustmentNote: '✨ Added 15-minute walk effect'
+    }));
+  };
+
+  const handleReplaceMeal = () => {
+    // Suggest replacing highest-impact meal with healthy alternative
+    const highest = plannedMeals.reduce((max: Meal, m: Meal) => m.glucoseImpact > max.glucoseImpact ? m : max);
+    const allMeals = [...BREAKFAST_MEALS, ...LUNCH_MEALS, ...DINNER_MEALS];
+    const healthyAlternative = allMeals.find(m => m.type === 'healthy' && m.mealType === highest.mealType);
+    if (healthyAlternative) {
+      const newMeals = plannedMeals.map((m: Meal) => m.mealType === highest.mealType ? healthyAlternative : m);
+      setPlannedMeals(newMeals);
+      simulateGlucoseImpact();
+      setSimulationResults((prev: any) => ({
+        ...prev,
+        adjustmentNote: `✨ Replaced ${highest.name} with ${healthyAlternative.name}`
+      }));
+    }
+  };
+
+  const handleAdjustPortion = () => {
+    // Reduce portion sizes by 20%
+    const adjusted = plannedMeals.map((m: any) => ({
+      ...m,
+      glucoseImpact: Math.round(m.glucoseImpact * 0.8)
+    }));
+    setAdjustedMeals(adjusted);
+    setPlannedMeals(adjusted);
+    simulateGlucoseImpact();
+    setSimulationResults((prev: any) => ({
+      ...prev,
+      adjustmentNote: '✨ Reduced portion sizes by 20%'
+    }));
   };
 
   return (
@@ -300,13 +304,14 @@ export const SlowMoMode: React.FC<SlowMoModeProps> = ({ onStartGame, onBack }) =
             <View className="w-full max-w-[350px] mb-6">
               {['breakfast', 'lunch', 'dinner'].map((mealType) => {
                 const planned = plannedMeals.find(m => m.mealType === mealType);
+                const meals = mealType === 'breakfast' ? BREAKFAST_MEALS : mealType === 'lunch' ? LUNCH_MEALS : DINNER_MEALS;
                 return (
                   <View key={mealType} className="mb-4">
                     <Text className="text-purple-300 text-sm font-bold mb-2">
                       {mealType.toUpperCase()}
                     </Text>
                     <View className="flex-row gap-2">
-                      {mealOptions.filter(m => m.id.includes(mealType)).map((option) => (
+                      {meals.slice(0, 2).map((option) => (
                         <TouchableOpacity
                           key={option.id}
                           onPress={() => handlePlanMeal(mealType, option.id)}
@@ -316,13 +321,13 @@ export const SlowMoMode: React.FC<SlowMoModeProps> = ({ onStartGame, onBack }) =
                               : 'bg-black/40 border-purple-700'
                           }`}
                         >
-                          <Text className="text-white text-xs text-center mb-1">
+                          <Text className="text-white text-xs text-center mb-1" numberOfLines={2}>
                             {option.name}
                           </Text>
                           <Text className={`text-xs text-center ${
-                            option.type === 'healthy' ? 'text-green-400' : 'text-red-400'
+                            option.type === 'healthy' ? 'text-green-400' : option.type === 'moderate' ? 'text-amber-400' : 'text-red-400'
                           }`}>
-                            {option.type === 'healthy' ? 'Healthy' : 'High Impact'}
+                            {option.glucoseImpact} mg/dL
                           </Text>
                         </TouchableOpacity>
                       ))}
@@ -421,14 +426,17 @@ export const SlowMoMode: React.FC<SlowMoModeProps> = ({ onStartGame, onBack }) =
             {/* Interactive Adjustments */}
             <View className="bg-black/60 p-4 rounded-xl border border-amber-700 mb-6 w-full max-w-[350px]">
               <Text className="text-amber-400 text-xs font-bold mb-3">🔄 WHAT IF SCENARIOS</Text>
+              {simulationResults?.adjustmentNote && (
+                <Text className="text-amber-300 text-xs mb-3 text-center">{simulationResults.adjustmentNote}</Text>
+              )}
               <View className="space-y-2">
-                <TouchableOpacity className="p-2 bg-black/40 rounded border border-amber-600">
+                <TouchableOpacity onPress={handleAddExercise} className="p-2 bg-black/40 rounded border border-amber-600 active:bg-amber-600/20">
                   <Text className="text-amber-300 text-xs text-center">+ Add 15min Exercise</Text>
                 </TouchableOpacity>
-                <TouchableOpacity className="p-2 bg-black/40 rounded border border-green-600">
+                <TouchableOpacity onPress={handleReplaceMeal} className="p-2 bg-black/40 rounded border border-green-600 active:bg-green-600/20">
                   <Text className="text-green-300 text-xs text-center">+ Replace One Meal</Text>
                 </TouchableOpacity>
-                <TouchableOpacity className="p-2 bg-black/40 rounded border border-blue-600">
+                <TouchableOpacity onPress={handleAdjustPortion} className="p-2 bg-black/40 rounded border border-blue-600 active:bg-blue-600/20">
                   <Text className="text-blue-300 text-xs text-center">+ Adjust Portion Size</Text>
                 </TouchableOpacity>
               </View>
@@ -454,7 +462,7 @@ export const SlowMoMode: React.FC<SlowMoModeProps> = ({ onStartGame, onBack }) =
         )}
 
         {/* Evening Reflection Phase */}
-        {phase === 'evening' && simulationResults?.comparison && (
+        {phase === 'evening' && simulationResults && (
           <View className="items-center px-4">
             <Text className="text-5xl mb-4">🌙</Text>
             <Text className="text-amber-400 text-3xl font-bold mb-2">EVENING REFLECTION</Text>
@@ -463,33 +471,35 @@ export const SlowMoMode: React.FC<SlowMoModeProps> = ({ onStartGame, onBack }) =
             </Text>
 
             {/* Comparison Summary */}
-            <View className="bg-black/60 p-4 rounded-xl border border-cyan-700 mb-6 w-full max-w-[350px]">
-              <Text className="text-cyan-400 text-xs font-bold mb-3">COMPARISON SUMMARY</Text>
-              <View className="flex-row justify-between mb-2">
-                <Text className="text-gray-400 text-xs">Predicted Impact:</Text>
-                <Text className="text-white text-xs">{simulationResults.comparison.predictedImpact} mg/dL</Text>
-              </View>
-              <View className="flex-row justify-between mb-2">
-                <Text className="text-gray-400 text-xs">Actual Impact:</Text>
-                <Text className="text-white text-xs">{simulationResults.comparison.actualImpact} mg/dL</Text>
-              </View>
-              <View className="flex-row justify-between mb-3">
-                <Text className="text-gray-400 text-xs">Difference:</Text>
-                <Text className={`text-xs ${
-                  simulationResults.comparison.difference < 0 ? 'text-green-400' : 'text-red-400'
+            {simulationResults?.comparison && (
+              <View className="bg-black/60 p-4 rounded-xl border border-cyan-700 mb-6 w-full max-w-[350px]">
+                <Text className="text-cyan-400 text-xs font-bold mb-3">COMPARISON SUMMARY</Text>
+                <View className="flex-row justify-between mb-2">
+                  <Text className="text-gray-400 text-xs">Predicted Impact:</Text>
+                  <Text className="text-white text-xs">{simulationResults.comparison.predictedImpact} mg/dL</Text>
+                </View>
+                <View className="flex-row justify-between mb-2">
+                  <Text className="text-gray-400 text-xs">Actual Impact:</Text>
+                  <Text className="text-white text-xs">{simulationResults.comparison.actualImpact} mg/dL</Text>
+                </View>
+                <View className="flex-row justify-between mb-3">
+                  <Text className="text-gray-400 text-xs">Difference:</Text>
+                  <Text className={`text-xs ${
+                    simulationResults.comparison.difference < 0 ? 'text-green-400' : 'text-red-400'
+                  }`}>
+                    {simulationResults.comparison.difference < 0 ? '↓' : '↑'} {Math.abs(simulationResults.comparison.difference)} mg/dL
+                  </Text>
+                </View>
+                <Text className={`text-xs text-center ${
+                  Math.abs(simulationResults.comparison.difference) < 20 ? 'text-green-400' : 'text-amber-400'
                 }`}>
-                  {simulationResults.comparison.difference < 0 ? '↓' : '↑'} {Math.abs(simulationResults.comparison.difference)} mg/dL
+                  {Math.abs(simulationResults.comparison.difference) < 20 ? 
+                    'Great consistency! ✅' : 
+                    'Learning opportunity 📚'
+                  }
                 </Text>
               </View>
-              <Text className={`text-xs text-center ${
-                Math.abs(simulationResults.comparison.difference) < 20 ? 'text-green-400' : 'text-amber-400'
-              }`}>
-                {Math.abs(simulationResults.comparison.difference) < 20 ? 
-                  'Great consistency! ✅' : 
-                  'Learning opportunity 📚'
-                }
-              </Text>
-            </View>
+            )}
 
             {/* Actual Meal Input */}
             {actualMeals.length < 3 && (
@@ -499,13 +509,14 @@ export const SlowMoMode: React.FC<SlowMoModeProps> = ({ onStartGame, onBack }) =
                 </Text>
                 {['breakfast', 'lunch', 'dinner'].map((mealType) => {
                   const actual = actualMeals.find(m => m.mealType === mealType);
+                  const meals = mealType === 'breakfast' ? BREAKFAST_MEALS : mealType === 'lunch' ? LUNCH_MEALS : DINNER_MEALS;
                   return (
                     <View key={mealType} className="mb-3">
                       <Text className="text-white text-xs mb-1">
                         {mealType.toUpperCase()}:
                       </Text>
                       <View className="flex-row gap-1">
-                        {mealOptions.filter(m => m.id.includes(mealType)).map((option) => (
+                        {meals.slice(0, 2).map((option) => (
                           <TouchableOpacity
                             key={option.id}
                             onPress={() => handleActualMeal(mealType, option.id)}
@@ -515,8 +526,8 @@ export const SlowMoMode: React.FC<SlowMoModeProps> = ({ onStartGame, onBack }) =
                                 : 'bg-black/40 border-gray-600'
                             }`}
                           >
-                            <Text className="text-white text-xs text-center">
-                              {option.name.split(' ')[0]}
+                            <Text className="text-white text-xs text-center" numberOfLines={2}>
+                              {option.name}
                             </Text>
                           </TouchableOpacity>
                         ))}
@@ -528,15 +539,17 @@ export const SlowMoMode: React.FC<SlowMoModeProps> = ({ onStartGame, onBack }) =
             )}
 
             {/* Comparison Insights */}
-            <View className="bg-black/60 p-4 rounded-xl border border-green-700 mb-6 w-full max-w-[350px]">
-              <Text className="text-green-400 text-xs font-bold mb-2">🎓 REFLECTION INSIGHTS</Text>
-              {simulationResults.comparison.insights.map((insight: string, index: number) => (
-                <View key={index} className="flex-row items-start mb-2">
-                  <Text className="text-green-300 mr-2">•</Text>
-                  <Text className="text-white text-xs flex-1">{insight}</Text>
-                </View>
-              ))}
-            </View>
+            {simulationResults?.comparison && (
+              <View className="bg-black/60 p-4 rounded-xl border border-green-700 mb-6 w-full max-w-[350px]">
+                <Text className="text-green-400 text-xs font-bold mb-2">🎓 REFLECTION INSIGHTS</Text>
+                {simulationResults.comparison.insights.map((insight: string, index: number) => (
+                  <View key={index} className="flex-row items-start mb-2">
+                    <Text className="text-green-300 mr-2">•</Text>
+                    <Text className="text-white text-xs flex-1">{insight}</Text>
+                  </View>
+                ))}
+              </View>
+            )}
 
             {/* Educational Takeaways */}
             <View className="bg-black/60 p-4 rounded-xl border border-amber-700 mb-6 w-full max-w-[350px]">
@@ -563,7 +576,23 @@ export const SlowMoMode: React.FC<SlowMoModeProps> = ({ onStartGame, onBack }) =
 
             {/* Complete Button */}
             <TouchableOpacity
-              onPress={() => onStartGame('slowmo')}
+              onPress={() => {
+                // Record session with results
+                recordSlowMoSession({
+                  plannedMeals: plannedMeals.map(m => ({
+                    mealType: m.mealType,
+                    name: m.name,
+                    glucoseImpact: m.glucoseImpact
+                  })),
+                  actualMeals: actualMeals.length > 0 ? actualMeals.map(m => ({
+                    mealType: m.mealType,
+                    name: m.name,
+                    glucoseImpact: m.glucoseImpact
+                  })) : undefined,
+                });
+                // Trigger completion callback if provided
+                onComplete?.();
+              }}
               className="px-8 py-4 rounded-2xl border-4 bg-green-600 border-green-400 w-full max-w-[300px]"
               style={{
                 shadowColor: '#10b981',

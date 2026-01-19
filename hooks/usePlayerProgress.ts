@@ -3,6 +3,13 @@ import { GameTier } from '@/constants/gameTiers';
 import { UserMode } from '@/types/game';
 import { PrivacySettings, PrivacyMode } from '@/types/health';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { analyzePlayerSessions, PlayerAnalytics } from '@/utils/slowMoAnalytics';
+
+export interface SlowMoModeSession {
+  plannedMeals?: Array<{ mealType: string; name: string; glucoseImpact: number }>;
+  actualMeals?: Array<{ mealType: string; name: string; glucoseImpact: number }>;
+  completedAt?: number; // timestamp when session was completed
+}
 
 export interface PlayerProgressState {
   maxTierUnlocked: GameTier;
@@ -14,6 +21,8 @@ export interface PlayerProgressState {
   userMode: UserMode | null;
   privacyMode: PrivacyMode;
   privacySettings?: PrivacySettings;
+  slowMoSessions?: SlowMoModeSession[]; // Track Slow Mo Mode sessions
+  slowMoSessionsCompleted?: number; // Total sessions completed
 }
 
 const STORAGE_KEY = 'glucoseWars.playerProgress';
@@ -37,6 +46,8 @@ export function usePlayerProgress() {
       gameStats: 'public',
       healthProfile: 'public',
     },
+    slowMoSessions: [],
+    slowMoSessionsCompleted: 0,
   });
 
   // Load from AsyncStorage on component mount
@@ -126,6 +137,35 @@ export function usePlayerProgress() {
     }));
   };
 
+  const recordSlowMoSession = (session: SlowMoModeSession) => {
+    setProgress(prev => ({
+      ...prev,
+      slowMoSessions: [...(prev.slowMoSessions || []), { ...session, completedAt: Date.now() }],
+      slowMoSessionsCompleted: (prev.slowMoSessionsCompleted || 0) + 1,
+    }));
+  };
+
+  const getSlowMoSessionStats = () => {
+    const sessions = progress.slowMoSessions || [];
+    if (sessions.length === 0) return null;
+    
+    const totalSessions = sessions.length;
+    const completedWithActualMeals = sessions.filter(s => s.actualMeals?.length).length;
+    const avgPlannedMeals = sessions.reduce((sum, s) => sum + (s.plannedMeals?.length || 0), 0) / totalSessions;
+    
+    return {
+      totalSessions,
+      completedWithActualMeals,
+      avgPlannedMeals,
+      completionRate: (completedWithActualMeals / totalSessions) * 100,
+    };
+  };
+
+  const getSlowMoAnalytics = (): PlayerAnalytics => {
+    const sessions = progress.slowMoSessions || [];
+    return analyzePlayerSessions(sessions);
+  };
+
   return {
     progress,
     unlockNextTier,
@@ -137,5 +177,8 @@ export function usePlayerProgress() {
     setUserMode,
     setPrivacyMode,
     updatePrivacySettings,
+    recordSlowMoSession,
+    getSlowMoSessionStats,
+    getSlowMoAnalytics,
   };
 }

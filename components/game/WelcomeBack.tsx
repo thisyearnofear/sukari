@@ -1,12 +1,14 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, ScrollView } from 'react-native';
-import { GameTier } from '@/constants/gameTiers';
+import { GameTier, GAME_TIERS } from '@/constants/gameTiers';
+
+type SelectableTier = Exclude<GameTier, 'slowmo'>;
 
 interface WelcomeBackProps {
-  maxTierUnlocked: GameTier;
-  currentTier: GameTier;
+  maxTierUnlocked: SelectableTier;
+  currentTier: SelectableTier;
   onResume: () => void;
-  onSkipToTier: (tier: GameTier) => void;
+  onSkipToTier: (tier: SelectableTier) => void;
   onPlayAgain: () => void;
 }
 
@@ -17,13 +19,8 @@ export const WelcomeBack: React.FC<WelcomeBackProps> = ({
   onSkipToTier,
   onPlayAgain,
 }) => {
-  const tiers: GameTier[] = ['tier1', 'tier2', 'tier3'];
-  const tierNames = {
-    tier1: 'Tutorial',
-    tier2: 'Challenge 1',
-    tier3: 'Challenge 2',
-  };
-  const tierDescriptions = {
+  const tiers: Exclude<GameTier, 'slowmo'>[] = ['tier1', 'tier2', 'tier3'];
+  const tierDescriptions: Record<Exclude<GameTier, 'slowmo'>, string> = {
     tier1: 'Learn the basics (30 seconds)',
     tier2: 'Manage your health (60 seconds)',
     tier3: 'Master advanced play (90 seconds)',
@@ -35,7 +32,7 @@ export const WelcomeBack: React.FC<WelcomeBackProps> = ({
         Welcome back! 👋
       </Text>
       <Text style={{ fontSize: 14, color: '#9ca3af', marginBottom: 24 }}>
-        You've unlocked up to {tierNames[maxTierUnlocked]}
+        You've unlocked up to {GAME_TIERS[maxTierUnlocked].name}
       </Text>
 
       {/* Main action: Resume */}
@@ -50,7 +47,7 @@ export const WelcomeBack: React.FC<WelcomeBackProps> = ({
         }}
       >
         <Text style={{ fontSize: 16, fontWeight: 'bold', color: '#fff' }}>
-          ▶️ Resume {tierNames[currentTier]}
+          ▶️ Resume {GAME_TIERS[currentTier].name}
         </Text>
         <Text style={{ fontSize: 12, color: 'rgba(255, 255, 255, 0.7)', marginTop: 4 }}>
           Continue your journey
@@ -84,7 +81,7 @@ export const WelcomeBack: React.FC<WelcomeBackProps> = ({
             <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
               <View style={{ flex: 1 }}>
                 <Text style={{ fontSize: 14, fontWeight: '600', color: isUnlocked ? '#fff' : '#9ca3af' }}>
-                  {tierNames[tier]}
+                  {GAME_TIERS[tier].name}
                 </Text>
                 <Text style={{ fontSize: 11, color: '#6b7280', marginTop: 2 }}>
                   {tierDescriptions[tier]}

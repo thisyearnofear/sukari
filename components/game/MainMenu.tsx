@@ -6,9 +6,8 @@ import { USER_MODE_CONFIGS } from '@/constants/userModes';
 import { PrivacyToggle } from '@/components/PrivacyToggle';
 import { PrivacySettingsModal } from '@/components/PrivacySettings';
 import { useWeb3 } from '@/context/Web3Context';
-
-// WebOnlyConnectButton is now just a pass-through component since we handle wallet connection directly
-import WebOnlyConnectButton from '@/components/WebOnlyConnectButton';
+import { RoleBadgeModal } from '@/components/game/RoleBadgeModal';
+import { GAME_TIERS } from '@/constants/gameTiers';
 
 const { width, height } = Dimensions.get('window');
 const screenWidth = width;
@@ -19,6 +18,7 @@ interface MainMenuProps {
   onSelectGame: () => void;
   onUserModeSelected?: (mode: string) => void;
   userModeSelected?: boolean;
+  onViewStats?: () => void;
 }
 
 const FloatingFood: React.FC<{ emoji: string; delay: number; isAlly: boolean }> = ({ emoji, delay, isAlly }) => {
@@ -66,7 +66,7 @@ const FloatingFood: React.FC<{ emoji: string; delay: number; isAlly: boolean }> 
   );
 };
 
-export const MainMenu: React.FC<MainMenuProps> = ({ onStartGame, onUserModeSelected, userModeSelected }) => {
+export const MainMenu: React.FC<MainMenuProps> = ({ onStartGame, onSelectGame, onUserModeSelected, userModeSelected, onViewStats }) => {
   const [selectedMode, setSelectedMode] = useState<ControlMode>('swipe');
   const [showPrivacySettings, setShowPrivacySettings] = useState(false);
   const pulseAnim = useRef(new Animated.Value(1)).current;
@@ -106,20 +106,13 @@ export const MainMenu: React.FC<MainMenuProps> = ({ onStartGame, onUserModeSelec
     { emoji: '🥤', isAlly: false },
   ];
 
-  // Get player progress info for display
-  const tierNames = {
-    tier1: 'Tutorial',
-    tier2: 'Challenge 1',
-    tier3: 'Challenge 2',
-  };
-
   const progressInfo = progress.maxTierUnlocked !== 'tier1' ? (
     <View style={{ width: maxWidth }} className="bg-black/60 p-3 rounded-xl border border-amber-700 mb-4">
       <Text className="text-amber-400 text-xs font-bold text-center mb-1">
         🏆 YOUR PROGRESS
       </Text>
       <Text className="text-white text-sm text-center">
-        Unlocked: {tierNames[progress.maxTierUnlocked]}
+        Unlocked: {GAME_TIERS[progress.maxTierUnlocked].name}
       </Text>
       {progress.bestScore > 0 && (
         <Text className="text-green-400 text-xs text-center mt-1">
@@ -463,6 +456,20 @@ export const MainMenu: React.FC<MainMenuProps> = ({ onStartGame, onUserModeSelec
               </Text>
             </View>
           </TouchableOpacity>
+
+          {/* Stats button */}
+          {onViewStats && (
+            <TouchableOpacity
+              onPress={() => onViewStats?.()}
+              className="px-6 py-3 rounded-2xl border-2 border-purple-500 bg-purple-600/20 mt-3"
+              activeOpacity={0.7}
+            >
+              <View className="flex-row items-center justify-center">
+                <Text className="text-xl mr-2">📊</Text>
+                <Text className="text-purple-300 text-sm font-bold">YOUR STATS</Text>
+              </View>
+            </TouchableOpacity>
+          )}
         </View>
 
         {/* Tip */}

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, TouchableOpacity, ScrollView, Dimensions, Animated } from 'react-native';
 import { GameTier, GAME_TIERS } from '@/constants/gameTiers';
-import { ControlMode } from '@/types/game';
+import { ControlMode, GameMode } from '@/types/game';
 import { usePlayerProgress } from '@/hooks/usePlayerProgress';
 import { Ionicons } from '@expo/vector-icons';
 
@@ -9,7 +9,7 @@ const { width } = Dimensions.get('window');
 const maxWidth = Math.min(width * 0.9, 400);
 
 interface GameSelectionScreenProps {
-  onStartGame: (tier: GameTier, controlMode: ControlMode) => void;
+  onStartGame: (tier: GameTier, controlMode: ControlMode, gameMode?: GameMode) => void;
   onBack?: () => void;
 }
 

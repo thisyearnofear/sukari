@@ -9,7 +9,7 @@ interface AnimatedBackgroundProps {
   comboCount: number;
   timer: number;
   timePhase?: TimePhase;
-  gameMode?: 'classic' | 'life';
+  gameMode?: 'classic' | 'life' | 'slowmo';
 }
 
 // Get time of day colors and atmosphere

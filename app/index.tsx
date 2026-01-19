@@ -7,21 +7,26 @@ import { Onboarding } from '@/components/game/Onboarding';
 import { WelcomeBack } from '@/components/game/WelcomeBack';
 import { MainMenu } from '@/components/game/MainMenu';
 import { GameSelectionScreen } from '@/components/game/GameSelectionScreen';
+import { SlowMoMode } from '@/components/game/SlowMoMode';
+import { SlowMoResults } from '@/components/game/SlowMoResults';
+import { SlowMoStats } from '@/components/game/SlowMoStats';
 import { useBattleGame } from '@/hooks/useBattleGame';
 import { useHealthProfile } from '@/hooks/useHealthProfile';
 import { usePlayerProgress } from '@/hooks/usePlayerProgress';
-import { ControlMode } from '@/types/game';
+import { ControlMode, GameMode } from '@/types/game';
 import { GAME_TIERS, GameTier } from '@/constants/gameTiers';
 
-type AppScreen = 'menu' | 'onboarding' | 'battle' | 'results' | 'welcome' | 'game_selection';
+type AppScreen = 'menu' | 'onboarding' | 'battle' | 'results' | 'welcome' | 'game_selection' | 'slowmo' | 'slowmo_results' | 'slowmo_stats';
 
 export default function HomeScreen() {
-  const { progress, unlockNextTier, updateBestScore, incrementGamesPlayed, setSkipOnboarding, setCurrentTier } =
+  const { progress, unlockNextTier, updateBestScore, incrementGamesPlayed, setSkipOnboarding, setCurrentTier, getSlowMoAnalytics } =
     usePlayerProgress();
 
   const [appScreen, setAppScreen] = useState<AppScreen>('menu');
   const [controlMode, setControlMode] = useState<ControlMode>('swipe');
   const [selectedHealthScenario, setSelectedHealthScenario] = useState<string | null>(null);
+  const [selectedGameMode, setSelectedGameMode] = useState<GameMode>('classic');
+  const [lastSlowMoSession, setLastSlowMoSession] = useState<any>(null);
   const hasTransitionedToResults = useRef(false);
   
   // Ensure we always have a valid tier config
@@ -59,8 +64,12 @@ export default function HomeScreen() {
     
     // Set the game mode if provided
     if (gameMode) {
-      // In a real implementation, we would set this in game state
-      console.log(`Game mode selected: ${gameMode}`);
+      setSelectedGameMode(gameMode);
+      // If slowmo mode, go directly to SlowMoMode component
+      if (gameMode === 'slowmo') {
+        setAppScreen('slowmo');
+        return;
+      }
     }
     
     // Show onboarding only for first-time users or if explicitly requested
@@ -101,6 +110,14 @@ export default function HomeScreen() {
   };
 
   const handleBackFromGameSelection = () => {
+    setAppScreen('menu');
+  };
+
+  const handleViewStats = () => {
+    setAppScreen('slowmo_stats');
+  };
+
+  const handleCloseStats = () => {
     setAppScreen('menu');
   };
 
@@ -153,6 +170,18 @@ export default function HomeScreen() {
     }
   }, [appScreen, gameState.isGameActive]);
 
+  // Show Slow Mo Mode Stats
+  if (appScreen === 'slowmo_stats') {
+    return (
+      <View style={{ flex: 1 }}>
+        <SlowMoStats
+          analytics={getSlowMoAnalytics()}
+          onClose={handleCloseStats}
+        />
+      </View>
+    );
+  }
+
   // Show main menu with user mode selector if needed
   if (appScreen === 'menu') {
     return (
@@ -160,6 +189,7 @@ export default function HomeScreen() {
         <MainMenu 
           onStartGame={handleStartGame}
           onSelectGame={handleSelectGame}
+          onViewStats={handleViewStats}
           userModeSelected={progress.userMode !== null}
         />
       </View>
@@ -173,6 +203,44 @@ export default function HomeScreen() {
         <GameSelectionScreen
           onStartGame={handleStartGameWithTier}
           onBack={handleBackFromGameSelection}
+        />
+      </View>
+    );
+  }
+
+  // Show Slow Mo Mode
+  if (appScreen === 'slowmo') {
+    return (
+      <View style={{ flex: 1 }}>
+        <SlowMoMode
+          onStartGame={(mode: GameMode) => {
+            // After SlowMoMode completes, return to menu
+            setAppScreen('menu');
+          }}
+          onBack={() => setAppScreen('game_selection')}
+          onComplete={() => {
+            // Session completed and recorded - show results
+            const lastSession = progress.slowMoSessions?.[progress.slowMoSessions.length - 1];
+            if (lastSession) {
+              setLastSlowMoSession(lastSession);
+              setAppScreen('slowmo_results');
+            } else {
+              setAppScreen('menu');
+            }
+          }}
+        />
+      </View>
+    );
+  }
+
+  // Show Slow Mo Mode Results
+  if (appScreen === 'slowmo_results' && lastSlowMoSession) {
+    return (
+      <View style={{ flex: 1 }}>
+        <SlowMoResults
+          session={lastSlowMoSession}
+          sessionNumber={progress.slowMoSessionsCompleted || 1}
+          onContinue={() => setAppScreen('menu')}
         />
       </View>
     );

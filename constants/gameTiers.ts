@@ -1,7 +1,7 @@
 import { GameMode } from '@/types/game';
 import { HealthScenario } from '@/types/health';
 
-export type GameTier = 'tier1' | 'tier2' | 'tier3';
+export type GameTier = 'tier1' | 'tier2' | 'tier3' | 'slowmo';
 
 export interface TierConfig {
   tier: GameTier;
@@ -30,7 +30,7 @@ export interface TierConfig {
 export const GAME_TIERS: Record<GameTier, TierConfig> = {
   tier1: {
     tier: 'tier1',
-    name: 'Tutorial',
+    name: 'Warm-up Round',
     description: 'Warm-up Round: Learn the basics',
     duration: 30,
     foodSpawnRate: 1500,

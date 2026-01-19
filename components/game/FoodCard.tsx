@@ -10,7 +10,7 @@ interface FoodCardProps {
   onSwipe: (foodId: string, direction: SwipeDirection, action: SwipeAction) => void;
   controlMode: ControlMode;
   showOptimalHint?: boolean; // Show which direction is optimal
-  gameMode?: 'classic' | 'life';
+  gameMode?: 'classic' | 'life' | 'slowmo';
 }
 
 // Particle explosion component
