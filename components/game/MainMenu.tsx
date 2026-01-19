@@ -124,7 +124,7 @@ export const MainMenu: React.FC<MainMenuProps> = ({ onStartGame, onSelectGame, o
 
   if (showUserModeSelector) {
     return (
-      <View className="flex-1 items-center justify-center" style={{ backgroundColor: COLORS.BG_DARK }}>
+      <View className="flex-1" style={{ backgroundColor: COLORS.BG_DARK }}>
         {/* Animated background foods */}
         {floatingFoods.map((food, i) => (
           <FloatingFood 
@@ -138,8 +138,12 @@ export const MainMenu: React.FC<MainMenuProps> = ({ onStartGame, onSelectGame, o
         {/* Dark overlay */}
         <View className="absolute inset-0 bg-gradient-to-b from-purple-900/30 to-black/50" />
 
-        {/* User Mode Selector */}
-        <View className="items-center z-10 px-4">
+        {/* User Mode Selector - Scrollable */}
+        <ScrollView 
+          className="flex-1 z-10" 
+          contentContainerStyle={{ alignItems: 'center', paddingVertical: 24, paddingHorizontal: 16 }}
+          showsVerticalScrollIndicator={false}
+        >
           {/* Hero Title with Medieval Theme */}
           <View className="items-center mb-6">
             <Text className="text-6xl mb-3">👑</Text>
@@ -273,8 +277,8 @@ export const MainMenu: React.FC<MainMenuProps> = ({ onStartGame, onSelectGame, o
                 Completely optional - works without minting!
               </Text>
             </View>
-          )}
-        </View>
+            )}
+        </ScrollView>
 
         {/* Onchain Badge Minting Modal */}
         <RoleBadgeModal
