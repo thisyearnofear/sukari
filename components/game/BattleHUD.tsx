@@ -3,6 +3,8 @@ import { View, Text, TouchableOpacity, Animated, Easing, Dimensions, StyleSheet 
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { StabilityZone } from '@/types/game';
 import { COMBO_TIERS } from '@/constants/gameConfig';
+import { COLORS, ANIMATIONS } from '@/constants/designSystem';
+import { useAccessibility } from '@/hooks/useAccessibility';
 
 const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
 
@@ -36,11 +38,11 @@ const getStabilityZone = (stability: number): StabilityZone => {
 
 const getStabilityColor = (zone: StabilityZone): string => {
   switch (zone) {
-    case 'balanced': return '#10b981';
+    case 'balanced': return COLORS.ZONES.balanced;
     case 'warning-low':
-    case 'warning-high': return '#f59e0b';
-    case 'critical-low': return '#06b6d4';
-    case 'critical-high': return '#ef4444';
+    case 'warning-high': return COLORS.ZONES.warningHigh;
+    case 'critical-low': return COLORS.ZONES.criticalLow;
+    case 'critical-high': return COLORS.ZONES.criticalHigh;
   }
 };
 
@@ -237,6 +239,7 @@ export const BattleHUD: React.FC<BattleHUDProps> = ({
   controlMode = 'swipe',
   onToggleControlMode,
 }) => {
+  const { getButtonLabel, getHUDLabel } = useAccessibility();
   const zone = getStabilityZone(stability);
   const stabilityColor = getStabilityColor(zone);
   const isLowTimer = timer <= 10;
@@ -687,6 +690,10 @@ export const BattleHUD: React.FC<BattleHUDProps> = ({
             <TouchableOpacity
               onPress={onExercise}
               disabled={exerciseCharges <= 0}
+              accessible={true}
+              accessibilityLabel={getButtonLabel('exercise', exerciseCharges)}
+              accessibilityRole="button"
+              accessibilityHint="Double tap to call exercise action"
               style={[
                 styles.powerUpButton,
                 exerciseCharges > 0 ? styles.powerUpActive : styles.powerUpDisabled,
@@ -736,6 +743,10 @@ export const BattleHUD: React.FC<BattleHUDProps> = ({
             <TouchableOpacity
               onPress={onRations}
               disabled={rationCharges <= 0}
+              accessible={true}
+              accessibilityLabel={getButtonLabel('rations', rationCharges)}
+              accessibilityRole="button"
+              accessibilityHint="Double tap to consume emergency rations"
               style={[
                 styles.powerUpButton,
                 rationCharges > 0 ? styles.powerUpActive : styles.powerUpDisabled,

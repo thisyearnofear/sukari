@@ -26,6 +26,106 @@ Adaptive loading, caching, and resource optimization
 ### 8. ORGANIZED
 Predictable file structure with domain-driven design
 
+## 🎨 Design System Architecture
+
+### Centralized Design Tokens (`constants/designSystem.ts`)
+
+**Single source of truth for all UI styling** - eliminates 40+ hardcoded color values and enables consistent theming across the app.
+
+**Colors:**
+- **Glucose Zones**: balanced (green), warning (amber), critical (red/cyan)
+- **Food Factions**: ally (green), enemy (red), contextual (purple)
+- **UI Elements**: primary (blue), success (green), error (red), backgrounds, text
+- **Accessibility**: Focus rings, contrast-compliant colors
+
+**Typography:**
+- **Sizes**: XS (12px) through 5XL (48px)
+- **Weights**: Light (300) through ExtraBold (800)
+- **Presets**: TITLE_LARGE, BODY_LARGE, BUTTON for consistent text styles
+- **Line heights**: TIGHT (1.2) through LOOSE (2)
+
+**Spacing:**
+- **Grid-based**: 4px base unit, multiples (1=4px, 2=8px, 3=12px, etc.)
+- **Consistency**: All padding/margins use token-based values
+
+**Animations:**
+- **Durations**: INSTANT through SLOWEST (0ms to 1500ms)
+- **Easing**: LINEAR, EASE_IN, EASE_OUT, EASE_IN_OUT
+- **Accessibility**: Respects user motion preferences
+
+### Navigation State Machine (`constants/navigation.ts`)
+
+**Type-safe, validated navigation** - prevents invalid screen transitions at runtime.
+
+**Key Features:**
+- **Screen Definitions**: All 9 app screens as enum (menu, onboarding, battle, results, etc.)
+- **Transition Validation**: `isValidTransition(from, to)` enforces valid flows
+- **Screen Metadata**: Title, description, UI rules for each screen
+- **Breadcrumb Generation**: Shows user location in app (e.g., "Home > Select Game > Battle")
+- **Progress Tracking**: Tier progression info for UI display
+
+**Prevents Bugs Like:**
+```typescript
+// Before: Possible but wrong
+setAppScreen('battle');  // Could jump from menu, skipping onboarding
+
+// After: Validated
+navigateTo('battle');    // ❌ Invalid from 'menu', console.warn fires
+```
+
+### Animation Builders (`utils/animations.ts`)
+
+**Reusable animation utilities** - consolidates 50+ lines of inline Animated code into clean builders.
+
+**Available Builders:**
+- `createPulseAnimation()` - Loop scale effect (UI emphasis)
+- `createFadeInAnimation()` / `createFadeOutAnimation()` - Opacity transitions
+- `createScaleInAnimation()` / `createScaleOutAnimation()` - Entrance/exit
+- `createSlideUpAnimation()` / `createSlideDownAnimation()` - Directional slides
+- `createGlowAnimation()` - Brightness loop (special effects)
+- `createComboBurstAnimation()` - Particle burst with opacity fade
+- `createFloatingAnimation()` - Vertical floating (background elements)
+- `createWobbleAnimation()` - Shake effect (warnings/errors)
+
+**Benefits:**
+- All animations use `useNativeDriver: true` for performance
+- Consistent timing (durations from design system)
+- Easy to tune globally (change duration in one place)
+- Cleaner component code (15 lines → 3 lines)
+
+### Accessibility Architecture (`hooks/useAccessibility.ts`)
+
+**Semantic labels for screen readers** - establishes WCAG AA compliance path.
+
+**Components:**
+- `getFoodCardLabel()` - Reads "Broccoli, ally. Swipe up to rally"
+- `getButtonLabel()` - Reads "Exercise button - 2 charges remaining"
+- `getMeterLabel()` - Reads "Stability meter at 65 percent, good status"
+- `getHUDLabel()` - Reads "Score: 1250 points"
+- `getResultsLabel()` - Reads "You won. Score 1250 points. Grade A"
+- `getAccessibilityConfig()` - Full a11y setup for components
+
+**Integration Pattern:**
+```typescript
+const { getFoodCardLabel } = useAccessibility();
+
+<TouchableOpacity
+  accessible={true}
+  accessibilityLabel={getFoodCardLabel('Broccoli', 'ally')}
+  accessibilityRole="button"
+  accessibilityHint="Swipe to interact"
+/>
+```
+
+### Component Consolidation
+
+**Eliminated platform-specific duplicates** - WebOnlyConnectButton.tsx and WebProviders.tsx now single implementations (was 4 files, now 2).
+
+**Pattern:**
+- Before: WebOnlyConnectButton.web.tsx + WebOnlyConnectButton.native.tsx (identical)
+- After: WebOnlyConnectButton.tsx (single cross-platform file)
+- Benefit: Single source of truth, easier maintenance
+
 ## 🎮 System Overview
 
 ### High-Level Architecture

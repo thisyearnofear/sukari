@@ -69,6 +69,12 @@ const CLASSIC_STEPS: OnboardingStep[] = [
     emoji: '🏰',
   },
   {
+    title: 'UNDERSTANDING THE GAME',
+    subtitle: 'Here\'s what it all means...',
+    content: '⚔️ KINGDOM = Your Body\n🍎 ALLIES = Healthy Foods\n🍬 ENEMIES = Junk Foods\n🩸 STABILITY = Blood Glucose Level (70-140 mg/dL is healthy)',
+    emoji: '🔑',
+  },
+  {
     title: 'RALLY ALLIES',
     subtitle: 'Swipe UP on healthy foods',
     content: 'Vegetables, proteins, and whole grains strengthen your realm',

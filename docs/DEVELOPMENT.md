@@ -19,18 +19,140 @@ npx expo start
 ```
 📁 glucosewars/
 ├── app/
-│   └── index.tsx          # Main app entry
+│   └── index.tsx                 # Main app entry (navigation orchestration)
 ├── components/
-│   └── game/              # Game components
+│   ├── game/                     # Game-specific components
+│   │   ├── MainMenu.tsx          # Uses: COLORS, animation builders, ProgressIndicator
+│   │   ├── BattleScreen.tsx      # Uses: COLORS, animation builders
+│   │   ├── BattleHUD.tsx         # Uses: COLORS, useAccessibility
+│   │   ├── FoodCard.tsx          # Uses: useAccessibility (screen reader labels)
+│   │   ├── ResultsScroll.tsx     # Uses: COLORS, useAccessibility
+│   │   ├── Onboarding.tsx        # Uses: metaphor bridge step + animations
+│   │   └── ProgressIndicator.tsx # Tier progression visualization
+│   ├── WebOnlyConnectButton.tsx  # Cross-platform (consolidated)
+│   └── WebProviders.tsx          # Cross-platform (consolidated)
 ├── constants/
-│   └── gameTiers.ts       # Tier configurations
+│   ├── designSystem.ts           # 🎨 Colors, typography, spacing, animations, shadows, z-indexes
+│   ├── navigation.ts             # 🧭 Screen definitions, transitions, validation
+│   ├── gameTiers.ts              # Game tier configurations
+│   ├── gameConfig.ts             # Game mechanics & rules
+│   ├── userModes.ts              # User mode configurations
+│   └── [other configs]
 ├── hooks/
-│   └── usePlayerProgress.ts # Progression tracking
+│   ├── useAccessibility.ts       # ♿ Screen reader labels, a11y configs
+│   ├── usePlayerProgress.ts      # Progression tracking & persistence
+│   ├── useBattleGame.ts          # Game state & mechanics
+│   └── [other hooks]
+├── utils/
+│   ├── animations.ts             # ⚡ Reusable animation builders (12+)
+│   └── [other utilities]
 ├── types/
-│   ├── game.ts           # Game types
-│   └── health.ts         # Health types
-└── docs/                # Documentation
+│   ├── game.ts                   # Game state types
+│   └── health.ts                 # Health profile types
+└── docs/                         # Documentation
 ```
+
+### Key Architectural Systems
+
+**Design System** (`constants/designSystem.ts`)
+- Centralized colors (glucose zones, UI, accessibility)
+- Typography presets (TITLE_LARGE, BODY_LARGE, BUTTON, etc.)
+- Spacing grid (4px base unit)
+- Animation durations and easing
+- Shadow/elevation levels
+- Z-index layering rules
+
+**Navigation State Machine** (`constants/navigation.ts`)
+- Screen type definitions
+- Valid transition rules
+- Screen metadata
+- Breadcrumb generation
+- Progress indicators
+
+**Animation Builders** (`utils/animations.ts`)
+- Reusable animation utilities (pulse, fade, scale, glow, burst, float, wobble)
+- Particle trajectory calculations
+- Screen transition builders
+- Consistent timing using design system
+
+**Accessibility** (`hooks/useAccessibility.ts`)
+- Semantic labels for screen readers
+- Pre-built accessibility configs for components
+- Button, meter, and results labels
+- WCAG AA compliance foundation
+```
+
+## 🛠️ Using the Design System
+
+### Importing Design Tokens
+
+**Colors:**
+```typescript
+import { COLORS } from '@/constants/designSystem';
+
+// Stability zones (glucose levels)
+const balancedColor = COLORS.ZONES.balanced;      // Green
+const warningColor = COLORS.ZONES.warningHigh;    // Amber
+const criticalColor = COLORS.ZONES.criticalHigh;  // Red
+
+// UI elements
+const bgColor = COLORS.BG_DARK;
+const textColor = COLORS.TEXT_PRIMARY;
+```
+
+**Typography:**
+```typescript
+import { TYPOGRAPHY } from '@/constants/designSystem';
+
+// Use presets for consistency
+<Text style={TYPOGRAPHY.PRESETS.TITLE_LARGE}>Large Title</Text>
+<Text style={TYPOGRAPHY.PRESETS.BUTTON}>Button Text</Text>
+
+// Manual control
+<Text style={{ 
+  fontSize: TYPOGRAPHY.SIZE.LG,
+  fontWeight: TYPOGRAPHY.WEIGHT.BOLD 
+}}>
+  Custom
+</Text>
+```
+
+**Animations:**
+```typescript
+import { ANIMATIONS } from '@/constants/designSystem';
+import { createPulseAnimation, createFadeInAnimation } from '@/utils/animations';
+
+const pulseAnim = useRef(new Animated.Value(1)).current;
+
+// Use builders for consistency
+createPulseAnimation(pulseAnim, {
+  duration: ANIMATIONS.DURATION.SLOWER,
+  minScale: 1,
+  maxScale: 1.05,
+}).start();
+```
+
+**Accessibility:**
+```typescript
+import { useAccessibility } from '@/hooks/useAccessibility';
+
+const { getFoodCardLabel, getButtonLabel } = useAccessibility();
+
+<TouchableOpacity
+  accessible={true}
+  accessibilityLabel={getFoodCardLabel('Broccoli', 'ally', 'up')}
+  accessibilityRole="button"
+  accessibilityHint={getAccessibilityHint('swipe')}
+>
+```
+
+### Core Principles When Developing
+
+1. **Always use COLORS tokens** - Never hardcode `#hex` values
+2. **Use TYPOGRAPHY presets** - For consistency across app
+3. **Use animation builders** - Instead of inline Animated code
+4. **Add accessibility labels** - All interactive elements must be screen-reader accessible
+5. **Validate navigation** - Use `isValidTransition()` to prevent bad states
 
 ## 🛠️ Development Workflow
 
@@ -56,6 +178,9 @@ unlockNextTier('tier1'); // Should unlock tier2
 ```bash
 # Run linting
 npm run lint
+
+# TypeScript check
+npx tsc --noEmit
 
 # Commit with message
 git commit -m "Enhance tier2 onboarding"

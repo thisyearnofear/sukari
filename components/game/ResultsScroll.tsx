@@ -6,6 +6,8 @@ import { useScrollIntegration } from '@/hooks/useScrollIntegration';
 import { ScrollIntegration } from './ScrollIntegration';
 import { GameTier } from '@/constants/gameTiers';
 import { getUserModeConfig } from '@/constants/userModes';
+import { COLORS } from '@/constants/designSystem';
+import { useAccessibility } from '@/hooks/useAccessibility';
 
 // Fun glucose facts and tips
 const GLUCOSE_FACTS = [
@@ -84,6 +86,7 @@ export const ResultsScroll: React.FC<ResultsScrollProps> = ({
   dexcomOption,
   userMode,
 }) => {
+  const { getResultsLabel } = useAccessibility();
   const isVictory = result === 'victory';
   const scrollAnim = useRef(new Animated.Value(-500)).current;
   const fadeAnim = useRef(new Animated.Value(0)).current;
@@ -141,6 +144,7 @@ export const ResultsScroll: React.FC<ResultsScrollProps> = ({
   };
 
   const gradeInfo = getGrade();
+  const a11yResultsLabel = getResultsLabel(result, score, gradeInfo.grade);
   
   // Share functionality
   const handleShare = async () => {

@@ -2,6 +2,7 @@ import React, { useRef, useEffect, useState } from 'react';
 import { View, Text, Animated, PanResponder, Dimensions, TouchableOpacity } from 'react-native';
 import { FoodUnit, ControlMode, SwipeDirection, SwipeAction } from '@/types/game';
 import { SWIPE_THRESHOLD, SWIPE_DIRECTIONS } from '@/constants/gameConfig';
+import { useAccessibility } from '@/hooks/useAccessibility';
 
 const { height: screenHeight, width: screenWidth } = Dimensions.get('window');
 
@@ -241,6 +242,7 @@ const ElectricArc: React.FC<{ color: string }> = ({ color }) => {
 };
 
 export const FoodCard: React.FC<FoodCardProps> = ({ food, onSwipe, controlMode, showOptimalHint = false, gameMode = 'classic' }) => {
+  const { getFoodCardLabel } = useAccessibility();
   const pan = useRef(new Animated.ValueXY()).current;
   const scale = useRef(new Animated.Value(0.5)).current;
   const opacity = useRef(new Animated.Value(0)).current;
@@ -253,6 +255,9 @@ export const FoodCard: React.FC<FoodCardProps> = ({ food, onSwipe, controlMode, 
   const [showTrail, setShowTrail] = useState(false);
   const [trailDirection, setTrailDirection] = useState<SwipeDirection>('up');
   const [activeDirection, setActiveDirection] = useState<SwipeDirection | null>(null);
+  
+  // Accessibility label for screen readers
+  const a11yLabel = getFoodCardLabel(food.name, (food.faction === 'ally' || food.faction === 'contextual') ? 'ally' : 'enemy', gameMode === 'life' ? 'up' : undefined);
 
   // Determine visual appearance based on faction and contextual state
   const isAlly = food.faction === 'ally' || (food.faction === 'contextual' && food.isContextuallyGood);
@@ -580,6 +585,10 @@ export const FoodCard: React.FC<FoodCardProps> = ({ food, onSwipe, controlMode, 
   return (
     <Animated.View
       {...(controlMode === 'swipe' ? panResponder.panHandlers : {})}
+      accessible={true}
+      accessibilityLabel={a11yLabel}
+      accessibilityRole="button"
+      accessibilityHint={controlMode === 'swipe' ? 'Swipe to interact with this food' : 'Tap to interact with this food'}
       style={{
         position: 'absolute',
         left: food.x - 32,

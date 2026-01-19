@@ -12,6 +12,8 @@ import { HealthProfile } from '@/types/health';
 import { COMBO_TIERS } from '@/constants/gameConfig';
 import { getGlucoseZone } from '@/constants/healthScenarios';
 import { TierConfig } from '@/constants/gameTiers';
+import { COLORS, ANIMATIONS } from '@/constants/designSystem';
+import { createComboBurstAnimation } from '@/utils/animations';
 
 const { width, height } = Dimensions.get('window');
 

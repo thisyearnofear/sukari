@@ -8,6 +8,9 @@ import { PrivacySettingsModal } from '@/components/PrivacySettings';
 import { useWeb3 } from '@/context/Web3Context';
 import { RoleBadgeModal } from '@/components/game/RoleBadgeModal';
 import { GAME_TIERS } from '@/constants/gameTiers';
+import { COLORS, SPACING, ANIMATIONS } from '@/constants/designSystem';
+import { createPulseAnimation, createGlowAnimation, createFloatingAnimation } from '@/utils/animations';
+import { ProgressIndicator } from '@/components/game/ProgressIndicator';
 
 const { width, height } = Dimensions.get('window');
 const screenWidth = width;
@@ -28,22 +31,28 @@ const FloatingFood: React.FC<{ emoji: string; delay: number; isAlly: boolean }> 
 
   useEffect(() => {
     const startAnimation = () => {
-      translateY.setValue(-50);
-      translateX.setValue(40 + Math.random() * (screenWidth - 80));
+      createFloatingAnimation(translateY, {
+        duration: 8000,
+        distance: 600,
+        delay: delay,
+      }).start(() => startAnimation());
+      
       opacity.setValue(0);
-
       Animated.sequence([
         Animated.delay(delay),
-        Animated.parallel([
-          Animated.timing(opacity, { toValue: 0.6, duration: 500, useNativeDriver: true }),
-          Animated.timing(translateY, { toValue: 600, duration: 8000, useNativeDriver: true }),
-        ]),
+        Animated.timing(opacity, { toValue: 0.6, duration: 500, useNativeDriver: true }),
+        Animated.delay(7000),
         Animated.timing(opacity, { toValue: 0, duration: 500, useNativeDriver: true }),
-      ]).start(() => startAnimation());
+      ]).start();
+      
+      translateX.setValue(40 + Math.random() * (screenWidth - 80));
     };
 
     startAnimation();
   }, []);
+
+  const borderColor = isAlly ? COLORS.ALLY : COLORS.ENEMY;
+  const bgColor = isAlly ? 'rgba(34, 197, 94, 0.2)' : 'rgba(239, 68, 68, 0.2)';
 
   return (
     <Animated.View
@@ -56,8 +65,8 @@ const FloatingFood: React.FC<{ emoji: string; delay: number; isAlly: boolean }> 
       <View 
         className="w-12 h-12 rounded-full items-center justify-center border-2"
         style={{
-          borderColor: isAlly ? '#22c55e' : '#ef4444',
-          backgroundColor: isAlly ? 'rgba(34, 197, 94, 0.2)' : 'rgba(239, 68, 68, 0.2)',
+          borderColor,
+          backgroundColor: bgColor,
         }}
       >
         <Text className="text-2xl">{emoji}</Text>
@@ -79,20 +88,18 @@ export const MainMenu: React.FC<MainMenuProps> = ({ onStartGame, onSelectGame, o
 
   useEffect(() => {
     // Pulse animation for start button
-    Animated.loop(
-      Animated.sequence([
-        Animated.timing(pulseAnim, { toValue: 1.05, duration: 800, useNativeDriver: true }),
-        Animated.timing(pulseAnim, { toValue: 1, duration: 800, useNativeDriver: true }),
-      ])
-    ).start();
+    createPulseAnimation(pulseAnim, {
+      duration: ANIMATIONS.DURATION.SLOWER,
+      minScale: 1,
+      maxScale: 1.05,
+    }).start();
 
     // Glow animation
-    Animated.loop(
-      Animated.sequence([
-        Animated.timing(glowAnim, { toValue: 1, duration: 1500, useNativeDriver: true }),
-        Animated.timing(glowAnim, { toValue: 0, duration: 1500, useNativeDriver: true }),
-      ])
-    ).start();
+    createGlowAnimation(glowAnim, {
+      duration: ANIMATIONS.DURATION.SLOWEST,
+      minOpacity: 0,
+      maxOpacity: 1,
+    }).start();
   }, []);
 
   const floatingFoods = [
@@ -106,25 +113,18 @@ export const MainMenu: React.FC<MainMenuProps> = ({ onStartGame, onSelectGame, o
     { emoji: '🥤', isAlly: false },
   ];
 
-  const progressInfo = progress.maxTierUnlocked !== 'tier1' ? (
-    <View style={{ width: maxWidth }} className="bg-black/60 p-3 rounded-xl border border-amber-700 mb-4">
-      <Text className="text-amber-400 text-xs font-bold text-center mb-1">
-        🏆 YOUR PROGRESS
-      </Text>
-      <Text className="text-white text-sm text-center">
-        Unlocked: {GAME_TIERS[progress.maxTierUnlocked].name}
-      </Text>
-      {progress.bestScore > 0 && (
-        <Text className="text-green-400 text-xs text-center mt-1">
-          Best Score: {progress.bestScore}
-        </Text>
-      )}
-    </View>
-  ) : null;
+  const progressInfo = (
+    <ProgressIndicator 
+      currentTier={progress.currentTier || 'tier1'}
+      unlockedTiers={[...(['tier1'] as const), ...(progress.maxTierUnlocked !== 'tier1' ? [progress.maxTierUnlocked] : [])]}
+      variant="detailed"
+      showLabel={true}
+    />
+  );
 
   if (showUserModeSelector) {
     return (
-      <View className="flex-1 bg-[#0f0f1a] items-center justify-center">
+      <View className="flex-1 items-center justify-center" style={{ backgroundColor: COLORS.BG_DARK }}>
         {/* Animated background foods */}
         {floatingFoods.map((food, i) => (
           <FloatingFood 
@@ -292,7 +292,7 @@ export const MainMenu: React.FC<MainMenuProps> = ({ onStartGame, onSelectGame, o
   }
 
   return (
-    <View className="flex-1 bg-[#0f0f1a] items-center justify-center">
+    <View className="flex-1 items-center justify-center" style={{ backgroundColor: COLORS.BG_DARK }}>
       {/* Animated background foods */}
       {floatingFoods.map((food, i) => (
         <FloatingFood 
@@ -419,7 +419,7 @@ export const MainMenu: React.FC<MainMenuProps> = ({ onStartGame, onSelectGame, o
               onPress={() => onStartGame(selectedMode)}
               className={`px-6 py-4 rounded-2xl border-4 bg-green-600 border-green-400 w-full`}
               style={{
-                shadowColor: '#10b981',
+                shadowColor: COLORS.ZONES.balanced,
                 shadowOffset: { width: 0, height: 0 },
                 shadowOpacity: 0.8,
                 shadowRadius: 20,
@@ -441,7 +441,7 @@ export const MainMenu: React.FC<MainMenuProps> = ({ onStartGame, onSelectGame, o
             onPress={() => onSelectGame?.()}
             className={`px-6 py-4 rounded-2xl border-4 bg-amber-600 border-amber-400 w-full`}
             style={{
-              shadowColor: '#f59e0b',
+              shadowColor: COLORS.ZONES.warningHigh,
               shadowOffset: { width: 0, height: 0 },
               shadowOpacity: 0.8,
               shadowRadius: 20,
