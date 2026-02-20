@@ -70,9 +70,10 @@ const FloatingFood: React.FC<{ emoji: string; delay: number; isAlly: boolean }> 
 export const MainMenu: React.FC<MainMenuProps> = ({ onStartGame, onSelectGame, onUserModeSelected, userModeSelected, onViewStats }) => {
   const [selectedMode, setSelectedMode] = useState<ControlMode>('swipe');
   const [showPrivacySettings, setShowPrivacySettings] = useState(false);
+  const [showTutorialSettings, setShowTutorialSettings] = useState(false);
   const pulseAnim = useRef(new Animated.Value(1)).current;
   const glowAnim = useRef(new Animated.Value(0)).current;
-  const { progress, setUserMode, setPrivacyMode, updatePrivacySettings } = usePlayerProgress();
+  const { progress, setUserMode, setPrivacyMode, updatePrivacySettings, setSkipOnboarding } = usePlayerProgress();
   const [showUserModeSelector, setShowUserModeSelector] = useState(userModeSelected === false);
   const [selectedRole, setSelectedRole] = useState<UserMode | null>(null);
   const [showMintModal, setShowMintModal] = useState(false);
@@ -311,6 +312,39 @@ export const MainMenu: React.FC<MainMenuProps> = ({ onStartGame, onSelectGame, o
               onPress={() => setShowPrivacySettings(true)}
             >
               <Text className="text-cyan-400 text-2xl">⚙️</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+
+        {/* Tutorial Toggle */}
+        <View style={{ width: maxWidth }} className="bg-black/60 p-3 rounded-xl border border-purple-700 mb-4">
+          <View className="flex-row justify-between items-center">
+            <View className="flex-1">
+              <Text className="text-purple-400 text-xs font-bold mb-1">📚 TUTORIAL</Text>
+              <TouchableOpacity
+                onPress={() => {
+                  // Toggle tutorial: if currently skipped, show tutorial; if not skipped, skip it
+                  if (progress.skipOnboarding) {
+                    setSkipOnboarding(false);
+                  } else {
+                    setSkipOnboarding(true);
+                  }
+                }}
+                className={`flex-row items-center gap-2`}
+              >
+                <View className={`w-10 h-5 rounded-full p-1 ${progress.skipOnboarding ? 'bg-red-600' : 'bg-green-600'}`}>
+                  <View className={`w-3 h-3 rounded-full bg-white ${progress.skipOnboarding ? 'ml-5' : 'ml-0'}`} />
+                </View>
+                <Text className="text-white text-xs">
+                  {progress.skipOnboarding ? 'Skip Tutorial' : 'Show Tutorial'}
+                </Text>
+              </TouchableOpacity>
+            </View>
+            <TouchableOpacity
+              className="p-2 ml-2 active:bg-purple-400/20 rounded"
+              onPress={() => setShowTutorialSettings(true)}
+            >
+              <Text className="text-purple-400 text-2xl">ℹ️</Text>
             </TouchableOpacity>
           </View>
         </View>

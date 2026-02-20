@@ -480,8 +480,20 @@ export const BattleHUD: React.FC<BattleHUDProps> = ({
               )}
             </View>
 
-            {/* Pause button */}
+            {/* Control Mode & Pause buttons */}
             <View style={styles.pauseSection}>
+              {onToggleControlMode && (
+                <TouchableOpacity
+                  onPress={onToggleControlMode}
+                  style={styles.controlModeButton}
+                  accessibilityLabel={`Switch to ${controlMode === 'swipe' ? 'tap' : 'swipe'} controls`}
+                  accessibilityRole="button"
+                >
+                  <Text style={styles.controlModeIcon}>
+                    {controlMode === 'swipe' ? '👆' : '🖱️'}
+                  </Text>
+                </TouchableOpacity>
+              )}
               {onPause && !isPaused && (
                 <TouchableOpacity
                   onPress={onPause}
@@ -565,6 +577,12 @@ export const BattleHUD: React.FC<BattleHUDProps> = ({
             <Text style={styles.pauseTitle}>BATTLE PAUSED</Text>
             <Text style={styles.pauseSubtitle}>The realm awaits your command...</Text>
             
+            {/* Timer Display */}
+            <View style={styles.pauseTimerContainer}>
+              <Text style={styles.pauseTimerLabel}>TIME REMAINING</Text>
+              <Text style={styles.pauseTimerValue}>{timer}s</Text>
+            </View>
+            
             <TouchableOpacity
               onPress={onResume}
               style={styles.resumeButton}
@@ -589,12 +607,23 @@ export const BattleHUD: React.FC<BattleHUDProps> = ({
               </TouchableOpacity>
             )}
           
-            <TouchableOpacity
-              onPress={onRestart}
-              style={styles.restartButton}
-            >
-              <Text style={styles.restartButtonText}>🔄 RESTART</Text>
-            </TouchableOpacity>
+            <View style={styles.pauseButtonRow}>
+              <TouchableOpacity
+                onPress={onRestart}
+                style={styles.restartButtonSmall}
+              >
+                <Text style={styles.restartButtonText}>🔄 RESTART</Text>
+              </TouchableOpacity>
+              
+              {onPause && (
+                <TouchableOpacity
+                  onPress={onPause}
+                  style={styles.exitButtonSmall}
+                >
+                  <Text style={styles.exitButtonText}>🚪 EXIT</Text>
+                </TouchableOpacity>
+              )}
+            </View>
           </View>
         </View>
       )}
@@ -902,9 +931,20 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     borderWidth: 1,
     borderColor: 'rgba(255,255,255,0.2)',
+    marginLeft: 8,
   },
   pauseIcon: {
     fontSize: 18,
+  },
+  controlModeButton: {
+    padding: 8,
+    backgroundColor: 'rgba(59,130,246,0.2)',
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: 'rgba(59,130,246,0.5)',
+  },
+  controlModeIcon: {
+    fontSize: 16,
   },
   stabilitySection: {
     flexDirection: 'row',
@@ -1022,6 +1062,53 @@ const styles = StyleSheet.create({
     fontSize: 14,
     marginBottom: 24,
     fontStyle: 'italic',
+  },
+  pauseTimerContainer: {
+    backgroundColor: 'rgba(0,0,0,0.4)',
+    borderRadius: 12,
+    padding: 12,
+    marginBottom: 20,
+    borderWidth: 2,
+    borderColor: '#fbbf24',
+    alignItems: 'center',
+  },
+  pauseTimerLabel: {
+    color: '#9ca3af',
+    fontSize: 10,
+    fontWeight: 'bold',
+    marginBottom: 4,
+  },
+  pauseTimerValue: {
+    color: '#fbbf24',
+    fontSize: 28,
+    fontWeight: 'bold',
+  },
+  pauseButtonRow: {
+    flexDirection: 'row',
+    gap: 10,
+    width: '100%',
+  },
+  restartButtonSmall: {
+    flex: 1,
+    backgroundColor: 'rgba(251,191,36,0.2)',
+    paddingVertical: 12,
+    borderRadius: 10,
+    borderWidth: 2,
+    borderColor: '#fbbf24',
+  },
+  exitButtonSmall: {
+    flex: 1,
+    backgroundColor: 'rgba(239,68,68,0.2)',
+    paddingVertical: 12,
+    borderRadius: 10,
+    borderWidth: 2,
+    borderColor: '#ef4444',
+  },
+  exitButtonText: {
+    color: '#fca5a5',
+    fontSize: 14,
+    fontWeight: 'bold',
+    textAlign: 'center',
   },
   resumeButton: {
     backgroundColor: '#16a34a',

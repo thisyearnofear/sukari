@@ -20,6 +20,7 @@ export const GameSelectionScreen: React.FC<GameSelectionScreenProps> = ({ onStar
   const [selectedControlMode, setSelectedControlMode] = useState<ControlMode>('swipe');
   const [gameMode, setGameMode] = useState<GameMode>('classic');
   const [showQuickStart, setShowQuickStart] = useState(true);
+  const [showTierInfo, setShowTierInfo] = useState(false);
   const pulseAnim = useRef(new Animated.Value(1)).current;
 
   useEffect(() => {
@@ -167,8 +168,16 @@ export const GameSelectionScreen: React.FC<GameSelectionScreenProps> = ({ onStar
           </View>
 
           {/* Tier Selection - Compact Line */}
-          <View className="w-full max-w-sm mb-8">
-            <Text className="text-white text-xs font-bold mb-3 uppercase tracking-widest text-center">Difficulty Tier</Text>
+          <View className="w-full max-w-sm mb-4">
+            <View className="flex-row justify-between items-center mb-3">
+              <Text className="text-white text-xs font-bold uppercase tracking-widest text-center">Difficulty Tier</Text>
+              <TouchableOpacity 
+                onPress={() => setShowTierInfo(!showTierInfo)}
+                className="p-1"
+              >
+                <Text className="text-cyan-400 text-lg">ℹ️</Text>
+              </TouchableOpacity>
+            </View>
             <View className="flex-row gap-2">
               {tierData.map((tier) => (
                 <TouchableOpacity
@@ -190,6 +199,33 @@ export const GameSelectionScreen: React.FC<GameSelectionScreenProps> = ({ onStar
               ))}
             </View>
           </View>
+
+          {/* Tier Comparison Tooltip */}
+          {showTierInfo && (
+            <View className="w-full max-w-sm mb-4 bg-black/80 rounded-xl border border-cyan-700 p-3">
+              <Text className="text-cyan-400 text-xs font-bold mb-2">📊 TIER COMPARISON</Text>
+              <View className="gap-2">
+                <View className="flex-row justify-between">
+                  <Text className="text-green-400 text-xs">🏰 Warm-Up (Tier 1)</Text>
+                  <Text className="text-gray-400 text-xs">30s • Learn mechanics • Gentle penalties</Text>
+                </View>
+                <View className="flex-row justify-between">
+                  <Text className="text-amber-400 text-xs">⚔️ Challenge (Tier 2)</Text>
+                  <Text className="text-gray-400 text-xs">60s • Real glucose • Harder penalties</Text>
+                </View>
+                <View className="flex-row justify-between">
+                  <Text className="text-purple-400 text-xs">👑 Master (Tier 3)</Text>
+                  <Text className="text-gray-400 text-xs">90s • Full simulation • Maximum challenge</Text>
+                </View>
+              </View>
+              <TouchableOpacity 
+                onPress={() => setShowTierInfo(false)}
+                className="mt-2"
+              >
+                <Text className="text-gray-500 text-xs text-center">Tap to close</Text>
+              </TouchableOpacity>
+            </View>
+          )}
 
           <TouchableOpacity
             onPress={() => onStartGame(selectedTier, selectedControlMode, gameMode)}
