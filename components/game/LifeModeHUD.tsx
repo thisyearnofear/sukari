@@ -3,9 +3,7 @@ import { View, Text, TouchableOpacity, Dimensions, Animated, Easing, useWindowDi
 import { BodyMetrics, TimePhase, MorningCondition, PlotTwist, SavedFoodSlot, SocialStats } from '@/types/game';
 import { TIME_PHASES, MORNING_CONDITIONS } from '@/constants/gameConfig';
 
-// const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
 const SIDE_PANEL_WIDTH = 80;
-// const GAME_AREA_WIDTH = screenWidth - (SIDE_PANEL_WIDTH * 2);
 
 interface LifeModeHUDProps {
   metrics: BodyMetrics;
@@ -237,7 +235,7 @@ const MetricPanel: React.FC<{
   );
 };
 
-export { SIDE_PANEL_WIDTH, GAME_AREA_WIDTH };
+export { SIDE_PANEL_WIDTH };
 
 // Top Header Component - Kingdom themed with day progression
 export const LifeModeHeader: React.FC<{
@@ -889,6 +887,7 @@ export const LifeModePauseOverlay: React.FC<{
   controlMode?: 'swipe' | 'tap';
   onToggleControlMode?: () => void;
 }> = ({ isPaused, onResume, onRestart, onExit, controlMode = 'swipe', onToggleControlMode }) => {
+  const { width: screenWidth, height: screenHeight } = useWindowDimensions();
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const scaleAnim = useRef(new Animated.Value(0.8)).current;
   
@@ -1064,6 +1063,7 @@ export const SavedFoodsPanel: React.FC<{
   savedFoods: SavedFoodSlot[];
   onConsumeSaved: (index: number) => void;
 }> = ({ savedFoods, onConsumeSaved }) => {
+  const { width: screenWidth } = useWindowDimensions();
   return (
     <View
       style={{

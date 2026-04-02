@@ -23,7 +23,7 @@ const ComboBurst: React.FC<{
   color: string;
 }> = ({ comboCount, color }) => {
   const burstAnim = useRef(new Animated.Value(0)).current;
-  const [particles, setParticles] = useState<Array<{ id: number; angle: number; distance: number }>>([]);
+  const [particles, setParticles] = useState<{ id: number; angle: number; distance: number }[]>([]);
   
   useEffect(() => {
     if (comboCount >= 3) {
@@ -188,6 +188,9 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({
   const { width: screenWidth, height: screenHeight } = useWindowDimensions();
   const shakeAnim = useRef(new Animated.Value(0)).current;
 
+  const [showInsulinControl, setShowInsulinControl] = useState(false);
+  const [showTutorial, setShowTutorial] = useState(false);
+
   // Handle keyboard inputs for desktop
   useEffect(() => {
     if (Platform.OS !== 'web' || !gameState.isGameActive || showTutorial) return;
@@ -244,7 +247,6 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({
   }, [gameState.isGameActive, gameState.foods, gameState.gameMode, showTutorial, showInsulinControl, onSwipe]);
    const zone = getStabilityZone(gameState.stability);
    const insets = useSafeAreaInsets();
-   const [showInsulinControl, setShowInsulinControl] = useState(false);
    
    // Track combo for burst effect
    const prevComboRef = useRef(gameState.comboCount);
@@ -253,9 +255,8 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({
    // Track swipe feedback
    const [flashType, setFlashType] = useState<'success' | 'error' | null>(null);
    const [flashTrigger, setFlashTrigger] = useState(0);
-
+   
    // Tutorial for tier1 - show modal for first 2 foods
-   const [showTutorial, setShowTutorial] = useState(false);
    const [tutorialFood, setTutorialFood] = useState<any>(null);
    const isTier1Tutorial = tierConfig?.tier === 'tier1' && tierConfig.tutorialMode;
    const currentTutorialFoodId = useRef<string | null>(null);

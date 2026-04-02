@@ -14,7 +14,7 @@ import { ProgressIndicator } from '@/components/game/ProgressIndicator';
 import { useBattleGame } from '@/hooks/useBattleGame';
 import { useHealthProfile } from '@/hooks/useHealthProfile';
 import { usePlayerProgress } from '@/hooks/usePlayerProgress';
-import { ControlMode, GameMode } from '@/types/game';
+import { ControlMode, GameMode, SwipeDirection, SwipeAction } from '@/types/game';
 import { GAME_TIERS, GameTier } from '@/constants/gameTiers';
 import {
   AppScreen,
@@ -437,7 +437,7 @@ export default function HomeScreen() {
             <Text style={styles.modalEmoji}>⚔️</Text>
             <Text style={styles.modalTitle}>ADVANCE TO CHALLENGE 1?</Text>
             <Text style={styles.modalDescription}>
-              You've mastered the Warm-Up! Challenge 1 introduces real glucose management with:
+              You&apos;ve mastered the Warm-Up! Challenge 1 introduces real glucose management with:
             </Text>
             <View style={styles.modalFeatures}>
               <Text style={styles.modalFeature}>• Real glucose simulation</Text>

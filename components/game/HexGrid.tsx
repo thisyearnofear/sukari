@@ -7,7 +7,7 @@ interface HexGridProps {
   height: number;
   pathData: string;
   bridgeTransforms: string[];
-  particles: Array<{ id: string; position: number; color: string; glow: string }>;
+  particles: { id: string; position: number; color: string; glow: string }[];
 }
 
 export const HexGrid: React.FC<HexGridProps> = ({

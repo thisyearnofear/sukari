@@ -44,6 +44,8 @@ import {
   TIME_SPEED_MODIFIERS,
   MESSAGE_POSITIONS,
 } from '@/constants/gameConfig';
+import { getReflectionMessage } from '@/constants/userModes';
+import { useVRFService } from './useVRFService';
 import { SeededRandom, getWeeklySeed } from '@/utils/random';
 
 const { width, height } = Dimensions.get('window');

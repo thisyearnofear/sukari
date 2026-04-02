@@ -19,11 +19,12 @@ export const WelcomeBack: React.FC<WelcomeBackProps> = ({
   onSkipToTier,
   onPlayAgain,
 }) => {
-  const tiers: Exclude<GameTier, 'slowmo'>[] = ['tier1', 'tier2', 'tier3'];
+  const tiers: Exclude<GameTier, 'slowmo'>[] = ['tier1', 'tier2', 'tier3', 'weekly'];
   const tierDescriptions: Record<Exclude<GameTier, 'slowmo'>, string> = {
     tier1: 'Learn the basics (30 seconds)',
     tier2: 'Manage your health (60 seconds)',
     tier3: 'Master advanced play (90 seconds)',
+    weekly: "Alchemist's Lab Weekly Challenge",
   };
 
   return (

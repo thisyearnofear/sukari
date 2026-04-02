@@ -69,7 +69,7 @@ export const AnimatedBackground: React.FC<AnimatedBackgroundProps> = ({
   timePhase = 'morning',
   gameMode = 'classic',
 }) => {
-  const { width: screenWidth, height: screenHeight } = useWindowDimensions();
+  const { width, height } = useWindowDimensions();
   const pulseAnim = useRef(new Animated.Value(0)).current;
   const rotateAnim = useRef(new Animated.Value(0)).current;
   const scaleAnim = useRef(new Animated.Value(1)).current;
@@ -614,9 +614,9 @@ const styles = StyleSheet.create({
   diagonalLine: {
     position: 'absolute',
     width: 2,
-    height: height * 2,
+    height: 1600,
     transform: [{ rotate: '45deg' }],
-    top: -height / 2,
+    top: -400,
   },
   cornerAccent: {
     position: 'absolute',

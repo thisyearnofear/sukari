@@ -499,7 +499,7 @@ export const FoodCard: React.FC<FoodCardProps> = ({ food, onSwipe, controlMode, 
     const particleCount = 12;
     
     // Different particle types based on action
-    const particleConfig: Record<string, { types: Array<'spark' | 'ring' | 'star' | 'droplet' | 'ember'>; color: string; secondaryColor: string }> = {
+    const particleConfig: Record<string, { types: ('spark' | 'ring' | 'star' | 'droplet' | 'ember')[]; color: string; secondaryColor: string }> = {
       rally: { types: ['star', 'spark', 'ring'], color: '#22c55e', secondaryColor: '#86efac' },
       banish: { types: ['ember', 'spark', 'droplet'], color: '#ef4444', secondaryColor: '#fca5a5' },
       save: { types: ['star', 'ring', 'spark'], color: '#3b82f6', secondaryColor: '#93c5fd' },

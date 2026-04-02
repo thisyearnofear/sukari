@@ -114,7 +114,9 @@ export type PlotTwistType =
   | 'learning_opportunity7'
   | 'learning_opportunity8'
   | 'learning_opportunity9'
-  | 'learning_opportunity10';
+  | 'learning_opportunity10'
+  | 'royal_pantry_audit'
+  | 'community_feast';
 
 export interface PlotTwist {
   id: PlotTwistType;
