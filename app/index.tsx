@@ -28,6 +28,14 @@ import {
 
 export default function HomeScreen() {
   const [isClient, setIsClient] = useState(false);
+  const [appScreen, setAppScreen] = useState<AppScreen>('menu');
+  const [controlMode, setControlMode] = useState<ControlMode>('swipe');
+  const [selectedHealthScenario, setSelectedHealthScenario] = useState<string | null>(null);
+  const [selectedGameMode, setSelectedGameMode] = useState<GameMode>('classic');
+  const [lastSlowMoSession, setLastSlowMoSession] = useState<any>(null);
+  const [showTierAdvanceModal, setShowTierAdvanceModal] = useState(false);
+  const [pendingTierAdvance, setPendingTierAdvance] = useState<GameTier | null>(null);
+
   const {
     progress,
     unlockNextTier,
@@ -43,9 +51,11 @@ export default function HomeScreen() {
     setIsClient(true);
   }, []);
 
-  const [appScreen, setAppScreen] = useState<AppScreen>('menu');
+  const hasTransitionedToResults = useRef(false);
 
-  // ... rest of state ...
+  // Ensure we always have a valid tier config
+  const currentTier = progress.currentTier || 'tier1';
+  const tierConfig = GAME_TIERS[currentTier];
 
   if (!isClient) {
     return (
@@ -54,18 +64,6 @@ export default function HomeScreen() {
       </View>
     );
   }
-
-  const [controlMode, setControlMode] = useState<ControlMode>('swipe');
-  const [selectedHealthScenario, setSelectedHealthScenario] = useState<string | null>(null);
-  const [selectedGameMode, setSelectedGameMode] = useState<GameMode>('classic');
-  const [lastSlowMoSession, setLastSlowMoSession] = useState<any>(null);
-  const [showTierAdvanceModal, setShowTierAdvanceModal] = useState(false);
-  const [pendingTierAdvance, setPendingTierAdvance] = useState<GameTier | null>(null);
-  const hasTransitionedToResults = useRef(false);
-
-  // Ensure we always have a valid tier config
-  const currentTier = progress.currentTier || 'tier1';
-  const tierConfig = GAME_TIERS[currentTier];
 
   /**
    * Navigate to a screen with validation

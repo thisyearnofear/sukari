@@ -37,11 +37,14 @@ export const Web3Provider = ({ children }: { children: ReactNode }) => {
           const { BrowserProvider } = ethersModule;
 
           // Check if user is already connected
-          if (typeof window !== 'undefined' && (window as any).ethereum) {
+          // Robust check for window.ethereum to handle conflicts (e.g., Backpack wallet)
+          const ethereum = typeof window !== 'undefined' ? (window as any).ethereum : undefined;
+          
+          if (ethereum) {
             try {
-              const accounts = await (window as any).ethereum.request({ method: 'eth_accounts' });
-              if (accounts.length > 0) {
-                const web3Provider = new BrowserProvider((window as any).ethereum);
+              const accounts = await ethereum.request({ method: 'eth_accounts' });
+              if (accounts && accounts.length > 0) {
+                const web3Provider = new BrowserProvider(ethereum);
                 const webSigner = await web3Provider.getSigner();
 
                 setIsConnected(true);
@@ -79,13 +82,14 @@ export const Web3Provider = ({ children }: { children: ReactNode }) => {
         const { BrowserProvider } = ethersModule;
 
         // Web wallet connection
-        if (typeof window !== 'undefined' && (window as any).ethereum) {
-          const accounts = await (window as any).ethereum.request({
+        const ethereum = typeof window !== 'undefined' ? (window as any).ethereum : undefined;
+        if (ethereum) {
+          const accounts = await ethereum.request({
             method: 'eth_requestAccounts',
           });
 
-          if (accounts.length > 0) {
-            const web3Provider = new BrowserProvider((window as any).ethereum);
+          if (accounts && accounts.length > 0) {
+            const web3Provider = new BrowserProvider(ethereum);
             const webSigner = await web3Provider.getSigner();
 
             setIsConnected(true);
