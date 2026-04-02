@@ -47,15 +47,35 @@ export default function HomeScreen() {
     trackQuestProgress,
   } = usePlayerProgress();
 
+  // Ensure we always have a valid tier config
+  const currentTier = progress.currentTier || 'tier1';
+  const tierConfig = GAME_TIERS[currentTier];
+
+  const {
+    healthProfile,
+    startGlucoseSimulation,
+    stopGlucoseSimulation,
+    logMeal,
+    administerInsulin,
+  } = useHealthProfile(selectedHealthScenario as any || undefined);
+
+  const {
+    gameState,
+    startGame,
+    handleSwipe: baseHandleSwipe,
+    useExercise,
+    useRations,
+    pauseGame,
+    resumeGame,
+    restartGame,
+    consumeSavedFood,
+  } = useBattleGame(logMeal, tierConfig, progress.userMode || undefined);
+
   useEffect(() => {
     setIsClient(true);
   }, []);
 
   const hasTransitionedToResults = useRef(false);
-
-  // Ensure we always have a valid tier config
-  const currentTier = progress.currentTier || 'tier1';
-  const tierConfig = GAME_TIERS[currentTier];
 
   if (!isClient) {
     return (
@@ -265,14 +285,6 @@ export default function HomeScreen() {
     ),
   };
 
-  const {
-    healthProfile,
-    startGlucoseSimulation,
-    stopGlucoseSimulation,
-    logMeal,
-    administerInsulin,
-  } = useHealthProfile(selectedHealthScenario as any || undefined);
-
   const handleSwipe = (foodId: string, direction: SwipeDirection, action: SwipeAction) => {
     // Original handleSwipe from useBattleGame
     baseHandleSwipe(foodId, direction, action);
@@ -290,18 +302,6 @@ export default function HomeScreen() {
       trackQuestProgress('share_ally');
     }
   };
-
-  const {
-    gameState,
-    startGame,
-    handleSwipe: baseHandleSwipe,
-    useExercise,
-    useRations,
-    pauseGame,
-    resumeGame,
-    restartGame,
-    consumeSavedFood,
-  } = useBattleGame(logMeal, tierConfig, progress.userMode || undefined);
 
   const handleStartGame = (controlMode: ControlMode) => {
     setControlMode(controlMode);
