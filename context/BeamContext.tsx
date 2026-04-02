@@ -14,6 +14,8 @@ interface BeamContextType {
   logout: () => Promise<void>;
   isLoading: boolean;
   showSyncFeedback: boolean;
+  mintAchievement: (achievementId: string) => Promise<string | null>;
+  fetchAchievements: () => Promise<any[]>;
 }
 
 const BeamContext = createContext<BeamContextType | undefined>(undefined);
@@ -88,6 +90,37 @@ export const BeamProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
+  const mintAchievement = async (achievementId: string) => {
+    if (!beam || !playerAccount) return null;
+    try {
+      setIsLoading(true);
+      triggerSyncFeedback();
+      // In a real implementation, this would call the Beam Asset API
+      // const asset = await beam.assets.mint({
+      //   receiver: playerAccount.address,
+      //   assetId: achievementId,
+      // });
+      console.log(`Minting achievement ${achievementId} on Beam for ${playerAccount.address}`);
+      return '0x_beam_tx_hash_placeholder';
+    } catch (error) {
+      console.error('Beam minting failed:', error);
+      return null;
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const fetchAchievements = async () => {
+    if (!beam || !playerAccount) return [];
+    try {
+      // return await beam.assets.getOwnedAssets(playerAccount.address);
+      return [];
+    } catch (error) {
+      console.error('Beam fetch achievements failed:', error);
+      return [];
+    }
+  };
+
   return (
     <BeamContext.Provider
       value={{
@@ -98,6 +131,8 @@ export const BeamProvider = ({ children }: { children: ReactNode }) => {
         logout,
         isLoading,
         showSyncFeedback,
+        mintAchievement,
+        fetchAchievements,
       }}
     >
       {children}

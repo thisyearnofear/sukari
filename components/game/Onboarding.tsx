@@ -107,6 +107,12 @@ const CLASSIC_STEPS: OnboardingStep[] = [
     directionLabel: '👆 HEALTHY',
   },
   {
+    title: 'SECURE YOUR DEEDS',
+    subtitle: 'Kingdom Treasury',
+    content: 'Log in with your Social Account (Google, Apple) to sync your progress across the Realm and secure your achievements as digital deeds on the Beam network.',
+    emoji: '👑',
+  },
+  {
     title: 'CHOOSE CONTROLS',
     subtitle: 'How will you fight?',
     content: '',
@@ -170,6 +176,12 @@ const LIFE_MODE_STEPS: OnboardingStep[] = [
     subtitle: 'Use power-ups wisely',
     content: 'Train Knights (exercise) to lower stability. Host Royal Feasts (rations) to raise it.',
     emoji: '⚔️',
+  },
+  {
+    title: 'SECURE YOUR DEEDS',
+    subtitle: 'Kingdom Treasury',
+    content: 'Log in with your Social Account (Google, Apple) to sync your progress across the Realm and secure your achievements as digital deeds on the Beam network.',
+    emoji: '👑',
   },
   {
     title: 'CHOOSE CONTROLS',

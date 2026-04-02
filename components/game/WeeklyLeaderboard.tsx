@@ -1,5 +1,5 @@
-import React from 'react';
-import { View, Text, StyleSheet, ScrollView } from 'react-native';
+import React, { useEffect, useRef, useState } from 'react';
+import { View, Text, StyleSheet, ScrollView, Animated } from 'react-native';
 import { COLORS } from '@/constants/designSystem';
 
 interface LeaderboardEntry {
@@ -25,6 +25,37 @@ interface WeeklyLeaderboardProps {
 }
 
 export const WeeklyLeaderboard: React.FC<WeeklyLeaderboardProps> = ({ playerScore, playerTitle, seed }) => {
+  const proclamationAnim = useRef(new Animated.Value(0)).current;
+  const [showProclamation, setShowProclamation] = useState(false);
+  const [proclamation, setProclamation] = useState('');
+
+  const PROCLAMATIONS = [
+    "Sir Glucose just reached a 50x combo!",
+    "Lady Insulin has secured the Royal Treasury.",
+    "Knight Fiber is leading the Alchemist's Lab.",
+    "A new Squire has entered the Realm!",
+    "The Sugar Horde is retreating in Sector 7."
+  ];
+
+  useEffect(() => {
+    const cycleProclamations = () => {
+      setProclamation(PROCLAMATIONS[Math.floor(Math.random() * PROCLAMATIONS.length)]);
+      setShowProclamation(true);
+      
+      Animated.sequence([
+        Animated.timing(proclamationAnim, { toValue: 1, duration: 800, useNativeDriver: true }),
+        Animated.delay(4000),
+        Animated.timing(proclamationAnim, { toValue: 0, duration: 800, useNativeDriver: true }),
+      ]).start(() => {
+        setShowProclamation(false);
+        setTimeout(cycleProclamations, 5000);
+      });
+    };
+
+    const timer = setTimeout(cycleProclamations, 2000);
+    return () => clearTimeout(timer);
+  }, []);
+
   // In a real app, we'd fetch based on seed. Here we just show mock data.
   const displayData = [...MOCK_LEADERBOARD];
   
@@ -56,6 +87,17 @@ export const WeeklyLeaderboard: React.FC<WeeklyLeaderboardProps> = ({ playerScor
 
   return (
     <View style={styles.container}>
+      {showProclamation && (
+        <Animated.View 
+          style={[
+            styles.proclamation,
+            { opacity: proclamationAnim, transform: [{ translateY: proclamationAnim.interpolate({ inputRange: [0, 1], outputRange: [10, 0] }) }] }
+          ]}
+        >
+          <Text style={styles.proclamationText}>📢 {proclamation}</Text>
+        </Animated.View>
+      )}
+
       <Text style={styles.title}>🧪 WEEKLY ALCHEMIST RANKINGS</Text>
       <Text style={styles.subtitle}>Seed: #{seed} • Ends in 3 days</Text>
       
@@ -104,6 +146,22 @@ const styles = StyleSheet.create({
     fontSize: 10,
     textAlign: 'center',
     marginBottom: 12,
+  },
+  proclamation: {
+    backgroundColor: 'rgba(167, 139, 250, 0.15)',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: 'rgba(167, 139, 250, 0.3)',
+    marginBottom: 12,
+    alignSelf: 'center',
+  },
+  proclamationText: {
+    color: '#a78bfa',
+    fontSize: 10,
+    fontWeight: 'bold',
+    fontStyle: 'italic',
   },
   scroll: {
     maxHeight: 200,

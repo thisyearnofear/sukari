@@ -220,7 +220,7 @@ const ElectricArc: React.FC<{ color: string; active: boolean }> = ({ color, acti
   );
 };
 
-export const BattleHUD: React.FC<BattleHUDProps> = ({
+export const BattleHUD: React.FC<BattleHUDProps> = React.memo(({
   score,
   stability,
   timer,
@@ -825,7 +825,7 @@ export const BattleHUD: React.FC<BattleHUDProps> = ({
       </View>
     </>
   );
-};
+});
 
 const styles = StyleSheet.create({
   // Top HUD styles
@@ -1358,6 +1358,5 @@ const styles = StyleSheet.create({
     borderRadius: 4,
     shadowOffset: { width: 0, height: 0 },
     shadowOpacity: 0.8,
-    shadowRadius: 4,
   },
 });

@@ -18,7 +18,7 @@ import { getWeeklySeed } from '@/utils/random';
 // MOVED TO constants/gameConfig.ts
 
 // Funny share messages based on performance
-const getShareMessage = (score: number, accuracy: number, grade: string) => {
+const getShareMessage = (score: number, accuracy: number, grade: string, challengeId?: string) => {
   const messages = {
     S: `🏆 ${score} pts in Glucose Wars! ${accuracy}% accuracy. My pancreas is PROUD!`,
     A: `⚔️ ${score} pts in Glucose Wars! ${accuracy}% accuracy. Glucose game STRONG 💪`,
@@ -26,7 +26,13 @@ const getShareMessage = (score: number, accuracy: number, grade: string) => {
     C: `🍩 ${score} pts in Glucose Wars! Donuts won some battles...`,
     D: `💀 ${score} pts in Glucose Wars. The sugar horde showed no mercy!`,
   };
-  return messages[grade as keyof typeof messages] || messages.D;
+  
+  let baseMessage = messages[grade as keyof typeof messages] || messages.D;
+  if (challengeId) {
+    baseMessage += `\n\nI challenge YOU to beat my score in the Alchemist's Lab! Seed: #${challengeId} 🧪`;
+  }
+  
+  return baseMessage;
 };
 
 // Get mode-specific message after results
@@ -206,7 +212,7 @@ export const ResultsScroll: React.FC<ResultsScrollProps> = ({
   // Share functionality
   const handleShare = async () => {
     // Apply privacy settings to the share message
-    let message = getShareMessage(score, accuracy, gradeInfo.grade);
+    let message = getShareMessage(score, accuracy, gradeInfo.grade, isWeeklyChallenge ? String(weeklySeed) : undefined);
 
     // Check if achievements should be shared based on privacy settings
     if (healthProfile?.privacySettings?.achievements === 'private') {

@@ -15,6 +15,8 @@ import { createPulseAnimation, createGlowAnimation, createFloatingAnimation } fr
 import { ProgressIndicator } from '@/components/game/ProgressIndicator';
 import { DailyQuests } from '@/components/game/DailyQuests';
 import { GrandLibrary } from '@/components/game/GrandLibrary';
+import { BeamAssets } from '@/components/game/BeamAssets';
+import { Modal } from 'react-native';
 
 const { width, height } = Dimensions.get('window');
 const screenWidth = width;
@@ -83,6 +85,7 @@ export const MainMenu: React.FC<MainMenuProps> = ({ onStartGame, onSelectGame, o
   const [selectedRole, setSelectedRole] = useState<UserMode | null>(null);
   const [showMintModal, setShowMintModal] = useState(false);
   const [showLibrary, setShowLibrary] = useState(false);
+  const [showTreasury, setShowTreasury] = useState(false);
   const { isConnected } = useWeb3();
   const { playerAccount, showSyncFeedback } = useBeam();
   const [showWelcome, setShowWelcome] = useState(false);
@@ -346,7 +349,10 @@ export const MainMenu: React.FC<MainMenuProps> = ({ onStartGame, onSelectGame, o
             <Text style={{ color: 'white', fontSize: 18, fontWeight: 'bold' }}>{progress.kingdomRenown} RENOWN</Text>
           </View>
         </View>
-        <TouchableOpacity style={{ backgroundColor: 'rgba(88, 28, 135, 0.4)', padding: 10, borderRadius: 12, borderWidth: 1, borderColor: 'rgba(167, 139, 250, 0.3)' }}>
+        <TouchableOpacity 
+          onPress={() => setShowTreasury(true)}
+          style={{ backgroundColor: 'rgba(88, 28, 135, 0.4)', padding: 10, borderRadius: 12, borderWidth: 1, borderColor: 'rgba(167, 139, 250, 0.3)' }}
+        >
           <Ionicons name="trophy-outline" size={20} color="#a78bfa" />
         </TouchableOpacity>
       </View>
@@ -553,6 +559,17 @@ export const MainMenu: React.FC<MainMenuProps> = ({ onStartGame, onSelectGame, o
           onClose={() => setShowLibrary(false)}
         />
       )}
+
+      <Modal
+        visible={showTreasury}
+        animationType="slide"
+        transparent={true}
+        onRequestClose={() => setShowTreasury(false)}
+      >
+        <View className="flex-1 justify-end">
+          <BeamAssets onClose={() => setShowTreasury(false)} />
+        </View>
+      </Modal>
     </View>
   );
 };

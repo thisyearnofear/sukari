@@ -63,6 +63,8 @@ export const KINGDOM_LORE = [
   { id: 'sleep', emoji: '💤', fact: 'The Restorer\'s Dream: Poor sleep makes your body resist the Royal Key (Insulin)!', tip: 'Rest well for 7-9 hours to maintain Harmony.' },
   { id: 'hydration', emoji: '💧', fact: 'The Pure Stream: Dehydration causes the sugar tide to rise!', tip: 'Drink from the Pure Stream (Water) before each feast.' },
   { id: 'breakfast', emoji: '🍳', fact: 'The Morning Shield: A Vitality-rich breakfast guards against spikes all day!', tip: 'Start with Eggs, not sugary cereals.' },
+  { id: 'protein', emoji: '🥚', fact: 'The Protein Guard: Protein keeps you full and guards against sudden Harmony crashes.', tip: 'Include a Guard in every major feast.' },
+  { id: 'timing', emoji: '⏰', fact: 'The Alchemist\'s Timing: When you eat is as important as what you eat!', tip: 'Try to eat most of your Vigor before the sun sets.' },
 ];
 
 // Food definitions - Allies (swipe UP to rally)

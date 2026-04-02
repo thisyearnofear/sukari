@@ -251,7 +251,7 @@ export const LifeModeHeader: React.FC<{
   onPause?: () => void;
   savedFoods?: SavedFoodSlot[];
   onConsumeSaved?: (index: number) => void;
-}> = ({ score, timer, timePhase, comboCount, comboTitle, morningCondition, activePlotTwist, plotTwistTimer, isPaused, onPause, savedFoods, onConsumeSaved }) => {
+}> = React.memo(({ score, timer, timePhase, comboCount, comboTitle, morningCondition, activePlotTwist, plotTwistTimer, isPaused, onPause, savedFoods, onConsumeSaved }) => {
   const phaseConfig = TIME_PHASES[timePhase];
   const conditionConfig = MORNING_CONDITIONS.find(c => c.id === morningCondition);
   const isLowTime = timer <= 10;
@@ -508,12 +508,12 @@ export const LifeModeHeader: React.FC<{
       )}
     </View>
   );
-};
+});
 
 // Left Side Panel - Energy & Hydration with enhanced styling
 export const LeftSidePanel: React.FC<{
   metrics: BodyMetrics;
-}> = ({ metrics }) => {
+}> = React.memo(({ metrics }) => {
   const { height: screenHeight } = useWindowDimensions();
   return (
     <View 
@@ -563,12 +563,12 @@ export const LeftSidePanel: React.FC<{
       </View>
     </View>
   );
-};
+});
 
 // Right Side Panel - Nutrition & Stability with enhanced styling
 export const RightSidePanel: React.FC<{
   metrics: BodyMetrics;
-}> = ({ metrics }) => {
+}> = React.memo(({ metrics }) => {
   const { height: screenHeight } = useWindowDimensions();
   return (
     <View 
@@ -618,7 +618,7 @@ export const RightSidePanel: React.FC<{
       </View>
     </View>
   );
-};
+});
 
 // Legacy export for backwards compatibility
 export const SideMetrics: React.FC<{
