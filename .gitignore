@@ -20,6 +20,12 @@ expo-env.d.ts
 # Metro
 .metro-health-check*
 
+# Tools & IDE
+.junie/
+.orchids/
+.zenflow/
+.vscode/
+
 # debug
 npm-debug.*
 yarn-debug.*
