@@ -1,10 +1,10 @@
 import React, { useRef, useEffect, useState } from 'react';
-import { View, Text, Animated, PanResponder, Dimensions, TouchableOpacity } from 'react-native';
+import { View, Text, Animated, PanResponder, useWindowDimensions, TouchableOpacity } from 'react-native';
 import { FoodUnit, ControlMode, SwipeDirection, SwipeAction } from '@/types/game';
 import { SWIPE_THRESHOLD, SWIPE_DIRECTIONS } from '@/constants/gameConfig';
 import { useAccessibility } from '@/hooks/useAccessibility';
 
-const { height: screenHeight, width: screenWidth } = Dimensions.get('window');
+// const { height: screenHeight, width: screenWidth } = Dimensions.get('window');
 
 interface FoodCardProps {
   food: FoodUnit;
@@ -242,6 +242,7 @@ const ElectricArc: React.FC<{ color: string }> = ({ color }) => {
 };
 
 export const FoodCard: React.FC<FoodCardProps> = ({ food, onSwipe, controlMode, showOptimalHint = false, gameMode = 'classic' }) => {
+  const { width: screenWidth, height: screenHeight } = useWindowDimensions();
   const { getFoodCardLabel } = useAccessibility();
   const pan = useRef(new Animated.ValueXY()).current;
   const scale = useRef(new Animated.Value(0.5)).current;
@@ -553,6 +554,9 @@ export const FoodCard: React.FC<FoodCardProps> = ({ food, onSwipe, controlMode, 
       const isOptimal = food.optimalSwipe?.direction === dir;
       const color = getDirectionColor(dir);
       
+      // Horizontal actions (Save/Share) get a ghost icon hint if not active
+      const isHorizontal = dir === 'left' || dir === 'right';
+      
       return (
         <View
           key={dir}
@@ -561,22 +565,29 @@ export const FoodCard: React.FC<FoodCardProps> = ({ food, onSwipe, controlMode, 
             left: x,
             top: y,
             alignItems: 'center',
-            opacity: isActive ? 1 : (showOptimalHint && isOptimal ? 0.8 : 0.4),
-            transform: [{ scale: isActive ? 1.2 : 1 }],
+            opacity: isActive ? 1 : (showOptimalHint && isOptimal ? 0.8 : (isHorizontal ? 0.3 : 0.4)),
+            transform: [{ scale: isActive ? 1.2 : (isHorizontal && !isActive ? 0.9 : 1) }],
           }}
         >
           <View
             style={{
               backgroundColor: isActive ? color : 'rgba(0,0,0,0.6)',
-              paddingHorizontal: 4,
+              paddingHorizontal: isHorizontal && !isActive ? 6 : 4,
               paddingVertical: 2,
-              borderRadius: 6,
-              borderWidth: isOptimal ? 2 : 0,
-              borderColor: color,
+              borderRadius: 8,
+              borderWidth: isOptimal ? 2 : (isHorizontal && !isActive ? 1 : 0),
+              borderColor: isHorizontal && !isActive ? 'rgba(255,255,255,0.2)' : color,
+              shadowColor: isActive ? color : 'transparent',
+              shadowOffset: { width: 0, height: 0 },
+              shadowOpacity: 0.8,
+              shadowRadius: 4,
             }}
           >
-            <Text style={{ fontSize: 10, color: 'white', fontWeight: 'bold' }}>{icon}</Text>
+            <Text style={{ fontSize: isHorizontal && !isActive ? 12 : 10, color: 'white', fontWeight: 'bold' }}>{icon}</Text>
           </View>
+          {isHorizontal && !isActive && (
+            <Text style={{ fontSize: 6, color: 'rgba(255,255,255,0.4)', fontWeight: 'bold', marginTop: 1 }}>{label}</Text>
+          )}
         </View>
       );
     });
@@ -667,23 +678,23 @@ export const FoodCard: React.FC<FoodCardProps> = ({ food, onSwipe, controlMode, 
         <View
           style={{
             position: 'absolute',
-            top: -10,
-            right: -10,
-            width: 24,
-            height: 24,
-            borderRadius: 12,
+            top: -12,
+            right: -12,
+            width: 30,
+            height: 30,
+            borderRadius: 15,
             backgroundColor: borderColor,
             alignItems: 'center',
             justifyContent: 'center',
             shadowColor: borderColor,
             shadowOffset: { width: 0, height: 0 },
             shadowOpacity: 1,
-            shadowRadius: 8,
-            borderWidth: 2,
+            shadowRadius: 10,
+            borderWidth: 2.5,
             borderColor: '#fff',
           }}
         >
-          <Text style={{ fontSize: 12, color: 'white', fontWeight: 'bold' }}>
+          <Text style={{ fontSize: 16, color: 'white', fontWeight: 'bold' }}>
             {isAlly ? '✓' : '✗'}
           </Text>
         </View>

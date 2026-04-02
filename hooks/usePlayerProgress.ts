@@ -1,9 +1,27 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { GameTier } from '@/constants/gameTiers';
-import { UserMode } from '@/types/game';
+import { UserMode, SwipeAction } from '@/types/game';
 import { PrivacySettings, PrivacyMode } from '@/types/health';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { analyzePlayerSessions, PlayerAnalytics } from '@/utils/slowMoAnalytics';
+
+export type DailyQuestType = 
+  | 'save_healthy' 
+  | 'reject_enemy' 
+  | 'share_ally' 
+  | 'balanced_streak'
+  | 'perfect_day';
+
+export interface DailyQuest {
+  id: string;
+  type: DailyQuestType;
+  title: string;
+  description: string;
+  target: number;
+  current: number;
+  completed: boolean;
+  reward: number; // XP or Renown
+}
 
 export interface SlowMoModeSession {
   plannedMeals?: Array<{ mealType: string; name: string; glucoseImpact: number }>;
@@ -23,9 +41,60 @@ export interface PlayerProgressState {
   privacySettings?: PrivacySettings;
   slowMoSessions?: SlowMoModeSession[]; // Track Slow Mo Mode sessions
   slowMoSessionsCompleted?: number; // Total sessions completed
+  // Daily Quest System (ENHANCEMENT FIRST & MODULAR)
+  dailyQuests: DailyQuest[];
+  lastQuestResetAt: number | null;
+  kingdomRenown: number; // XP system
 }
 
 const STORAGE_KEY = 'glucoseWars.playerProgress';
+
+const DEFAULT_QUESTS: DailyQuest[] = [
+  {
+    id: 'q1',
+    type: 'save_healthy',
+    title: 'The Royal Pantry',
+    description: 'Save 5 healthy food cards for later.',
+    target: 5,
+    current: 0,
+    completed: false,
+    reward: 100,
+  },
+  {
+    id: 'q2',
+    type: 'reject_enemy',
+    title: 'Border Patrol',
+    description: 'Reject 10 unhealthy enemy cards.',
+    target: 10,
+    current: 0,
+    completed: false,
+    reward: 150,
+  },
+  {
+    id: 'q3',
+    type: 'share_ally',
+    title: 'Community Feast',
+    description: 'Share 3 ally cards with the kingdom.',
+    target: 3,
+    current: 0,
+    completed: false,
+    reward: 200,
+  },
+];
+
+export interface KingdomMilestone {
+  renown: number;
+  title: string;
+  icon: string;
+}
+
+export const KINGDOM_MILESTONES: KingdomMilestone[] = [
+  { renown: 0, title: 'Squire', icon: '🛡️' },
+  { renown: 500, title: 'Knight', icon: '⚔️' },
+  { renown: 1500, title: 'Guardian', icon: '👑' },
+  { renown: 3000, title: 'Royal Alchemist', icon: '🧪' },
+  { renown: 6000, title: 'Grand Master', icon: '🧙‍♂️' },
+];
 
 export function usePlayerProgress() {
   const [progress, setProgress] = useState<PlayerProgressState>({
@@ -48,6 +117,9 @@ export function usePlayerProgress() {
     },
     slowMoSessions: [],
     slowMoSessionsCompleted: 0,
+    dailyQuests: DEFAULT_QUESTS,
+    lastQuestResetAt: null,
+    kingdomRenown: 0,
   });
 
   // Load from AsyncStorage on component mount
@@ -56,7 +128,29 @@ export function usePlayerProgress() {
       try {
         const stored = await AsyncStorage.getItem(STORAGE_KEY);
         if (stored) {
-          setProgress(JSON.parse(stored));
+          const parsed = JSON.parse(stored);
+          
+          // Check for daily quest reset (PERFORMANT & ORGANIZED)
+          const now = new Date();
+          const lastReset = parsed.lastQuestResetAt ? new Date(parsed.lastQuestResetAt) : null;
+          
+          const isNewDay = !lastReset || 
+            now.getDate() !== lastReset.getDate() || 
+            now.getMonth() !== lastReset.getMonth() || 
+            now.getFullYear() !== lastReset.getFullYear();
+
+          if (isNewDay) {
+            setProgress({
+              ...parsed,
+              dailyQuests: DEFAULT_QUESTS,
+              lastQuestResetAt: Date.now(),
+            });
+          } else {
+            setProgress(parsed);
+          }
+        } else {
+          // First time initialization
+          setProgress(prev => ({ ...prev, lastQuestResetAt: Date.now() }));
         }
       } catch (error) {
         console.error('Failed to load player progress:', error);
@@ -166,6 +260,52 @@ export function usePlayerProgress() {
     return analyzePlayerSessions(sessions);
   };
 
+  /**
+   * Tracks progress for daily quests (ENHANCEMENT FIRST)
+   * This is called by the game engine when relevant actions occur.
+   */
+  const trackQuestProgress = useCallback((type: DailyQuestType, amount: number = 1) => {
+    setProgress(prev => {
+      const updatedQuests = prev.dailyQuests.map(quest => {
+        if (quest.type === type && !quest.completed) {
+          const newCurrent = Math.min(quest.current + amount, quest.target);
+          const isNowCompleted = newCurrent >= quest.target;
+          
+          return {
+            ...quest,
+            current: newCurrent,
+            completed: isNowCompleted,
+          };
+        }
+        return quest;
+      });
+
+      // Calculate newly earned renown
+      const newlyCompleted = updatedQuests.filter(
+        (q, i) => q.completed && !prev.dailyQuests[i].completed
+      );
+      const earnedRenown = newlyCompleted.reduce((sum, q) => sum + q.reward, 0);
+
+      if (earnedRenown > 0 || JSON.stringify(updatedQuests) !== JSON.stringify(prev.dailyQuests)) {
+        return {
+          ...prev,
+          dailyQuests: updatedQuests,
+          kingdomRenown: prev.kingdomRenown + earnedRenown,
+        };
+      }
+      
+      return prev;
+    });
+  }, []);
+
+  const getKingdomTitle = useCallback(() => {
+    const title = KINGDOM_MILESTONES.reduce((prev, curr) => {
+      if (progress.kingdomRenown >= curr.renown) return curr;
+      return prev;
+    }, KINGDOM_MILESTONES[0]);
+    return title;
+  }, [progress.kingdomRenown]);
+
   return {
     progress,
     unlockNextTier,
@@ -180,5 +320,7 @@ export function usePlayerProgress() {
     recordSlowMoSession,
     getSlowMoSessionStats,
     getSlowMoAnalytics,
+    trackQuestProgress,
+    getKingdomTitle,
   };
 }

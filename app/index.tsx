@@ -27,8 +27,16 @@ import {
 } from '@/constants/navigation';
 
 export default function HomeScreen() {
-  const { progress, unlockNextTier, updateBestScore, incrementGamesPlayed, setSkipOnboarding, setCurrentTier, getSlowMoAnalytics } =
-    usePlayerProgress();
+  const {
+    progress,
+    unlockNextTier,
+    updateBestScore,
+    incrementGamesPlayed,
+    setSkipOnboarding,
+    setCurrentTier,
+    getSlowMoAnalytics,
+    trackQuestProgress,
+  } = usePlayerProgress();
 
   const [appScreen, setAppScreen] = useState<AppScreen>('menu');
   const [controlMode, setControlMode] = useState<ControlMode>('swipe');
@@ -250,10 +258,28 @@ export default function HomeScreen() {
     administerInsulin,
   } = useHealthProfile(selectedHealthScenario as any || undefined);
 
+  const handleSwipe = (foodId: string, direction: SwipeDirection, action: SwipeAction) => {
+    // Original handleSwipe from useBattleGame
+    baseHandleSwipe(foodId, direction, action);
+
+    // Track quest progress (ENHANCEMENT FIRST)
+    // We look at the food that was swiped to determine which quest to progress
+    const food = gameState.foods.find(f => f.id === foodId);
+    if (!food) return;
+
+    if (action === 'save' && (food.faction === 'ally' || food.isContextuallyGood)) {
+      trackQuestProgress('save_healthy');
+    } else if (action === 'reject' && (food.faction === 'enemy' || !food.isContextuallyGood)) {
+      trackQuestProgress('reject_enemy');
+    } else if (action === 'share' && (food.faction === 'ally' || food.isContextuallyGood)) {
+      trackQuestProgress('share_ally');
+    }
+  };
+
   const {
     gameState,
     startGame,
-    handleSwipe,
+    handleSwipe: baseHandleSwipe,
     useExercise,
     useRations,
     pauseGame,

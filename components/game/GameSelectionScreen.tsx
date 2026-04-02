@@ -32,12 +32,14 @@ export const GameSelectionScreen: React.FC<GameSelectionScreenProps> = ({ onStar
   }, [pulseAnim]);
   
   const availableTiers: GameTier[] = ['tier1'];
-  if (progress.maxTierUnlocked === 'tier2' || progress.maxTierUnlocked === 'tier3') {
+  if (progress.maxTierUnlocked === 'tier2' || progress.maxTierUnlocked === 'tier3' || progress.maxTierUnlocked === 'weekly') {
     availableTiers.push('tier2');
   }
-  if (progress.maxTierUnlocked === 'tier3') {
+  if (progress.maxTierUnlocked === 'tier3' || progress.maxTierUnlocked === 'weekly') {
     availableTiers.push('tier3');
   }
+  // Weekly Challenge is always available as the "Alchemist's Lab"
+  availableTiers.push('weekly');
 
   const tierData = availableTiers.map(tier => GAME_TIERS[tier]);
 
@@ -71,7 +73,7 @@ export const GameSelectionScreen: React.FC<GameSelectionScreenProps> = ({ onStar
           <View className="w-full max-w-sm mb-6">
             <View className="bg-gradient-to-r from-amber-600/30 to-orange-600/20 rounded-2xl border-2 border-amber-400 p-6 items-center">
               <Text className="text-5xl mb-3">
-                {selectedTier === 'tier1' ? '🏰' : selectedTier === 'tier2' ? '⚔️' : '👑'}
+                {selectedTier === 'tier1' ? '🏰' : selectedTier === 'tier2' ? '⚔️' : selectedTier === 'tier3' ? '👑' : '🧪'}
               </Text>
               <Text className="text-amber-300 text-sm font-bold mb-1">RECOMMENDED</Text>
               <Text className="text-white text-2xl font-bold text-center mb-2">
@@ -190,7 +192,7 @@ export const GameSelectionScreen: React.FC<GameSelectionScreenProps> = ({ onStar
                   }`}
                 >
                   <Text className="text-xl mb-1">
-                    {tier.tier === 'tier1' ? '🏰' : tier.tier === 'tier2' ? '⚔️' : '👑'}
+                    {tier.tier === 'tier1' ? '🏰' : tier.tier === 'tier2' ? '⚔️' : tier.tier === 'tier3' ? '👑' : '🧪'}
                   </Text>
                   <Text className={`text-[10px] font-bold ${selectedTier === tier.tier ? 'text-amber-300' : 'text-white'}`}>
                     {tier.name.toUpperCase()}
@@ -216,6 +218,10 @@ export const GameSelectionScreen: React.FC<GameSelectionScreenProps> = ({ onStar
                 <View className="flex-row justify-between">
                   <Text className="text-purple-400 text-xs">👑 Master (Tier 3)</Text>
                   <Text className="text-gray-400 text-xs">90s • Full simulation • Maximum challenge</Text>
+                </View>
+                <View className="flex-row justify-between">
+                  <Text className="text-pink-400 text-xs">🧪 Alchemist (Weekly)</Text>
+                  <Text className="text-gray-400 text-xs">120s • Seeded Run • Global Leaderboard</Text>
                 </View>
               </View>
               <TouchableOpacity 

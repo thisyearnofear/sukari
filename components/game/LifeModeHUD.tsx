@@ -1,11 +1,11 @@
 import React, { useRef, useEffect } from 'react';
-import { View, Text, TouchableOpacity, Dimensions, Animated, Easing } from 'react-native';
+import { View, Text, TouchableOpacity, Dimensions, Animated, Easing, useWindowDimensions } from 'react-native';
 import { BodyMetrics, TimePhase, MorningCondition, PlotTwist, SavedFoodSlot, SocialStats } from '@/types/game';
 import { TIME_PHASES, MORNING_CONDITIONS } from '@/constants/gameConfig';
 
-const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
+// const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
 const SIDE_PANEL_WIDTH = 80;
-const GAME_AREA_WIDTH = screenWidth - (SIDE_PANEL_WIDTH * 2);
+// const GAME_AREA_WIDTH = screenWidth - (SIDE_PANEL_WIDTH * 2);
 
 interface LifeModeHUDProps {
   metrics: BodyMetrics;
@@ -94,6 +94,8 @@ const MetricPanel: React.FC<{
   
   const pulseAnim = useRef(new Animated.Value(1)).current;
   const glowAnim = useRef(new Animated.Value(0.3)).current;
+  const opacityAnim = useRef(new Animated.Value(0.6)).current;
+  const prevValue = useRef(value);
   
   useEffect(() => {
     if (isCritical) {
@@ -105,8 +107,23 @@ const MetricPanel: React.FC<{
       );
       pulse.start();
       return () => pulse.stop();
+    } else {
+      pulseAnim.setValue(1);
     }
   }, [isCritical]);
+
+  useEffect(() => {
+    // Increase opacity when value changes significantly or is critical
+    const diff = Math.abs(value - prevValue.current);
+    if (isCritical || diff >= 5) {
+      Animated.sequence([
+        Animated.timing(opacityAnim, { toValue: 1, duration: 400, useNativeDriver: true }),
+        Animated.delay(2000),
+        Animated.timing(opacityAnim, { toValue: isCritical ? 1 : 0.6, duration: 1000, useNativeDriver: true }),
+      ]).start();
+    }
+    prevValue.current = value;
+  }, [value, isCritical]);
 
   useEffect(() => {
     const glow = Animated.loop(
@@ -125,6 +142,7 @@ const MetricPanel: React.FC<{
         alignItems: 'center', 
         marginBottom: 16,
         transform: [{ scale: pulseAnim }],
+        opacity: opacityAnim,
       }}
     >
       {/* Icon with glow */}
@@ -498,6 +516,7 @@ export const LifeModeHeader: React.FC<{
 export const LeftSidePanel: React.FC<{
   metrics: BodyMetrics;
 }> = ({ metrics }) => {
+  const { height: screenHeight } = useWindowDimensions();
   return (
     <View 
       style={{ 
@@ -552,6 +571,7 @@ export const LeftSidePanel: React.FC<{
 export const RightSidePanel: React.FC<{
   metrics: BodyMetrics;
 }> = ({ metrics }) => {
+  const { height: screenHeight } = useWindowDimensions();
   return (
     <View 
       style={{ 

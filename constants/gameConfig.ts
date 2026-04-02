@@ -359,6 +359,28 @@ export const MODE_PLOT_TWISTS: Record<UserMode, PlotTwist[]> = {
       bonusCondition: 'Stress raises glucose without eating. Focus on calming foods!',
       optimalActions: ['consume', 'reject'],
     },
+    {
+      id: 'royal_pantry_audit',
+      name: 'Pantry Audit!',
+      icon: '🏺',
+      description: 'The King demands the Royal Pantry be filled!',
+      duration: 12,
+      effect: {},
+      bonusCondition: 'Saving foods (Swipe LEFT) gives 3x points!',
+      optimalActions: ['save'],
+      shareBonus: true,
+    },
+    {
+      id: 'community_feast',
+      name: 'Community Feast!',
+      icon: '🤝',
+      description: 'Sharing is caring in our kingdom!',
+      duration: 12,
+      effect: {},
+      bonusCondition: 'Sharing foods (Swipe RIGHT) gives 4x points!',
+      optimalActions: ['share'],
+      shareBonus: true,
+    },
   ],
   caregiver: [
     {

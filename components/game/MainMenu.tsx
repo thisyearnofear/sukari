@@ -11,6 +11,7 @@ import { GAME_TIERS } from '@/constants/gameTiers';
 import { COLORS, SPACING, ANIMATIONS } from '@/constants/designSystem';
 import { createPulseAnimation, createGlowAnimation, createFloatingAnimation } from '@/utils/animations';
 import { ProgressIndicator } from '@/components/game/ProgressIndicator';
+import { DailyQuests } from '@/components/game/DailyQuests';
 
 const { width, height } = Dimensions.get('window');
 const screenWidth = width;
@@ -73,7 +74,8 @@ export const MainMenu: React.FC<MainMenuProps> = ({ onStartGame, onSelectGame, o
   const [showTutorialSettings, setShowTutorialSettings] = useState(false);
   const pulseAnim = useRef(new Animated.Value(1)).current;
   const glowAnim = useRef(new Animated.Value(0)).current;
-  const { progress, setUserMode, setPrivacyMode, updatePrivacySettings, setSkipOnboarding } = usePlayerProgress();
+  const { progress, setUserMode, setPrivacyMode, updatePrivacySettings, setSkipOnboarding, getKingdomTitle } = usePlayerProgress();
+  const kingdomTitle = getKingdomTitle();
   const [showUserModeSelector, setShowUserModeSelector] = useState(userModeSelected === false);
   const [selectedRole, setSelectedRole] = useState<UserMode | null>(null);
   const [showMintModal, setShowMintModal] = useState(false);
@@ -259,6 +261,22 @@ export const MainMenu: React.FC<MainMenuProps> = ({ onStartGame, onSelectGame, o
 
   return (
     <View className="flex-1 items-center justify-center" style={{ backgroundColor: COLORS.BG_DARK }}>
+      {/* Kingdom Renown Header */}
+      <View style={{ width: '100%', paddingTop: 48, paddingHorizontal: 24, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', zIndex: 20 }}>
+        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+          <View style={{ backgroundColor: 'rgba(217, 119, 6, 0.2)', padding: 8, borderRadius: 20, borderWidth: 1, borderColor: 'rgba(245, 158, 11, 0.3)', marginRight: 12 }}>
+            <Text style={{ fontSize: 20 }}>{kingdomTitle.icon}</Text>
+          </View>
+          <View>
+            <Text style={{ color: '#f59e0b', fontSize: 10, fontWeight: 'bold', letterSpacing: 1, textTransform: 'uppercase' }}>{kingdomTitle.title}</Text>
+            <Text style={{ color: 'white', fontSize: 18, fontWeight: 'bold' }}>{progress.kingdomRenown} RENOWN</Text>
+          </View>
+        </View>
+        <TouchableOpacity style={{ backgroundColor: 'rgba(88, 28, 135, 0.4)', padding: 10, borderRadius: 12, borderWidth: 1, borderColor: 'rgba(167, 139, 250, 0.3)' }}>
+          <Ionicons name="trophy-outline" size={20} color="#a78bfa" />
+        </TouchableOpacity>
+      </View>
+
       {floatingFoods.map((food, i) => (
         <FloatingFood 
           key={i} 
@@ -298,7 +316,14 @@ export const MainMenu: React.FC<MainMenuProps> = ({ onStartGame, onSelectGame, o
 
          {progressInfo}
 
-        <View style={{ width: maxWidth }} className="bg-black/60 p-3 rounded-xl border border-cyan-700 mb-4 mt-6">
+         <View style={{ width: maxWidth }} className="mt-6">
+           <DailyQuests 
+             quests={progress.dailyQuests} 
+             renown={progress.kingdomRenown} 
+           />
+         </View>
+
+        <View style={{ width: maxWidth }} className="bg-black/60 p-3 rounded-xl border border-cyan-700 mb-4 mt-2">
           <View className="flex-row justify-between items-center">
             <View className="flex-1">
               <Text className="text-cyan-400 text-xs font-bold mb-1">🔐 PRIVACY</Text>

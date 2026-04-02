@@ -10,6 +10,8 @@ import { GameTier } from '@/constants/gameTiers';
 import { getUserModeConfig } from '@/constants/userModes';
 import { COLORS } from '@/constants/designSystem';
 import { useAccessibility } from '@/hooks/useAccessibility';
+import { WeeklyLeaderboard } from './WeeklyLeaderboard';
+import { getWeeklySeed } from '@/utils/random';
 
 // Fun glucose facts and tips
 const GLUCOSE_FACTS = [
@@ -48,6 +50,30 @@ function getModeSpecificMessage(userMode: UserMode | undefined, tier: GameTier |
   }
   return '';
 }
+
+// Personal Advisor mapping based on performance
+const ADVISOR_TIPS = {
+  sugar: {
+    reject: 'Good job rejecting refined sugars! They cause rapid spikes.',
+    consume: 'Sugary foods cause rapid spikes. Try pairing with protein next time.',
+  },
+  processed: {
+    reject: 'Bypassing processed snacks keeps your energy stable longer.',
+    consume: 'Processed foods lack fiber, leading to erratic glucose levels.',
+  },
+  vegetable: {
+    reject: 'Veggies are your best allies! Don\'t let them go to waste.',
+    consume: 'Excellent! Fiber from vegetables slows down sugar absorption.',
+  },
+  protein: {
+    reject: 'Proteins help flatten the curve. Try to include them in meals.',
+    consume: 'Smart move. Protein provides a steady energy release.',
+  },
+  hydration: {
+    reject: 'Hydration is key! High glucose can lead to dehydration.',
+    consume: 'Great! Staying hydrated helps your body manage glucose better.',
+  },
+};
 
 interface ResultsScrollProps {
   result: 'victory' | 'defeat';
@@ -137,6 +163,8 @@ export const ResultsScroll: React.FC<ResultsScrollProps> = ({
     ? Math.round((correctSwipes / (correctSwipes + incorrectSwipes)) * 100) 
     : 0;
 
+  const isWeeklyChallenge = tier === 'weekly';
+
   const getGrade = () => {
     if (score >= 500 && accuracy >= 90) return { grade: 'S', color: '#fbbf24', title: 'LEGENDARY!' };
     if (score >= 400 && accuracy >= 80) return { grade: 'A', color: '#22c55e', title: 'EXCELLENT!' };
@@ -147,6 +175,39 @@ export const ResultsScroll: React.FC<ResultsScrollProps> = ({
 
   const gradeInfo = getGrade();
   const a11yResultsLabel = getResultsLabel(result, score, gradeInfo.grade);
+  const weeklySeed = getWeeklySeed();
+
+  const getEducationalInsight = () => {
+    if (!gameState) return null;
+    
+    // Alchemist's Lab specific advice
+    if (isWeeklyChallenge) {
+      return {
+        icon: '🧪',
+        title: 'ALCHEMIST\'S LAB REPORT',
+        message: 'This seeded run tests your consistency. Everyone faces the same foods this week! To rank higher, focus on maintaining a Balanced Zone streak (40-60%) for score multipliers.',
+      };
+    }
+
+    // Find most frequent food types in incorrect swipes
+    // (In a real app, we'd track which foods were missed/wrongly swiped)
+    // For now, let's provide a generic tip based on the game result
+    if (result === 'defeat') {
+      return {
+        icon: '👨‍🔬',
+        title: 'ALCHEMIST\'S ADVICE',
+        message: 'When stability drops, focus on fiber-rich allies (🥦) and avoid the sugar horde (🍩). Movement (Exercise Power-up) can also help bring levels back down.',
+      };
+    }
+    
+    return {
+      icon: '🤴',
+      title: 'ROYAL COMMENDATION',
+      message: 'Your mastery of the 4-way swipe shows great tactical awareness. Remember: Saving healthy snacks for later (👈) is the mark of a true King!',
+    };
+  };
+
+  const insight = getEducationalInsight();
   
   // Share functionality
   const handleShare = async () => {
@@ -306,6 +367,33 @@ export const ResultsScroll: React.FC<ResultsScrollProps> = ({
               </View>
               <Text style={{ fontSize: 14, fontWeight: 'bold', color: gradeInfo.color }}>{gradeInfo.title}</Text>
             </View>
+
+            {/* Educational Insight - NEW */}
+            {insight && (
+              <View style={{ 
+                backgroundColor: 'rgba(59, 130, 246, 0.1)', 
+                padding: 10, 
+                borderRadius: 12, 
+                borderWidth: 1, 
+                borderColor: 'rgba(59, 130, 246, 0.3)',
+                marginBottom: 10
+              }}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 4 }}>
+                  <Text style={{ fontSize: 16, marginRight: 6 }}>{insight.icon}</Text>
+                  <Text style={{ color: '#93c5fd', fontSize: 10, fontWeight: 'bold', letterSpacing: 1 }}>{insight.title}</Text>
+                </View>
+                <Text style={{ color: '#d1d5db', fontSize: 11, lineHeight: 15 }}>{insight.message}</Text>
+              </View>
+            )}
+
+            {/* Weekly Leaderboard - NEW */}
+            {isWeeklyChallenge && (
+              <WeeklyLeaderboard 
+                playerScore={score} 
+                playerTitle={gradeInfo.title}
+                seed={weeklySeed}
+              />
+            )}
 
             {/* Stats */}
             <View style={{ marginBottom: 10 }}>

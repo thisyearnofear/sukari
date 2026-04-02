@@ -34,8 +34,9 @@ export const BattleTutorialModal: React.FC<BattleTutorialModalProps> = ({
         }),
       ]).start();
 
-      // Auto-dismiss after 4 seconds
-      const timer = setTimeout(onDismiss, 4000);
+      // Optional: Auto-dismiss after 6 seconds (increased from 4s) 
+      // but let the user tap to continue
+      const timer = setTimeout(onDismiss, 6000);
       return () => {
         clearTimeout(timer);
         fadeAnim.setValue(0);
@@ -51,18 +52,20 @@ export const BattleTutorialModal: React.FC<BattleTutorialModalProps> = ({
 
   const isAlly = food.faction === 'ally';
   const direction = isAlly ? '👆' : '👇';
-  const buttonText = isAlly ? '👆 RALLY' : '👇 BANISH';
+  const buttonText = isAlly ? 'RALLY' : 'BANISH';
   const color = isAlly ? '#22c55e' : '#ef4444';
 
   return (
     <Modal visible={visible} transparent animationType="none">
-      <View
+      <TouchableOpacity
         style={{
           flex: 1,
           backgroundColor: 'rgba(0,0,0,0.7)',
           alignItems: 'center',
           justifyContent: 'center',
         }}
+        activeOpacity={1}
+        onPress={onDismiss}
       >
         <Animated.View
           style={{
@@ -81,37 +84,40 @@ export const BattleTutorialModal: React.FC<BattleTutorialModalProps> = ({
           <Text style={{ fontSize: 60, marginBottom: 16 }}>{food.sprite}</Text>
 
           {/* Instruction */}
-          <Text style={{ fontSize: 14, color: '#d1d5db', textAlign: 'center', marginBottom: 16, fontWeight: '600' }}>
+          <Text style={{ fontSize: 16, color: '#d1d5db', textAlign: 'center', marginBottom: 24, fontWeight: '600' }}>
             {isAlly
               ? `🥗 This is HEALTHY\nSwipe or tap ${direction} to RALLY it!`
               : `🍩 This is JUNK FOOD\nSwipe or tap ${direction} to BANISH it!`}
           </Text>
 
-          {/* Action buttons - only show if tap mode for clarity */}
-          {controlMode === 'tap' && (
-            <TouchableOpacity
-              onPress={onDismiss}
-              style={{
-                backgroundColor: color,
-                paddingHorizontal: 32,
-                paddingVertical: 12,
-                borderRadius: 12,
-                marginBottom: 8,
-              }}
-              activeOpacity={0.8}
-            >
-              <Text style={{ color: 'white', fontWeight: 'bold', fontSize: 14 }}>
-                {buttonText}
-              </Text>
-            </TouchableOpacity>
-          )}
+          {/* Action button - always show as "Tap to Continue" or primary action */}
+          <TouchableOpacity
+            onPress={onDismiss}
+            style={{
+              backgroundColor: color,
+              paddingHorizontal: 40,
+              paddingVertical: 14,
+              borderRadius: 14,
+              marginBottom: 8,
+              shadowColor: color,
+              shadowOffset: { width: 0, height: 4 },
+              shadowOpacity: 0.3,
+              shadowRadius: 8,
+              elevation: 5,
+            }}
+            activeOpacity={0.8}
+          >
+            <Text style={{ color: 'white', fontWeight: 'bold', fontSize: 16, letterSpacing: 1 }}>
+              {buttonText.toUpperCase()}
+            </Text>
+          </TouchableOpacity>
 
-          {/* Auto-dismiss hint */}
-          <Text style={{ fontSize: 11, color: '#6b7280', fontStyle: 'italic' }}>
-            Dismisses automatically in 4 seconds
+          {/* Dismiss hint */}
+          <Text style={{ fontSize: 11, color: '#6b7280', marginTop: 8 }}>
+            Tap anywhere to continue
           </Text>
         </Animated.View>
-      </View>
+      </TouchableOpacity>
     </Modal>
   );
 };

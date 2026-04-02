@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { View, Text, Animated, Dimensions, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, Text, Animated, Dimensions, StyleSheet, TouchableOpacity, useWindowDimensions, Platform } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { FoodCard } from './FoodCard';
 import { BattleHUD } from './BattleHUD';
@@ -185,7 +185,63 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({
   tierConfig,
   onToggleControlMode,
 }) => {
+  const { width: screenWidth, height: screenHeight } = useWindowDimensions();
   const shakeAnim = useRef(new Animated.Value(0)).current;
+
+  // Handle keyboard inputs for desktop
+  useEffect(() => {
+    if (Platform.OS !== 'web' || !gameState.isGameActive || showTutorial) return;
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (gameState.foods.length === 0) return;
+      
+      const firstFood = gameState.foods[0];
+      let direction: SwipeDirection | null = null;
+      let action: SwipeAction | null = null;
+
+      switch (e.key) {
+        case 'ArrowUp':
+        case 'w':
+        case 'W':
+          direction = 'up';
+          action = 'consume';
+          break;
+        case 'ArrowDown':
+        case 's':
+        case 'S':
+          direction = 'down';
+          action = 'reject';
+          break;
+        case 'ArrowLeft':
+        case 'a':
+        case 'A':
+          if (gameState.gameMode === 'life') {
+            direction = 'left';
+            action = 'save';
+          }
+          break;
+        case 'ArrowRight':
+        case 'd':
+        case 'D':
+          if (gameState.gameMode === 'life') {
+            direction = 'right';
+            action = 'share';
+          }
+          break;
+        case ' ': // Space for exercise/rations or general action
+          if (showInsulinControl) return;
+          // Contextual action or just ignore
+          break;
+      }
+
+      if (direction && action) {
+        onSwipe(firstFood.id, direction, action);
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [gameState.isGameActive, gameState.foods, gameState.gameMode, showTutorial, showInsulinControl, onSwipe]);
    const zone = getStabilityZone(gameState.stability);
    const insets = useSafeAreaInsets();
    const [showInsulinControl, setShowInsulinControl] = useState(false);

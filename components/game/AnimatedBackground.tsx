@@ -1,8 +1,8 @@
 import React, { useEffect, useRef } from 'react';
-import { View, Text, Animated, Dimensions, StyleSheet, ImageBackground } from 'react-native';
+import { View, Text, Animated, Dimensions, StyleSheet, ImageBackground, useWindowDimensions } from 'react-native';
 import { StabilityZone, TimePhase } from '@/types/game';
 
-const { width, height } = Dimensions.get('window');
+// const { width, height } = Dimensions.get('window');
 
 interface AnimatedBackgroundProps {
   zone: StabilityZone;
@@ -69,6 +69,7 @@ export const AnimatedBackground: React.FC<AnimatedBackgroundProps> = ({
   timePhase = 'morning',
   gameMode = 'classic',
 }) => {
+  const { width: screenWidth, height: screenHeight } = useWindowDimensions();
   const pulseAnim = useRef(new Animated.Value(0)).current;
   const rotateAnim = useRef(new Animated.Value(0)).current;
   const scaleAnim = useRef(new Animated.Value(1)).current;

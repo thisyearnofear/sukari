@@ -44,8 +44,7 @@ import {
   TIME_SPEED_MODIFIERS,
   MESSAGE_POSITIONS,
 } from '@/constants/gameConfig';
-import { getReflectionMessage } from '@/constants/userModes';
-import { useVRFService } from './useVRFService';
+import { SeededRandom, getWeeklySeed } from '@/utils/random';
 
 const { width, height } = Dimensions.get('window');
 
@@ -94,10 +93,10 @@ const isMetricWarning = (value: number): boolean => (value > 15 && value <= 30) 
 // Default food effects for backwards compatibility
 const DEFAULT_EFFECTS: FoodEffects = { energy: 0, hydration: 0, nutrition: 0, stability: 0 };
 
-const selectRandomFood = (isAlly: boolean, timePhase?: TimePhase): FoodDefinition => {
+const selectRandomFood = (isAlly: boolean, timePhase?: TimePhase, seededRandom?: SeededRandom | null): FoodDefinition => {
   const foods = isAlly ? ALLY_FOODS : ENEMY_FOODS;
   const totalWeight = foods.reduce((sum, f) => sum + f.spawnWeight, 0);
-  let random = Math.random() * totalWeight;
+  let random = seededRandom ? seededRandom.next() * totalWeight : Math.random() * totalWeight;
 
   for (const food of foods) {
     random -= food.spawnWeight;
@@ -108,11 +107,12 @@ const selectRandomFood = (isAlly: boolean, timePhase?: TimePhase): FoodDefinitio
 
 const SIDE_PANEL_WIDTH = 80; // Match the side panel width from LifeModeHUD
 
-const createFoodUnit = (definition: FoodDefinition, timePhase?: TimePhase, gameMode?: GameMode): FoodUnit => {
+const createFoodUnit = (definition: FoodDefinition, timePhase?: TimePhase, gameMode?: GameMode, seededRandom?: SeededRandom | null): FoodUnit => {
   // For life mode, spawn within the narrower center area
   const leftMargin = gameMode === 'life' ? SIDE_PANEL_WIDTH + 20 : 40;
   const rightMargin = gameMode === 'life' ? SIDE_PANEL_WIDTH + 20 : 40;
-  const spawnX = leftMargin + Math.random() * (width - leftMargin - rightMargin);
+  const randomX = seededRandom ? seededRandom.next() : Math.random();
+  const spawnX = leftMargin + randomX * (width - leftMargin - rightMargin);
   const spawnY = -60;
 
   // Determine if contextual food is good based on time
@@ -122,8 +122,11 @@ const createFoodUnit = (definition: FoodDefinition, timePhase?: TimePhase, gameM
     isContextuallyGood = modifier > 0;
   }
 
+  const randomSpeed = seededRandom ? seededRandom.next() : Math.random();
+  const randomId = seededRandom ? seededRandom.nextInt(0, 1000000).toString() : Math.random().toString(36).substr(2, 9);
+
   return {
-    id: `food-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+    id: `food-${Date.now()}-${randomId}`,
     type: definition.type,
     faction: definition.faction,
     name: definition.name,
@@ -131,7 +134,7 @@ const createFoodUnit = (definition: FoodDefinition, timePhase?: TimePhase, gameM
     x: spawnX,
     y: spawnY,
     targetY: height - 200, // Stop well above the bottom (was 120, now 200)
-    speed: 1.2 + Math.random() * 0.8,
+    speed: 1.2 + randomSpeed * 0.8,
     points: definition.basePoints,
     glucoseImpact: definition.glucoseImpact,
     effects: definition.effects || DEFAULT_EFFECTS,
@@ -242,6 +245,15 @@ export const useBattleGame = (onFoodConsumed?: (foodNutrients: FoodNutrients) =>
   const { generateFairPlotTwist, getVerifiableRandom } = useVRFService();
 
   const [vrfEnabled, setVrfEnabled] = useState(false); // Toggle for testing VRF fairness
+  const seededRandomRef = useRef<SeededRandom | null>(null);
+
+  useEffect(() => {
+    if (tierConfig?.tier === 'weekly') {
+      seededRandomRef.current = new SeededRandom(getWeeklySeed());
+    } else {
+      seededRandomRef.current = null;
+    }
+  }, [tierConfig?.tier]);
 
   const triggerPlotTwist = useCallback(async () => {
     try {
@@ -559,9 +571,10 @@ export const useBattleGame = (onFoodConsumed?: (foodNutrients: FoodNutrients) =>
       setGameState(prev => {
         if (prev.foods.length >= SPAWN_CONFIG.MAX_FOODS_ON_SCREEN || prev.isPaused) return prev;
 
-        const isAlly = Math.random() < SPAWN_CONFIG.ALLY_SPAWN_CHANCE;
-        const definition = selectRandomFood(isAlly, prev.timePhase);
-        const newFood = createFoodUnit(definition, prev.timePhase, prev.gameMode);
+        const randomVal = seededRandomRef.current ? seededRandomRef.current.next() : Math.random();
+        const isAlly = randomVal < SPAWN_CONFIG.ALLY_SPAWN_CHANCE;
+        const definition = selectRandomFood(isAlly, prev.timePhase, seededRandomRef.current);
+        const newFood = createFoodUnit(definition, prev.timePhase, prev.gameMode, seededRandomRef.current);
 
         return {
           ...prev,

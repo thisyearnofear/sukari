@@ -1,7 +1,7 @@
 import { GameMode } from '@/types/game';
 import { HealthScenario } from '@/types/health';
 
-export type GameTier = 'tier1' | 'tier2' | 'tier3' | 'slowmo';
+export type GameTier = 'tier1' | 'tier2' | 'tier3' | 'slowmo' | 'weekly';
 
 export interface TierConfig {
   tier: GameTier;
@@ -116,6 +116,28 @@ export const GAME_TIERS: Record<GameTier, TierConfig> = {
     requiresWin: false,
     gameMode: 'slowmo',
     educationalFocus: true, // Special flag for educational mode
+  },
+  weekly: {
+    tier: 'weekly',
+    name: "Alchemist's Lab",
+    description: 'Weekly Challenge: Same for everyone!',
+    duration: 120,
+    foodSpawnRate: 900,
+    maxConcurrentFoods: 8,
+    swipeDirections: ['up', 'down', 'left', 'right'],
+    showMetrics: true,
+    showGlucose: true,
+    showComboCounter: true,
+    showSocialStats: true,
+    enablePlotTwists: true,
+    healthProfile: 'auto_newly_aware',
+    tutorialMode: false,
+    insulinRequired: true,
+    insulinUIEnabled: true,
+    dexcomOption: true,
+    winCondition: 'advanced',
+    requiresWin: false,
+    gameMode: 'life',
   },
 };
 

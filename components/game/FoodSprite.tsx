@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { memo } from 'react';
 import { View, Text } from 'react-native';
 import { FoodUnit } from '@/types/game';
 import { FOOD_DEFINITIONS } from '@/constants/gameConfig';
@@ -7,7 +7,7 @@ interface FoodSpriteProps {
   food: FoodUnit;
 }
 
-export const FoodSprite: React.FC<FoodSpriteProps> = ({ food }) => {
+const FoodSpriteComponent: React.FC<FoodSpriteProps> = ({ food }) => {
   const definition = FOOD_DEFINITIONS.find(d => d.type === food.type);
   
   return (
@@ -39,3 +39,17 @@ export const FoodSprite: React.FC<FoodSpriteProps> = ({ food }) => {
     </View>
   );
 };
+
+// Optimization: Memoize FoodSprite to prevent unnecessary re-renders during the game loop.
+// Only re-render if position (x, y) or key properties change.
+// This follows the PERFORMANT Core Principle.
+export const FoodSprite = memo(FoodSpriteComponent, (prevProps, nextProps) => {
+  return (
+    prevProps.food.id === nextProps.food.id &&
+    prevProps.food.x === nextProps.food.x &&
+    prevProps.food.y === nextProps.food.y &&
+    prevProps.food.type === nextProps.food.type &&
+    prevProps.food.opacity === nextProps.food.opacity &&
+    prevProps.food.scale === nextProps.food.scale
+  );
+});

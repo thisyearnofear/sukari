@@ -15,8 +15,6 @@
     "preset": "jest-expo"
   },
   "dependencies": {
-    "@ethersproject/providers": "5.8.0",
-    "@ethersproject/random": "5.8.0",
     "@expo/vector-icons": "^15.0.3",
     "@rainbow-me/rainbowkit": "^2.1.0",
     "@react-native-async-storage/async-storage": "^2.2.0",
