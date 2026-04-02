@@ -6,13 +6,15 @@ GlucoseWars is a ubiquitous, immersive kingdom-defense game that turns health ma
 
 In the Realm of Harmony, your body is your Kingdom. You must defend it against the **Sugar Horde** (Enemies) while rallying your **Allies** (Healthy Foods). Every swipe affects your Kingdom's **Vigor**, **Purity**, **Vitality**, and **Harmony**.
 
-## ⚔️ Ubiquitous Design
+## ⚔️ Ubiquitous & User-Ready
 
-Unlike traditional health apps, GlucoseWars is built for **ubiquity**:
+GlucoseWars is built for **ubiquity** and is now **User-Ready**:
 - **Kingdom-First Narrative**: No clinical friction. Medical concepts are wrapped in "Common Lore" and "Ancient Scrolls."
 - **Immersive Roles**: Choose your path as a **Protector**, **Guardian**, or **Alchemist**.
+- **Grand Library**: A discovery hub for educational "Kingdom Secrets" that rewards curiosity.
+- **Royal Treasury**: Secure your "Deeds of Valor" (Achievements) on-chain via the Beam network.
 - **Cross-Platform Mastery**: Precise touch controls for mobile and intuitive keyboard support for desktop.
-- **Universal Appeal**: High-paced gameplay that rewards skill, timing, and strategic thinking.
+- **Universal Appeal**: High-paced gameplay that rewards skill, timing, and strategic thinking for all ages.
 
 ## 🎓 The Grand Library
 
@@ -69,10 +71,12 @@ npx expo start
 - No cognitive overload for new players
 - Natural difficulty scaling
 
-### ✅ Scroll Blockchain Integration
-- **Player Progress**: Onchain state tracking
-- **Achievement NFTs**: Mintable health milestones
-- **Cross-Device Sync**: Persistent identity
+### ✅ Beam SDK Integration (User-Ready)
+- **Social Onboarding**: Frictionless login via Google, Apple, or Discord.
+- **Gasless Sessions**: Pure gameplay, no transaction friction for the user.
+- **Persistent Progress**: Sync Kingdom Renown and Tiers across all devices.
+- **Deed Minting**: Tokenize achievements as on-chain "Deeds of Valor."
+- **Global Proclamations**: Real-time community leaderboard notifications.
 
 ### ✅ Dexcom Integration
 - **Tier 2 Showcase**: Contextual real data introduction

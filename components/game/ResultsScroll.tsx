@@ -13,6 +13,7 @@ import { COLORS } from '@/constants/designSystem';
 import { useAccessibility } from '@/hooks/useAccessibility';
 import { WeeklyLeaderboard } from './WeeklyLeaderboard';
 import { getWeeklySeed } from '@/utils/random';
+import { usePlayerProgress } from '@/hooks/usePlayerProgress';
 
 // Kingdom Lore and Wisdom
 // MOVED TO constants/gameConfig.ts
@@ -123,6 +124,8 @@ export const ResultsScroll: React.FC<ResultsScrollProps> = ({
   const [showScrollPanel, setShowScrollPanel] = useState(false);
   const [randomLore] = useState(() => KINGDOM_LORE[Math.floor(Math.random() * KINGDOM_LORE.length)]);
   const { evaluateAchievements } = useScrollIntegration();
+  const { getSlowMoAnalytics } = usePlayerProgress();
+  const playerAnalytics = getSlowMoAnalytics();
 
   // Evaluate achievements when game ends
   useEffect(() => {
@@ -186,6 +189,16 @@ export const ResultsScroll: React.FC<ResultsScrollProps> = ({
         icon: '🧪',
         title: 'ALCHEMIST\'S OBSERVATION',
         message: 'This seeded run tests your consistency. Everyone faces the same foods this week! To rank higher, focus on maintaining a Harmony streak (40-60%) for score multipliers.',
+      };
+    }
+
+    // Personalized Kingdom Decree based on health analytics (EDUCATIVE & ENHANCEMENT FIRST)
+    if (playerAnalytics && playerAnalytics.totalSessions > 0 && playerAnalytics.recommendations.length > 0) {
+      const randomRecommendation = playerAnalytics.recommendations[Math.floor(Math.random() * playerAnalytics.recommendations.length)];
+      return {
+        icon: '📜',
+        title: 'KINGDOM DECREE',
+        message: `The Alchemist has analyzed your recent feats: "${randomRecommendation}" Use this wisdom to better defend your Harmony in the next battle!`,
       };
     }
 

@@ -217,7 +217,7 @@ const initialGameState: GameState = {
 };
 
 export const useBattleGame = (onFoodConsumed?: (foodNutrients: FoodNutrients) => void, tierConfig?: any, userMode?: UserMode) => {
-  const { beam, playerAccount } = useBeam();
+  const { playerAccount, reportGameResult } = useBeam();
   const { discoverLore } = usePlayerProgress();
   const [gameState, setGameState] = useState<GameState>(initialGameState);
 
@@ -404,18 +404,14 @@ export const useBattleGame = (onFoodConsumed?: (foodNutrients: FoodNutrients) =>
     if (plotTwistRef.current) clearTimeout(plotTwistRef.current);
 
     // Sync results with Beam (ENHANCEMENT FIRST & PERFORMANT)
-    if (playerAccount && beam) {
-      try {
-        console.log('Reporting game results to Beam:', { result, score: gameState.score });
-        // In a real implementation, we would use a Beam Session to sign and send the transaction
-        // await beam.reportMatchResult({
-        //   matchId: `match-${Date.now()}`,
-        //   score: gameState.score,
-        //   isVictory: result === 'victory'
-        // });
-      } catch (error) {
-        console.error('Failed to report results to Beam:', error);
-      }
+    if (playerAccount) {
+      reportGameResult(gameState.score, result, {
+        correctSwipes: gameState.correctSwipes,
+        incorrectSwipes: gameState.incorrectSwipes,
+        comboMax: gameState.comboCount, // Fixed: use comboCount instead of comboMax
+        timeInBalanced: gameState.timeInBalanced,
+        finalHarmony: gameState.stability
+      });
     }
 
     Haptics.notificationAsync(
@@ -423,7 +419,7 @@ export const useBattleGame = (onFoodConsumed?: (foodNutrients: FoodNutrients) =>
         ? Haptics.NotificationFeedbackType.Success
         : Haptics.NotificationFeedbackType.Error
     );
-  }, [playerAccount, beam, gameState.score]);
+  }, [playerAccount, reportGameResult, gameState.score, gameState.correctSwipes, gameState.incorrectSwipes, gameState.comboCount, gameState.timeInBalanced, gameState.stability]);
 
   // Timer countdown with Life Mode support
   useEffect(() => {

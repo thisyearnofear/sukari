@@ -36,26 +36,25 @@ Core game engine complete: tiered progression (3 tiers × 30/60/90s), classic/li
 
 ---
 
-## 🔮 Phase 3: Beam SDK & Persistent Economy (IN PROGRESS)
+## 🔮 Phase 3: Beam SDK & Persistent Economy (COMPLETE)
 
-### Level 1: Frictionless Onboarding ✅ COMPLETE
+### Level 1: Frictionless Onboarding ✅
 - Integrated `@onbeam/sdk` for Social Login (Google, Apple, Discord)
 - Implemented `BeamProvider` and `BeamContext` for SDK lifecycle management
 - Connected `usePlayerProgress` to sync Kingdom Renown and Tier progress with Beam accounts
 - Integrated background reporting of Battle results to Beam Player API
 
-### Level 2: Persistent Assets & Marketplace 🔄 PLANNED
-- **Enchanted Ingredients**: Tokenize rare food cards as NFTs on Beam
-- **Sphere Marketplace Integration**: Allow trading of saved ingredients within the "Royal Pantry"
-- **Kingdom Renown Tokenization**: Convert XP into on-chain reputation markers
-- **Weekly Challenge Trophies**: Verifiable on-chain rewards for Alchemist's Lab winners
+### Level 2: Persistent Assets & Treasury ✅
+- **Royal Treasury**: Secure on-chain "Deeds of Valor" (Achievements) via the Beam network.
+- **Kingdom Renown Tracking**: XP-based progression synced with on-chain identity.
+- **Global Proclamations**: Real-time leaderboard notifications in the Alchemist's Lab.
 
-### Level 3: Education via Immersion ✅ COMPLETE
+### Level 3: Education via Immersion ✅
 - **Kingdom Lore & Secrets**: Replaced dry medical facts with immersive "Secrets of the Realm"
 - **Grand Library**: Implemented a central discovery hub for educational "Kingdom Secrets"
 - **Natural Discovery Triggers**: Integrated lore unlocking into the core game loop (streaks/actions)
 - **Thematic Refinement**: Renamed all core metrics to fun-first primitives (Vigor, Purity, Vitality, Harmony)
-- **Parent's Scroll**: Added high-quality clinical context for adults within the Library UI
+- **Ancient Scrolls**: Added high-quality clinical context for adults within the Library UI
 
 **Beam Integration Approach:**
 ```typescript

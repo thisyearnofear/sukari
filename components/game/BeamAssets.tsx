@@ -53,6 +53,24 @@ const BEAM_ACHIEVEMENTS: BeamAchievement[] = [
     unlocked: false,
     isMinted: false,
   },
+  {
+    id: 'lore_master',
+    name: 'Lore Master',
+    description: 'Discover all secrets in the Grand Library.',
+    icon: '📜',
+    points: 500,
+    unlocked: false,
+    isMinted: false,
+  },
+  {
+    id: 'social_hero',
+    name: 'Social Hero',
+    description: 'Reach maximum Social meter in Life Mode.',
+    icon: '🤝',
+    points: 200,
+    unlocked: false,
+    isMinted: false,
+  },
 ];
 
 export const BeamAssets: React.FC<{ onClose: () => void }> = ({ onClose }) => {
@@ -70,8 +88,18 @@ export const BeamAssets: React.FC<{ onClose: () => void }> = ({ onClose }) => {
         
         // Update local state based on progress and Beam assets
         setAchievements(prev => prev.map(ach => {
-          // Check if unlocked locally (this would come from a more robust achievement system)
-          const isUnlocked = progress.kingdomRenown >= ach.points; 
+          // Check if unlocked locally
+          let isUnlocked = false;
+          
+          switch(ach.id) {
+            case 'victory_classic': isUnlocked = progress.gamesPlayed >= 1; break;
+            case 'victory_life': isUnlocked = progress.gamesPlayed >= 5; break;
+            case 'perfect_stability': isUnlocked = progress.kingdomRenown >= 1000; break;
+            case 'high_combo': isUnlocked = progress.kingdomRenown >= 500; break;
+            case 'lore_master': isUnlocked = progress.discoveredLoreIds.length >= 8; break;
+            case 'social_hero': isUnlocked = progress.kingdomRenown >= 2000; break;
+            default: isUnlocked = progress.kingdomRenown >= ach.points;
+          }
           
           // Check if minted on Beam
           const mintedAsset = beamOwnedAssets.find((a: any) => a.id === ach.id);

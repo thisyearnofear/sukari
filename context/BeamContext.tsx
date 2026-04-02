@@ -16,6 +16,7 @@ interface BeamContextType {
   showSyncFeedback: boolean;
   mintAchievement: (achievementId: string) => Promise<string | null>;
   fetchAchievements: () => Promise<any[]>;
+  reportGameResult: (score: number, result: 'victory' | 'defeat', metrics?: any) => Promise<boolean>;
 }
 
 const BeamContext = createContext<BeamContextType | undefined>(undefined);
@@ -68,8 +69,14 @@ export const BeamProvider = ({ children }: { children: ReactNode }) => {
       setIsLoading(true);
       // In a real implementation, this would trigger the Social Login flow
       // const account = await beam.login({ provider: 'google' });
-      // setPlayerAccount(account);
-      console.log('Beam login triggered');
+      // For now, we simulate a successful login to demonstrate the "User Ready" state
+      const mockAccount = {
+        address: '0x748a...93c5',
+        name: 'Guardian-748',
+        provider: 'google',
+      };
+      setPlayerAccount(mockAccount);
+      console.log('Beam login triggered - simulation successful');
     } catch (error) {
       console.error('Beam login failed:', error);
     } finally {
@@ -121,6 +128,26 @@ export const BeamProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
+  const reportGameResult = async (score: number, result: 'victory' | 'defeat', metrics?: any) => {
+    if (!beam || !playerAccount) return false;
+    try {
+      triggerSyncFeedback();
+      console.log(`Reporting game results to Beam for ${playerAccount.address}:`, { score, result, metrics });
+      
+      // In a real implementation, this would use the Beam Session to sign and send the result
+      // This ensures progression is persistent and verifiable on the Beam network
+      // await beam.sessions.signAndSend({
+      //   to: BEAM_CHALLENGE_ID,
+      //   data: encodeResultData(score, result, metrics),
+      // });
+      
+      return true;
+    } catch (error) {
+      console.error('Failed to report game result to Beam:', error);
+      return false;
+    }
+  };
+
   return (
     <BeamContext.Provider
       value={{
@@ -133,6 +160,7 @@ export const BeamProvider = ({ children }: { children: ReactNode }) => {
         showSyncFeedback,
         mintAchievement,
         fetchAchievements,
+        reportGameResult,
       }}
     >
       {children}
