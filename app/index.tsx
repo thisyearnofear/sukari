@@ -27,6 +27,7 @@ import {
 } from '@/constants/navigation';
 
 export default function HomeScreen() {
+  const [isClient, setIsClient] = useState(false);
   const {
     progress,
     unlockNextTier,
@@ -38,7 +39,22 @@ export default function HomeScreen() {
     trackQuestProgress,
   } = usePlayerProgress();
 
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
+
   const [appScreen, setAppScreen] = useState<AppScreen>('menu');
+
+  // ... rest of state ...
+
+  if (!isClient) {
+    return (
+      <View style={{ flex: 1, backgroundColor: '#1a1a2e', justifyContent: 'center', alignItems: 'center' }}>
+        <Text style={{ color: '#fff' }}>Loading Kingdom...</Text>
+      </View>
+    );
+  }
+
   const [controlMode, setControlMode] = useState<ControlMode>('swipe');
   const [selectedHealthScenario, setSelectedHealthScenario] = useState<string | null>(null);
   const [selectedGameMode, setSelectedGameMode] = useState<GameMode>('classic');

@@ -99,7 +99,9 @@ export const KINGDOM_MILESTONES: KingdomMilestone[] = [
 ];
 
 export function usePlayerProgress() {
-  const { playerAccount, beam } = useBeam();
+  const beamContext = useBeam();
+  const playerAccount = beamContext?.playerAccount;
+  const beam = beamContext?.beam;
   const [progress, setProgress] = useState<PlayerProgressState>({
     maxTierUnlocked: 'tier1',
     currentTier: 'tier1',

@@ -38,19 +38,23 @@ export const Web3Provider = ({ children }: { children: ReactNode }) => {
 
           // Check if user is already connected
           if (typeof window !== 'undefined' && (window as any).ethereum) {
-            const accounts = await (window as any).ethereum.request({ method: 'eth_accounts' });
-            if (accounts.length > 0) {
-              const web3Provider = new BrowserProvider((window as any).ethereum);
-              const webSigner = await web3Provider.getSigner();
+            try {
+              const accounts = await (window as any).ethereum.request({ method: 'eth_accounts' });
+              if (accounts.length > 0) {
+                const web3Provider = new BrowserProvider((window as any).ethereum);
+                const webSigner = await web3Provider.getSigner();
 
-              setIsConnected(true);
-              setAddress(await webSigner.getAddress());
-              setProvider(web3Provider);
-              setSigner(webSigner);
+                setIsConnected(true);
+                setAddress(await webSigner.getAddress());
+                setProvider(web3Provider);
+                setSigner(webSigner);
 
-              // Get chain ID
-              const network = await web3Provider.getNetwork();
-              setChainId(Number(network.chainId));
+                // Get chain ID
+                const network = await web3Provider.getNetwork();
+                setChainId(Number(network.chainId));
+              }
+            } catch (reqError) {
+              console.warn('Silent Web3 initialization failed:', reqError);
             }
           }
         } catch (error) {

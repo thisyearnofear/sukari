@@ -171,7 +171,7 @@ export const BeamProvider = ({ children }: { children: ReactNode }) => {
 export const useBeam = () => {
   const context = useContext(BeamContext);
   if (context === undefined) {
-    throw new Error('useBeam must be used within a BeamProvider');
+    return null as any; // Return null instead of throwing to prevent app crash if used outside provider
   }
   return context;
 };
