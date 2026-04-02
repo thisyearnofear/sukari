@@ -8,7 +8,7 @@ interface GrandLibraryProps {
 }
 
 export const GrandLibrary: React.FC<GrandLibraryProps> = ({ discoveredLoreIds, onClose }) => {
-  const [showParentScroll, setShowParentScroll] = React.useState(false);
+  const [showAncientScrolls, setShowAncientScrolls] = React.useState(false);
 
   return (
     <View style={{
@@ -47,16 +47,16 @@ export const GrandLibrary: React.FC<GrandLibraryProps> = ({ discoveredLoreIds, o
       {/* Mode Toggle */}
       <View style={{ flexDirection: 'row', backgroundColor: 'rgba(0,0,0,0.5)', borderRadius: 25, padding: 4, marginBottom: 20, borderWidth: 1, borderColor: 'rgba(255,255,255,0.1)' }}>
         <TouchableOpacity 
-          onPress={() => setShowParentScroll(false)}
-          style={{ flex: 1, paddingVertical: 8, alignItems: 'center', borderRadius: 21, backgroundColor: !showParentScroll ? 'rgba(251, 191, 36, 0.2)' : 'transparent' }}
+          onPress={() => setShowAncientScrolls(false)}
+          style={{ flex: 1, paddingVertical: 8, alignItems: 'center', borderRadius: 21, backgroundColor: !showAncientScrolls ? 'rgba(251, 191, 36, 0.2)' : 'transparent' }}
         >
-          <Text style={{ color: !showParentScroll ? '#fbbf24' : '#94a3b8', fontSize: 13, fontWeight: 'bold' }}>KINGDOM LORE</Text>
+          <Text style={{ color: !showAncientScrolls ? '#fbbf24' : '#94a3b8', fontSize: 13, fontWeight: 'bold' }}>COMMON LORE</Text>
         </TouchableOpacity>
         <TouchableOpacity 
-          onPress={() => setShowParentScroll(true)}
-          style={{ flex: 1, paddingVertical: 8, alignItems: 'center', borderRadius: 21, backgroundColor: showParentScroll ? 'rgba(59, 130, 246, 0.2)' : 'transparent' }}
+          onPress={() => setShowAncientScrolls(true)}
+          style={{ flex: 1, paddingVertical: 8, alignItems: 'center', borderRadius: 21, backgroundColor: showAncientScrolls ? 'rgba(59, 130, 246, 0.2)' : 'transparent' }}
         >
-          <Text style={{ color: showParentScroll ? '#60a5fa' : '#94a3b8', fontSize: 13, fontWeight: 'bold' }}>PARENT\'S SCROLL</Text>
+          <Text style={{ color: showAncientScrolls ? '#60a5fa' : '#94a3b8', fontSize: 13, fontWeight: 'bold' }}>ANCIENT SCROLLS</Text>
         </TouchableOpacity>
       </View>
 
@@ -71,7 +71,7 @@ export const GrandLibrary: React.FC<GrandLibraryProps> = ({ discoveredLoreIds, o
               padding: 16,
               marginBottom: 16,
               borderWidth: 2,
-              borderColor: isUnlocked ? (showParentScroll ? '#3b82f6' : '#fbbf24') : 'rgba(255,255,255,0.05)',
+              borderColor: isUnlocked ? (showAncientScrolls ? '#3b82f6' : '#fbbf24') : 'rgba(255,255,255,0.05)',
               opacity: isUnlocked ? 1 : 0.6,
             }}>
               <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 12 }}>
@@ -83,8 +83,8 @@ export const GrandLibrary: React.FC<GrandLibraryProps> = ({ discoveredLoreIds, o
                     {isUnlocked ? lore.fact.split(':')[0] : 'Locked Secret'}
                   </Text>
                   {isUnlocked && (
-                    <Text style={{ color: showParentScroll ? '#60a5fa' : '#fbbf24', fontSize: 10, fontWeight: 'bold' }}>
-                      {showParentScroll ? 'SCROLL OF HEALING' : 'KINGDOM KNOWLEDGE'}
+                    <Text style={{ color: showAncientScrolls ? '#60a5fa' : '#fbbf24', fontSize: 10, fontWeight: 'bold' }}>
+                      {showAncientScrolls ? 'FORGOTTEN WISDOM' : 'COMMON LORE'}
                     </Text>
                   )}
                 </View>
@@ -93,14 +93,14 @@ export const GrandLibrary: React.FC<GrandLibraryProps> = ({ discoveredLoreIds, o
               {isUnlocked ? (
                 <>
                   <Text style={{ color: '#cbd5e1', fontSize: 14, lineHeight: 20, marginBottom: 12 }}>
-                    {showParentScroll ? getMedicalContext(lore.id) : lore.fact.split(':')[1]?.trim() || lore.fact}
+                    {showAncientScrolls ? getMedicalContext(lore.id) : lore.fact.split(':')[1]?.trim() || lore.fact}
                   </Text>
                   <View style={{ backgroundColor: 'rgba(0,0,0,0.3)', padding: 12, borderRadius: 10 }}>
-                    <Text style={{ color: showParentScroll ? '#93c5fd' : '#fde68a', fontSize: 12, fontWeight: '600' }}>
-                      💡 {showParentScroll ? 'CLINICAL ADVICE' : 'ALCHEMIST\'S TIP'}
+                    <Text style={{ color: showAncientScrolls ? '#93c5fd' : '#fde68a', fontSize: 12, fontWeight: '600' }}>
+                      💡 {showAncientScrolls ? 'SCRIBE\'S NOTE' : 'ALCHEMIST\'S TIP'}
                     </Text>
                     <Text style={{ color: '#94a3b8', fontSize: 11, marginTop: 4 }}>
-                      {showParentScroll ? getClinicalTip(lore.id) : lore.tip}
+                      {showAncientScrolls ? getClinicalTip(lore.id) : lore.tip}
                     </Text>
                   </View>
                 </>

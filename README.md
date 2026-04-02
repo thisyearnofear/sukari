@@ -1,10 +1,32 @@
-# GlucoseWars: Gamified Health Education on Scroll
+# GlucoseWars: Defend the Realm
 
-**🎮 A revolutionary approach to diabetes education through tiered progression gaming**
+GlucoseWars is a ubiquitous, immersive kingdom-defense game that turns health management into an epic quest. Designed for all ages, it uses high-speed "Fruit Ninja" style mechanics to teach the laws of metabolic Harmony through play.
 
-## 🌟 Elevator Pitch
+## 🏰 The Premise
 
-GlucoseWars transforms complex glucose management into an engaging, progressive learning experience. Using a **tiered progression system**, players master health concepts through gameplay - from basic food choices to advanced insulin management. With **Scroll blockchain integration**, achievements become ownable NFTs, creating a meaningful connection between gaming and real-world health improvement.
+In the Realm of Harmony, your body is your Kingdom. You must defend it against the **Sugar Horde** (Enemies) while rallying your **Allies** (Healthy Foods). Every swipe affects your Kingdom's **Vigor**, **Purity**, **Vitality**, and **Harmony**.
+
+## ⚔️ Ubiquitous Design
+
+Unlike traditional health apps, GlucoseWars is built for **ubiquity**:
+- **Kingdom-First Narrative**: No clinical friction. Medical concepts are wrapped in "Common Lore" and "Ancient Scrolls."
+- **Immersive Roles**: Choose your path as a **Protector**, **Guardian**, or **Alchemist**.
+- **Cross-Platform Mastery**: Precise touch controls for mobile and intuitive keyboard support for desktop.
+- **Universal Appeal**: High-paced gameplay that rewards skill, timing, and strategic thinking.
+
+## 🎓 The Grand Library
+
+Discover the secrets of the Realm as you play. Unlock **Common Lore** to master the basics and delve into **Ancient Scrolls** for deeper wisdom regarding metabolic health, exercise, and sleep.
+
+## 💎 Onchain Persistence (Beam SDK)
+
+Your progress as a Hero is secured by the **Beam**.
+- **Social Onboarding**: Jump into the battle instantly with social login.
+- **Gasless Sessions**: Pure gameplay, no transaction friction.
+- **Persistent Renown**: Your achievements and "Kingdom Renown" are saved across devices.
+
+---
+*GlucoseWars: One Realm. One Harmony. One Hero.*
 
 ## 🚀 Quick Start
 

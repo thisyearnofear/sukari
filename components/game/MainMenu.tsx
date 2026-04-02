@@ -182,22 +182,22 @@ export const MainMenu: React.FC<MainMenuProps> = ({ onStartGame, onSelectGame, o
               const config = USER_MODE_CONFIGS[mode];
               const roleData = {
                 personal: { 
-                  emblem: '🏰', 
-                  color: 'border-red-400', 
-                  bg: 'bg-red-600/20',
-                  learningFocus: 'Self-management mastery'
+                  emblem: '🛡️', 
+                  color: 'border-amber-400', 
+                  bg: 'bg-amber-600/20',
+                  learningFocus: 'Personal mastery'
                 },
                 caregiver: { 
-                  emblem: '🛡️', 
-                  color: 'border-blue-400', 
-                  bg: 'bg-blue-600/20',
-                  learningFocus: 'Support techniques'
+                  emblem: '🏰', 
+                  color: 'border-cyan-400', 
+                  bg: 'bg-cyan-600/20',
+                  learningFocus: 'Realm-wide protection'
                 },
                 curious: { 
-                  emblem: '📜', 
-                  color: 'border-purple-400', 
-                  bg: 'bg-purple-600/20',
-                  learningFocus: 'Comprehensive understanding'
+                  emblem: '🧪', 
+                  color: 'border-emerald-400', 
+                  bg: 'bg-emerald-600/20',
+                  learningFocus: 'Universal wisdom'
                 }
               }[mode];
 
@@ -217,7 +217,7 @@ export const MainMenu: React.FC<MainMenuProps> = ({ onStartGame, onSelectGame, o
                     <Text className="text-2xl">{config.icon}</Text>
                   </View>
 
-                  <Text className={`text-xl font-bold text-center mb-2 ${mode === 'personal' ? 'text-red-300' : mode === 'caregiver' ? 'text-blue-300' : 'text-purple-300'}`}>
+                  <Text className={`text-xl font-bold text-center mb-2 ${mode === 'personal' ? 'text-amber-300' : mode === 'caregiver' ? 'text-cyan-300' : 'text-emerald-300'}`}>
                     {config.name}
                   </Text>
 
@@ -239,11 +239,11 @@ export const MainMenu: React.FC<MainMenuProps> = ({ onStartGame, onSelectGame, o
           </ScrollView>
 
           <View className="items-center">
-            <View style={{ width: maxWidth }} className="bg-black/60 p-4 rounded-xl border border-cyan-700 mb-4">
-              <Text className="text-cyan-400 text-xs font-bold mb-2">💡 WHY CHOOSE A ROLE?</Text>
-              <Text className="text-white text-xs mb-1">• Personalizes your educational journey</Text>
-              <Text className="text-white text-xs mb-1">• Tailors glucose management lessons</Text>
-              <Text className="text-white text-xs">• Connects you with others on similar journeys</Text>
+            <View style={{ width: maxWidth }} className="bg-black/60 p-4 rounded-xl border border-amber-700 mb-4">
+              <Text className="text-amber-400 text-xs font-bold mb-2">💡 WHY CHOOSE A ROLE?</Text>
+              <Text className="text-white text-xs mb-1">• Personalizes your journey through the Realm</Text>
+              <Text className="text-white text-xs mb-1">• Tailors your quest objectives and rewards</Text>
+              <Text className="text-white text-xs">• Aligns your Harmony with your chosen path</Text>
             </View>
 
             <Text style={{ width: maxWidth }} className="text-gray-500 text-xs text-center mb-4">

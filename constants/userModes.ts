@@ -92,42 +92,42 @@ export const MODE_REFLECTIONS: Record<UserMode, ReflectionMessage[]> = {
 };
 
 export const USER_MODE_CONFIGS: Record<UserMode, UserModeConfig> = {
-  personal: {
-    id: 'personal',
-    name: 'Personal',
-    icon: '👤',
-    description: 'Managing my own glucose',
-    subtitle: 'Learn what works for YOUR body',
-    narrative: {
-      onboarding: "Your glucose management journey starts here. Let's learn how your body responds to food choices.",
-      tier2ResultsHero: 'YOU MANAGED',
-      tier3ResultsHero: 'YOUR MASTERY UNLOCKED',
+    personal: { 
+      id: 'personal',
+      name: 'Protector',
+      icon: '🛡️',
+      description: 'Master your personal Harmony',
+      subtitle: 'Guard your own inner Realm',
+      narrative: {
+        onboarding: "Your journey to Harmony starts here. Let's learn how to guard your personal Realm.",
+        tier2ResultsHero: 'YOU PROTECTED',
+        tier3ResultsHero: 'YOUR HARMONY UNLOCKED',
+      },
     },
-  },
-  caregiver: {
-    id: 'caregiver',
-    name: 'Caregiver',
-    icon: '👨‍👩‍👧',
-    description: 'Supporting someone with diabetes',
-    subtitle: 'Understand what they manage daily',
-    narrative: {
-      onboarding: "Supporting someone with diabetes takes understanding. Let's see what they navigate every day.",
-      tier2ResultsHero: 'YOU MANAGED THEIR GLUCOSE',
-      tier3ResultsHero: 'YOUR UNDERSTANDING DEEPENED',
+    caregiver: { 
+      id: 'caregiver',
+      name: 'Guardian',
+      icon: '🏰',
+      description: 'Defend the Harmony of others',
+      subtitle: 'Learn to protect your people',
+      narrative: {
+        onboarding: "Guarding others takes great strength. Let's see how you navigate the Realm's defenses.",
+        tier2ResultsHero: 'YOU GUARDED THE REALM',
+        tier3ResultsHero: 'YOUR VIGILANCE DEEPENED',
+      },
     },
-  },
-  curious: {
-    id: 'curious',
-    name: 'Curious',
-    icon: '📚',
-    description: 'Learning about glucose/diabetes',
-    subtitle: 'Explore health concepts through play',
-    narrative: {
-      onboarding: "Curious about how glucose management works? Let's explore together.",
-      tier2ResultsHero: 'YOU LEARNED',
-      tier3ResultsHero: 'YOUR KNOWLEDGE GREW',
+    curious: { 
+      id: 'curious',
+      name: 'Alchemist',
+      icon: '🧪',
+      description: 'Study the laws of Harmony',
+      subtitle: 'Unlock the secrets of the elements',
+      narrative: {
+        onboarding: "Curious about the laws of Harmony? Let's explore the Alchemist's secrets together.",
+        tier2ResultsHero: 'YOU DISCOVERED',
+        tier3ResultsHero: 'YOUR WISDOM GREW',
+      },
     },
-  },
 };
 
 export function getUserModeConfig(mode: UserMode | null): UserModeConfig | null {
