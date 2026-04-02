@@ -37,6 +37,14 @@ export const STABILITY_ZONES = {
   CRITICAL_HIGH: { min: 76, max: 100, color: '#ef4444', name: 'critical-high' as StabilityZone },
 };
 
+// Fun-first display names for metrics
+export const METRIC_LABELS = {
+  energy: 'VIGOR',
+  hydration: 'PURITY',
+  nutrition: 'VITALITY',
+  stability: 'HARMONY',
+};
+
 // Combo tiers with escalating rewards - rewards skill consistency
 export const COMBO_TIERS: ComboTier[] = [
   { count: 3, title: '⚔️ DEFENDER!', multiplier: 1.5, color: '#60a5fa' },
@@ -45,6 +53,16 @@ export const COMBO_TIERS: ComboTier[] = [
   { count: 12, title: '👑 REALM PROTECTOR!', multiplier: 3.5, color: '#fbbf24' },
   { count: 18, title: '⚡ LEGENDARY!', multiplier: 5, color: '#f97316' },
   { count: 25, title: '🌟 GLUCOSE MASTER!', multiplier: 7, color: '#ec4899' },
+];
+
+// Kingdom Lore and Wisdom - Moving from ResultsScroll for DRY
+export const KINGDOM_LORE = [
+  { id: 'brain', emoji: '🧠', fact: 'The Brain\'s Tribute: It claims 20% of your daily Vigor!', tip: 'Slow-burning grains provide lasting tribute.' },
+  { id: 'exercise', emoji: '🏃', fact: 'The Knight\'s March: Moving for 15 mins after a feast lowers the sugar tide for 24 hours!', tip: 'A brisk walk keeps the Harmony stable.' },
+  { id: 'fiber', emoji: '🥦', fact: 'The Green Aegis: Fiber from veggies slows the sugar horde by 50%!', tip: 'Lead with the Aegis, then consume the feast.' },
+  { id: 'sleep', emoji: '💤', fact: 'The Restorer\'s Dream: Poor sleep makes your body resist the Royal Key (Insulin)!', tip: 'Rest well for 7-9 hours to maintain Harmony.' },
+  { id: 'hydration', emoji: '💧', fact: 'The Pure Stream: Dehydration causes the sugar tide to rise!', tip: 'Drink from the Pure Stream (Water) before each feast.' },
+  { id: 'breakfast', emoji: '🍳', fact: 'The Morning Shield: A Vitality-rich breakfast guards against spikes all day!', tip: 'Start with Eggs, not sugary cereals.' },
 ];
 
 // Food definitions - Allies (swipe UP to rally)

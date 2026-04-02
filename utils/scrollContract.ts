@@ -330,22 +330,22 @@ interface IAnyrand {
  */
 export const ACHIEVEMENT_METADATA = {
   victory_classic: {
-    name: 'Glucose Master',
-    description: 'Won a Classic mode game - proof of glucose management mastery',
-    image: 'ipfs://QmXXXX/glucose_master.png', // Update with actual IPFS hash
+    name: 'Harmony Master',
+    description: 'Maintained the Kingdom\'s Harmony - proof of tactical glucose mastery',
+    image: 'ipfs://QmXXXX/harmony_master.png',
     attributes: [
       { trait_type: 'Rarity', value: 'Common' },
-      { trait_type: 'Category', value: 'Victory' },
+      { trait_type: 'Category', value: 'Deed' },
       { trait_type: 'Points', value: '100' },
-      { trait_type: 'Educational Value', value: 'Basic glucose management' },
+      { trait_type: 'Lore Value', value: 'Basic Harmony maintenance' },
     ],
     educationalContent: {
-      title: 'Foundations of Glucose Management',
-      summary: 'You\'ve mastered the basics of identifying and responding to different food types.',
+      title: 'Foundations of the Kingdom\'s Harmony',
+      summary: 'You\'ve mastered the basics of identifying and responding to different food tribes.',
       keyLessons: [
-        'Recognizing carbohydrate-rich foods that impact blood sugar',
-        'Understanding the difference between healthy and unhealthy choices',
-        'Building quick decision-making skills for glucose control'
+        'Recognizing the Sugar Horde and their impact on Harmony',
+        'Understanding the difference between the Green Aegis and the Horde',
+        'Building quick tactical skills for Kingdom protection'
       ],
       resources: [
         'https://diabetes.org/healthy-living/recipes-nutrition/understanding-carbs',
@@ -354,22 +354,22 @@ export const ACHIEVEMENT_METADATA = {
     }
   },
   victory_life: {
-    name: 'Life Keeper',
-    description: 'Survived a full Life mode game - advanced health management',
-    image: 'ipfs://QmXXXX/life_keeper.png',
+    name: 'Realm Guardian',
+    description: 'Guarded the Realm through a full cycle - advanced health stewardship',
+    image: 'ipfs://QmXXXX/realm_guardian.png',
     attributes: [
       { trait_type: 'Rarity', value: 'Rare' },
-      { trait_type: 'Category', value: 'Victory' },
+      { trait_type: 'Category', value: 'Deed' },
       { trait_type: 'Points', value: '250' },
-      { trait_type: 'Educational Value', value: 'Advanced glucose management' },
+      { trait_type: 'Lore Value', value: 'Advanced Harmony stewardship' },
     ],
     educationalContent: {
-      title: 'Advanced Glucose Management',
-      summary: 'You\'ve demonstrated the ability to manage complex glucose scenarios over time.',
+      title: 'Advanced Realm Stewardship',
+      summary: 'You\'ve demonstrated the ability to manage complex Harmony scenarios over a full cycle.',
       keyLessons: [
-        'Understanding how glucose levels change throughout the day',
-        'Managing insulin timing and dosage effectively',
-        'Handling unexpected events and their impact on blood sugar'
+        'Understanding how the sugar tide changes throughout the day',
+        'Managing the Royal Key (Insulin) timing and dosage effectively',
+        'Handling unexpected plot twists and their impact on the Kingdom'
       ],
       resources: [
         'https://diabetes.org/healthy-living/medication-treatments/insulin-other-injectables',
@@ -378,22 +378,22 @@ export const ACHIEVEMENT_METADATA = {
     }
   },
   perfect_stability: {
-    name: 'Perfect Balance',
-    description: 'Maintained optimal glucose levels throughout entire game',
-    image: 'ipfs://QmXXXX/perfect_balance.png',
+    name: 'Perfect Harmony',
+    description: 'Kept the Kingdom in perfect balance throughout the entire conflict',
+    image: 'ipfs://QmXXXX/perfect_harmony.png',
     attributes: [
       { trait_type: 'Rarity', value: 'Epic' },
       { trait_type: 'Category', value: 'Excellence' },
       { trait_type: 'Points', value: '150' },
-      { trait_type: 'Educational Value', value: 'Precision glucose control' },
+      { trait_type: 'Lore Value', value: 'Precision Harmony control' },
     ],
     educationalContent: {
-      title: 'Precision Glucose Control',
-      summary: 'You\'ve achieved perfect glucose stability, demonstrating expert-level management skills.',
+      title: 'Precision Harmony Control',
+      summary: 'You\'ve achieved perfect Harmony, demonstrating expert-level stewardship skills.',
       keyLessons: [
-        'The importance of consistent monitoring and adjustment',
-        'How to maintain balance in various situations',
-        'Advanced techniques for preventing spikes and drops'
+        'The importance of consistent monitoring of the sugar tide',
+        'How to maintain balance during the most intense feasts',
+        'Advanced techniques for repelling the Sugar Horde'
       ],
       resources: [
         'https://diabetes.org/healthy-living/managing-diabetes/blood-glucose',
@@ -402,21 +402,21 @@ export const ACHIEVEMENT_METADATA = {
     }
   },
   high_combo: {
-    name: 'Combo Champion',
-    description: 'Achieved 50+ consecutive correct swipes',
-    image: 'ipfs://QmXXXX/combo_champion.png',
+    name: 'Tactical Genius',
+    description: 'Achieved 50+ consecutive successful maneuvers',
+    image: 'ipfs://QmXXXX/tactical_genius.png',
     attributes: [
       { trait_type: 'Rarity', value: 'Rare' },
       { trait_type: 'Category', value: 'Skill' },
       { trait_type: 'Points', value: '120' },
-      { trait_type: 'Educational Value', value: 'Rapid decision making' },
+      { trait_type: 'Lore Value', value: 'Rapid tactical decision making' },
     ],
     educationalContent: {
-      title: 'Rapid Decision Making',
-      summary: 'Your ability to make quick, accurate decisions demonstrates mastery of glucose management principles.',
+      title: 'Rapid Tactical Decision Making',
+      summary: 'Your ability to make quick, accurate decisions demonstrates mastery of the Kingdom\'s tactical principles.',
       keyLessons: [
-        'Building instinctive responses to glucose challenges',
-        'Developing pattern recognition for food impacts',
+        'Building instinctive responses to the Sugar Horde',
+        'Developing pattern recognition for Ally food impacts',
         'Improving reaction time for better real-world management'
       ],
       resources: [
@@ -426,22 +426,22 @@ export const ACHIEVEMENT_METADATA = {
     }
   },
   health_streak: {
-    name: 'Health Warrior',
-    description: 'Won 3 consecutive games - demonstrating consistent glucose management',
-    image: 'ipfs://QmXXXX/health_warrior.png',
+    name: 'Eternal Guardian',
+    description: 'Defended the Kingdom in 3 consecutive conflicts - demonstrating consistent stewardship',
+    image: 'ipfs://QmXXXX/eternal_guardian.png',
     attributes: [
       { trait_type: 'Rarity', value: 'Legendary' },
       { trait_type: 'Category', value: 'Dedication' },
       { trait_type: 'Points', value: '300' },
-      { trait_type: 'Educational Value', value: 'Consistency in diabetes management' },
+      { trait_type: 'Lore Value', value: 'Consistency in Realm stewardship' },
     ],
     educationalContent: {
-      title: 'The Power of Consistency',
-      summary: 'You\'ve demonstrated the ability to maintain good glucose management over multiple sessions.',
+      title: 'The Power of Consistent Stewardship',
+      summary: 'You\'ve demonstrated the ability to maintain good Harmony over multiple conflicts.',
       keyLessons: [
-        'Consistent habits lead to better long-term glucose control',
-        'Small daily victories compound into significant health improvements',
-        'Building routines reduces cognitive load in diabetes management'
+        'Consistent habits lead to better long-term Harmony control',
+        'Small daily victories compound into a thriving Kingdom',
+        'Building routines reduces the burden of Realm stewardship'
       ],
       resources: [
         'https://diabetes.org/healthy-living/managing-diabetes/building-routines',
@@ -450,22 +450,22 @@ export const ACHIEVEMENT_METADATA = {
     }
   },
   explorer: {
-    name: 'Explorer',
-    description: 'Played all available game modes - comprehensive diabetes education',
-    image: 'ipfs://QmXXXX/explorer.png',
+    name: 'Realm Scholar',
+    description: 'Explored all paths of the Kingdom - comprehensive Realm knowledge',
+    image: 'ipfs://QmXXXX/realm_scholar.png',
     attributes: [
       { trait_type: 'Rarity', value: 'Rare' },
       { trait_type: 'Category', value: 'Discovery' },
       { trait_type: 'Points', value: '200' },
-      { trait_type: 'Educational Value', value: 'Broad diabetes knowledge' },
+      { trait_type: 'Lore Value', value: 'Broad Realm knowledge' },
     ],
     educationalContent: {
-      title: 'Comprehensive Diabetes Understanding',
-      summary: 'You\'ve explored all aspects of glucose management, from basic concepts to advanced strategies.',
+      title: 'Comprehensive Realm Understanding',
+      summary: 'You\'ve explored all aspects of Harmony management, from basic concepts to advanced strategies.',
       keyLessons: [
-        'Different situations require different glucose management approaches',
-        'Flexibility and adaptability are key to long-term success',
-        'Continuous learning leads to better health outcomes'
+        'Different conflicts require different stewardship approaches',
+        'Flexibility and adaptability are key to the Kingdom\'s long-term success',
+        'Continuous learning leads to a healthier Realm'
       ],
       resources: [
         'https://diabetes.org/diabetes/type-1/learning-zone',

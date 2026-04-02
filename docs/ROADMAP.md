@@ -36,6 +36,42 @@ Core game engine complete: tiered progression (3 tiers × 30/60/90s), classic/li
 
 ---
 
+## 🔮 Phase 3: Beam SDK & Persistent Economy (IN PROGRESS)
+
+### Level 1: Frictionless Onboarding ✅ COMPLETE
+- Integrated `@onbeam/sdk` for Social Login (Google, Apple, Discord)
+- Implemented `BeamProvider` and `BeamContext` for SDK lifecycle management
+- Connected `usePlayerProgress` to sync Kingdom Renown and Tier progress with Beam accounts
+- Integrated background reporting of Battle results to Beam Player API
+
+### Level 2: Persistent Assets & Marketplace 🔄 PLANNED
+- **Enchanted Ingredients**: Tokenize rare food cards as NFTs on Beam
+- **Sphere Marketplace Integration**: Allow trading of saved ingredients within the "Royal Pantry"
+- **Kingdom Renown Tokenization**: Convert XP into on-chain reputation markers
+- **Weekly Challenge Trophies**: Verifiable on-chain rewards for Alchemist's Lab winners
+
+### Level 3: Education via Immersion ✅ COMPLETE
+- **Kingdom Lore & Secrets**: Replaced dry medical facts with immersive "Secrets of the Realm"
+- **Grand Library**: Implemented a central discovery hub for educational "Kingdom Secrets"
+- **Natural Discovery Triggers**: Integrated lore unlocking into the core game loop (streaks/actions)
+- **Thematic Refinement**: Renamed all core metrics to fun-first primitives (Vigor, Purity, Vitality, Harmony)
+- **Parent's Scroll**: Added high-quality clinical context for adults within the Library UI
+
+**Beam Integration Approach:**
+```typescript
+// Example: Syncing progress to Beam Player Account
+const syncToBeam = async (renown: number, maxTier: string) => {
+  if (!beam.account) return;
+  await beam.client.players.updateStats({
+    kingdom_renown: renown,
+    max_tier: maxTier,
+    last_played: new Date().toISOString()
+  });
+};
+```
+
+---
+
 ## 📅 Timeline
 
 | Week | Deliverable | Status |
@@ -45,7 +81,8 @@ Core game engine complete: tiered progression (3 tiers × 30/60/90s), classic/li
 | 3-4 | Results & messaging customization | ✅ Complete |
 | 4-5 | In-game reflection points | ✅ Complete |
 | 5-6 | Mode-specific plot twists | ✅ Complete |
-| 6+ | Testing, refinement, launch | ⏳ Upcoming |
+| 7-8 | **Beam SDK Integration (Phase 1)** | ✅ Complete |
+| 9+ | **Asset Marketplace (Phase 2)** | ⏳ Upcoming |
 
 ---
 

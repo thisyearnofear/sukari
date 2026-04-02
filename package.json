@@ -16,6 +16,7 @@
   },
   "dependencies": {
     "@expo/vector-icons": "^15.0.3",
+    "@onbeam/sdk": "2.6.1",
     "@rainbow-me/rainbowkit": "^2.1.0",
     "@react-native-async-storage/async-storage": "^2.2.0",
     "@react-navigation/bottom-tabs": "^7.2.0",

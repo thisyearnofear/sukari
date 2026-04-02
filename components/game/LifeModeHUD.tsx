@@ -1,7 +1,7 @@
 import React, { useRef, useEffect } from 'react';
 import { View, Text, TouchableOpacity, Dimensions, Animated, Easing, useWindowDimensions } from 'react-native';
 import { BodyMetrics, TimePhase, MorningCondition, PlotTwist, SavedFoodSlot, SocialStats } from '@/types/game';
-import { TIME_PHASES, MORNING_CONDITIONS } from '@/constants/gameConfig';
+import { TIME_PHASES, MORNING_CONDITIONS, METRIC_LABELS } from '@/constants/gameConfig';
 
 const SIDE_PANEL_WIDTH = 80;
 
@@ -543,14 +543,14 @@ export const LeftSidePanel: React.FC<{
       
       <MetricPanel
         icon="⚡"
-        label="ENERGY"
+        label={METRIC_LABELS.energy}
         value={metrics.energy}
         color="#facc15"
         criticalColor="#ef4444"
       />
       <MetricPanel
         icon="💧"
-        label="HYDRATE"
+        label={METRIC_LABELS.hydration}
         value={metrics.hydration}
         color="#38bdf8"
         criticalColor="#ef4444"
@@ -598,14 +598,14 @@ export const RightSidePanel: React.FC<{
       
       <MetricPanel
         icon="🥗"
-        label="NUTRI"
+        label={METRIC_LABELS.nutrition}
         value={metrics.nutrition}
         color="#4ade80"
         criticalColor="#ef4444"
       />
       <MetricPanel
         icon="💓"
-        label="STABLE"
+        label={METRIC_LABELS.stability}
         value={metrics.stability}
         color="#f472b6"
         criticalColor="#ef4444"
@@ -1069,8 +1069,8 @@ export const SavedFoodsPanel: React.FC<{
       style={{
         position: 'absolute',
         top: 80,
-        left: screenWidth / 2 - 90,
-        width: 180,
+        left: screenWidth / 2 - 140,
+        width: 280,
         backgroundColor: 'rgba(10,10,18,0.95)',
         borderRadius: 12,
         borderWidth: 2,
@@ -1111,9 +1111,33 @@ export const SavedFoodsPanel: React.FC<{
             )}
           </TouchableOpacity>
         ))}
+        {/* Treasury Preview Slots */}
+        {[...Array(2)].map((_, i) => (
+          <View
+            key={`treasury-${i}`}
+            style={{
+              width: 48,
+              height: 48,
+              borderRadius: 10,
+              backgroundColor: 'rgba(147, 51, 234, 0.15)',
+              borderWidth: 1,
+              borderColor: 'rgba(147, 51, 234, 0.4)',
+              borderStyle: 'dashed',
+              alignItems: 'center',
+              justifyContent: 'center',
+              marginHorizontal: 4,
+              opacity: 0.6,
+            }}
+          >
+            <Text style={{ fontSize: 18, opacity: 0.5 }}>💎</Text>
+            <View style={{ position: 'absolute', bottom: -2, right: -2 }}>
+              <Text style={{ fontSize: 10 }}>🔒</Text>
+            </View>
+          </View>
+        ))}
       </View>
-      <Text style={{ color: '#9ca3af', fontSize: 8, textAlign: 'center', marginTop: 4 }}>
-        Tap to consume
+      <Text style={{ color: '#9ca3af', fontSize: 8, textAlign: 'center', marginTop: 6 }}>
+        Tap to consume • <Text style={{ color: '#a78bfa' }}>Treasury Vault (Locked)</Text>
       </Text>
     </View>
   );

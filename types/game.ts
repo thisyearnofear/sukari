@@ -253,6 +253,22 @@ export type MetricZone = 'optimal' | 'good' | 'warning' | 'critical';
 
 export type ControlMode = 'swipe' | 'tap';
 
+// Kingdom Lore & Educational Secrets
+export interface KingdomSecret {
+  id: string;
+  emoji: string;
+  fact: string;
+  tip: string;
+  unlocked: boolean;
+  unlockedAt?: number;
+}
+
+export interface LoreDiscovery {
+  id: string;
+  timestamp: number;
+  renownReward: number;
+}
+
 // User mode - personalization for different player types
 export type UserMode = 'personal' | 'caregiver' | 'curious';
 

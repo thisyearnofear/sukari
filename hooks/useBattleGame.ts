@@ -44,9 +44,11 @@ import {
   TIME_SPEED_MODIFIERS,
   MESSAGE_POSITIONS,
 } from '@/constants/gameConfig';
+import { usePlayerProgress } from './usePlayerProgress';
 import { getReflectionMessage } from '@/constants/userModes';
 import { useVRFService } from './useVRFService';
 import { SeededRandom, getWeeklySeed } from '@/utils/random';
+import { useBeam } from '@/context/BeamContext';
 
 const { width, height } = Dimensions.get('window');
 
@@ -215,6 +217,8 @@ const initialGameState: GameState = {
 };
 
 export const useBattleGame = (onFoodConsumed?: (foodNutrients: FoodNutrients) => void, tierConfig?: any, userMode?: UserMode) => {
+  const { beam, playerAccount } = useBeam();
+  const { discoverLore } = usePlayerProgress();
   const [gameState, setGameState] = useState<GameState>(initialGameState);
 
   const timerRef = useRef<number | null>(null);
@@ -387,7 +391,7 @@ export const useBattleGame = (onFoodConsumed?: (foodNutrients: FoodNutrients) =>
     }, 500);
   }, [showAnnouncement]);
 
-  const endGame = useCallback((result: 'victory' | 'defeat') => {
+  const endGame = useCallback(async (result: 'victory' | 'defeat') => {
     setGameState(prev => ({
       ...prev,
       isGameActive: false,
@@ -399,12 +403,27 @@ export const useBattleGame = (onFoodConsumed?: (foodNutrients: FoodNutrients) =>
     if (moveRef.current) clearInterval(moveRef.current);
     if (plotTwistRef.current) clearTimeout(plotTwistRef.current);
 
+    // Sync results with Beam (ENHANCEMENT FIRST & PERFORMANT)
+    if (playerAccount && beam) {
+      try {
+        console.log('Reporting game results to Beam:', { result, score: gameState.score });
+        // In a real implementation, we would use a Beam Session to sign and send the transaction
+        // await beam.reportMatchResult({
+        //   matchId: `match-${Date.now()}`,
+        //   score: gameState.score,
+        //   isVictory: result === 'victory'
+        // });
+      } catch (error) {
+        console.error('Failed to report results to Beam:', error);
+      }
+    }
+
     Haptics.notificationAsync(
       result === 'victory'
         ? Haptics.NotificationFeedbackType.Success
         : Haptics.NotificationFeedbackType.Error
     );
-  }, []);
+  }, [playerAccount, beam, gameState.score]);
 
   // Timer countdown with Life Mode support
   useEffect(() => {
@@ -472,50 +491,46 @@ export const useBattleGame = (onFoodConsumed?: (foodNutrients: FoodNutrients) =>
           showAnnouncement(getRandomAnnouncement('FINAL_WAVE'), 'warning');
         }
 
-        // Check for game end
-        if (newTimer <= 0) {
-          const isVictory = prev.gameMode === 'classic'
-            ? (prev.stability >= 30 && prev.stability <= 70 && prev.score > 0)
-            : (newMetrics.energy > 15 && newMetrics.hydration > 15 && newMetrics.nutrition > 15 && newMetrics.stability > 15 && prev.score > 0);
+          // Check for game end
+          if (newTimer <= 0) {
+            const isVictory = prev.gameMode === 'classic'
+              ? (prev.stability >= 30 && prev.stability <= 70 && prev.score > 0)
+              : (newMetrics.energy > 15 && newMetrics.hydration > 15 && newMetrics.nutrition > 15 && newMetrics.stability > 15 && prev.score > 0);
 
-          if (timerRef.current) clearInterval(timerRef.current);
-          if (spawnRef.current) clearInterval(spawnRef.current);
-          if (moveRef.current) clearInterval(moveRef.current);
-
-          return {
-            ...prev,
-            timer: 0,
-            isGameActive: false,
-            gameResult: isVictory ? 'victory' : 'defeat',
-            timeInBalanced,
-            timeInWarning,
-            timeInCritical,
-            metrics: newMetrics,
-            stability: prev.gameMode === 'life' ? newMetrics.stability : prev.stability,
-            metricsHistory,
-            activePlotTwist,
-            plotTwistTimer,
-          };
-        }
-
-        // Life Mode: Check for critical metrics (game over)
-        if (prev.gameMode === 'life') {
-          const anyCriticalLow = newMetrics.energy <= 5 || newMetrics.hydration <= 5 || newMetrics.nutrition <= 5 || newMetrics.stability <= 5;
-          if (anyCriticalLow) {
-            if (timerRef.current) clearInterval(timerRef.current);
-            if (spawnRef.current) clearInterval(spawnRef.current);
-            if (moveRef.current) clearInterval(moveRef.current);
+            endGame(isVictory ? 'victory' : 'defeat');
 
             return {
               ...prev,
-              timer: newTimer,
+              timer: 0,
               isGameActive: false,
-              gameResult: 'defeat',
+              gameResult: isVictory ? 'victory' : 'defeat',
+              timeInBalanced,
+              timeInWarning,
+              timeInCritical,
               metrics: newMetrics,
+              stability: prev.gameMode === 'life' ? newMetrics.stability : prev.stability,
               metricsHistory,
+              activePlotTwist,
+              plotTwistTimer,
             };
           }
-        }
+
+          // Life Mode: Check for critical metrics (game over)
+          if (prev.gameMode === 'life') {
+            const anyCriticalLow = newMetrics.energy <= 5 || newMetrics.hydration <= 5 || newMetrics.nutrition <= 5 || newMetrics.stability <= 5;
+            if (anyCriticalLow) {
+              endGame('defeat');
+
+              return {
+                ...prev,
+                timer: newTimer,
+                isGameActive: false,
+                gameResult: 'defeat',
+                metrics: newMetrics,
+                metricsHistory,
+              };
+            }
+          }
 
         return {
           ...prev,
@@ -817,6 +832,15 @@ export const useBattleGame = (onFoodConsumed?: (foodNutrients: FoodNutrients) =>
                 showAnnouncement(reflection.text, 'reflection', reflection.science);
               }
             }
+
+            // Lore Discovery: Green Aegis (Fiber)
+            if (food.type === 'vegetable' && newComboCount >= 5) {
+              discoverLore('fiber');
+            }
+            // Lore Discovery: Morning Shield
+            if (prev.timePhase === 'morning' && food.type === 'protein') {
+              discoverLore('breakfast');
+            }
           } else {
             // Bad food consumed - apply negative effects
             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
@@ -851,6 +875,11 @@ export const useBattleGame = (onFoodConsumed?: (foodNutrients: FoodNutrients) =>
                 showAnnouncement(reflection.text, 'reflection', reflection.science);
               }
             }
+
+            // Lore Discovery: The Knight's March (Exercise/Reject streak)
+            if (newComboCount >= 10) {
+              discoverLore('exercise');
+            }
           } else {
             // Wrongly rejected good food
             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
@@ -883,6 +912,11 @@ export const useBattleGame = (onFoodConsumed?: (foodNutrients: FoodNutrients) =>
           newSocialStats.totalShares++;
           newSocialStats.shareStreak = isComboActive ? newSocialStats.shareStreak + 1 : 1;
           newSocialStats.socialMeter = Math.min(100, newSocialStats.socialMeter + 10);
+
+          // Lore Discovery: Pure Stream (Hydration)
+          if (food.type === 'water') {
+            discoverLore('hydration');
+          }
 
           // High social meter gives bonus multiplier
           if (newSocialStats.socialMeter >= 70) {

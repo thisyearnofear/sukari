@@ -22,8 +22,8 @@ npx expo start
 │   └── index.tsx                 # Main app entry (navigation orchestration)
 ├── components/
 │   ├── game/                     # Game-specific components
-│   │   ├── MainMenu.tsx          # Uses: COLORS, animation builders, ProgressIndicator
-│   │   ├── BattleScreen.tsx      # Uses: COLORS, animation builders
+│   │   ├── MainMenu.tsx          # Uses: Beam SDK social login, animations, progress
+│   │   ├── BattleScreen.tsx      # Uses: COLORS, keyboard listeners, responsive layout
 │   │   ├── BattleHUD.tsx         # Uses: COLORS, useAccessibility
 │   │   ├── FoodCard.tsx          # Uses: useAccessibility (screen reader labels)
 │   │   ├── ResultsScroll.tsx     # Uses: COLORS, useAccessibility
@@ -31,6 +31,8 @@ npx expo start
 │   │   └── ProgressIndicator.tsx # Tier progression visualization
 │   ├── WebOnlyConnectButton.tsx  # Cross-platform (consolidated)
 │   └── WebProviders.tsx          # Cross-platform (consolidated)
+├── context/
+│   └── BeamContext.tsx           # 💎 Beam SDK state & lifecycle management
 ├── constants/
 │   ├── designSystem.ts           # 🎨 Colors, typography, spacing, animations, shadows, z-indexes
 │   ├── navigation.ts             # 🧭 Screen definitions, transitions, validation
@@ -80,6 +82,24 @@ npx expo start
 - Pre-built accessibility configs for components
 - Button, meter, and results labels
 - WCAG AA compliance foundation
+```
+
+### Beam SDK Integration (`context/BeamContext.tsx`)
+**Frictionless social onboarding and background game reporting.**
+
+**Key Usage:**
+- **Initialization**: Managed by `BeamProvider` in `WebProviders.tsx`.
+- **Login**: `beam.login(provider)` (e.g., 'google', 'apple').
+- **Syncing**: `beam.client.players.updateStats()` for persistent progress.
+- **Reporting**: Match results are reported to Beam at the end of each session.
+
+**Example: Accessing Beam State**
+```typescript
+import { useBeam } from '@/context/BeamContext';
+
+const { account, login, logout, isLoading } = useBeam();
+
+const handleLogin = () => login('google');
 ```
 
 ## 🛠️ Using the Design System

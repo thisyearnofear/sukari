@@ -7,12 +7,14 @@ import { USER_MODE_CONFIGS } from '@/constants/userModes';
 import { PrivacyToggle } from '@/components/PrivacyToggle';
 import { PrivacySettingsModal } from '@/components/PrivacySettings';
 import { useWeb3 } from '@/context/Web3Context';
+import { useBeam } from '@/context/BeamContext';
 import { RoleBadgeModal } from '@/components/game/RoleBadgeModal';
 import { GAME_TIERS } from '@/constants/gameTiers';
 import { COLORS, SPACING, ANIMATIONS } from '@/constants/designSystem';
 import { createPulseAnimation, createGlowAnimation, createFloatingAnimation } from '@/utils/animations';
 import { ProgressIndicator } from '@/components/game/ProgressIndicator';
 import { DailyQuests } from '@/components/game/DailyQuests';
+import { GrandLibrary } from '@/components/game/GrandLibrary';
 
 const { width, height } = Dimensions.get('window');
 const screenWidth = width;
@@ -75,12 +77,27 @@ export const MainMenu: React.FC<MainMenuProps> = ({ onStartGame, onSelectGame, o
   const [showTutorialSettings, setShowTutorialSettings] = useState(false);
   const pulseAnim = useRef(new Animated.Value(1)).current;
   const glowAnim = useRef(new Animated.Value(0)).current;
-  const { progress, setUserMode, setPrivacyMode, updatePrivacySettings, setSkipOnboarding, getKingdomTitle } = usePlayerProgress();
+  const { progress, setUserMode, setPrivacyMode, updatePrivacySettings, setSkipOnboarding, getKingdomTitle, discoverLore } = usePlayerProgress();
   const kingdomTitle = getKingdomTitle();
   const [showUserModeSelector, setShowUserModeSelector] = useState(userModeSelected === false);
   const [selectedRole, setSelectedRole] = useState<UserMode | null>(null);
   const [showMintModal, setShowMintModal] = useState(false);
+  const [showLibrary, setShowLibrary] = useState(false);
   const { isConnected } = useWeb3();
+  const { playerAccount, showSyncFeedback } = useBeam();
+  const [showWelcome, setShowWelcome] = useState(false);
+  const welcomeAnim = useRef(new Animated.Value(-100)).current;
+
+  useEffect(() => {
+    if (playerAccount && !showWelcome) {
+      setShowWelcome(true);
+      Animated.sequence([
+        Animated.timing(welcomeAnim, { toValue: 50, duration: 500, useNativeDriver: true }),
+        Animated.delay(3000),
+        Animated.timing(welcomeAnim, { toValue: -100, duration: 500, useNativeDriver: true }),
+      ]).start(() => setShowWelcome(false));
+    }
+  }, [playerAccount]);
 
   useEffect(() => {
     // Pulse animation for start button
@@ -262,11 +279,67 @@ export const MainMenu: React.FC<MainMenuProps> = ({ onStartGame, onSelectGame, o
 
   return (
     <View className="flex-1 items-center justify-center" style={{ backgroundColor: COLORS.BG_DARK }}>
+      {/* Welcome Toast */}
+      {showWelcome && (
+        <Animated.View
+          style={{
+            position: 'absolute',
+            top: 0,
+            left: 20,
+            right: 20,
+            backgroundColor: 'rgba(88, 28, 135, 0.95)',
+            padding: 16,
+            borderRadius: 12,
+            borderWidth: 1,
+            borderColor: '#a78bfa',
+            zIndex: 100,
+            flexDirection: 'row',
+            alignItems: 'center',
+            transform: [{ translateY: welcomeAnim }],
+            shadowColor: '#a78bfa',
+            shadowOffset: { width: 0, height: 4 },
+            shadowOpacity: 0.5,
+            shadowRadius: 10,
+          }}
+        >
+          <Text style={{ fontSize: 24, marginRight: 12 }}>👑</Text>
+          <View>
+            <Text style={{ color: 'white', fontWeight: 'bold' }}>Welcome back, Hero!</Text>
+            <Text style={{ color: '#c4b5fd', fontSize: 12 }}>Your Kingdom progress is secured.</Text>
+          </View>
+        </Animated.View>
+      )}
+
       {/* Kingdom Renown Header */}
       <View style={{ width: '100%', paddingTop: 48, paddingHorizontal: 24, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', zIndex: 20 }}>
         <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-          <View style={{ backgroundColor: 'rgba(217, 119, 6, 0.2)', padding: 8, borderRadius: 20, borderWidth: 1, borderColor: 'rgba(245, 158, 11, 0.3)', marginRight: 12 }}>
+          <View 
+            style={{ 
+              backgroundColor: 'rgba(217, 119, 6, 0.2)', 
+              padding: 8, 
+              borderRadius: 20, 
+              borderWidth: 1, 
+              borderColor: showSyncFeedback ? '#a78bfa' : 'rgba(245, 158, 11, 0.3)', 
+              marginRight: 12,
+              shadowColor: '#a78bfa',
+              shadowRadius: showSyncFeedback ? 15 : 0,
+              shadowOpacity: showSyncFeedback ? 1 : 0,
+            }}
+          >
             <Text style={{ fontSize: 20 }}>{kingdomTitle.icon}</Text>
+            {showSyncFeedback && (
+              <View 
+                style={{ 
+                  position: 'absolute', 
+                  top: -2, 
+                  right: -2, 
+                  width: 8, 
+                  height: 8, 
+                  borderRadius: 4, 
+                  backgroundColor: '#a78bfa' 
+                }} 
+              />
+            )}
           </View>
           <View>
             <Text style={{ color: '#f59e0b', fontSize: 10, fontWeight: 'bold', letterSpacing: 1, textTransform: 'uppercase' }}>{kingdomTitle.title}</Text>
@@ -432,6 +505,23 @@ export const MainMenu: React.FC<MainMenuProps> = ({ onStartGame, onSelectGame, o
               <Text className="text-white text-base font-bold">CUSTOMIZE BATTLE</Text>
             </View>
           </TouchableOpacity>
+
+          <TouchableOpacity
+            onPress={() => setShowLibrary(true)}
+            className="px-6 py-4 rounded-2xl border-4 bg-blue-900 border-blue-400 w-full mt-3"
+            style={{
+              shadowColor: '#3b82f6',
+              shadowOffset: { width: 0, height: 0 },
+              shadowOpacity: 0.5,
+              shadowRadius: 10,
+              elevation: 5,
+            }}
+          >
+            <View className="flex-row items-center justify-center">
+              <Text className="text-2xl mr-2">📜</Text>
+              <Text className="text-white text-base font-bold">GRAND LIBRARY</Text>
+            </View>
+          </TouchableOpacity>
         </View>
 
         <View className="mt-6">
@@ -456,12 +546,37 @@ export const MainMenu: React.FC<MainMenuProps> = ({ onStartGame, onSelectGame, o
         onClose={() => setShowPrivacySettings(false)}
         visible={showPrivacySettings}
       />
+
+      {showLibrary && (
+        <GrandLibrary 
+          discoveredLoreIds={progress.discoveredLoreIds}
+          onClose={() => setShowLibrary(false)}
+        />
+      )}
     </View>
   );
 };
 
 const WalletConnectionButton = () => {
   const { isConnected, address, connectWallet, disconnectWallet } = useWeb3();
+  const { playerAccount, login, logout, isLoading } = useBeam();
+
+  if (playerAccount) {
+    const truncatedAddress = `${playerAccount.address.substring(0, 6)}...${playerAccount.address.substring(playerAccount.address.length - 4)}`;
+    return (
+      <View className="flex-row gap-2">
+        <TouchableOpacity
+          className="bg-purple-600 px-4 py-2 rounded-full min-h-[36px] justify-center"
+          onPress={logout}
+          disabled={isLoading}
+        >
+          <Text className="text-white text-xs font-bold text-center">
+            {truncatedAddress} (Beam)
+          </Text>
+        </TouchableOpacity>
+      </View>
+    );
+  }
 
   if (isConnected && address) {
     const truncatedAddress = `${address.substring(0, 6)}...${address.substring(address.length - 4)}`;
@@ -476,14 +591,29 @@ const WalletConnectionButton = () => {
   }
 
   return (
-    <TouchableOpacity
-      className="bg-amber-600 px-3 py-2 rounded-full min-h-[36px] justify-center min-w-[80px]"
-      onPress={connectWallet}
-    >
-      <Text className="text-white font-bold text-xs text-center">
-        {Platform.OS === 'web' ? 'Connect' : 'Wallet'}
-      </Text>
-    </TouchableOpacity>
+    <View className="flex-row gap-2">
+      <TouchableOpacity
+        className="bg-amber-600 px-4 py-2 rounded-full min-h-[36px] justify-center"
+        onPress={connectWallet}
+      >
+        <Text className="text-white font-bold text-xs text-center">
+          {Platform.OS === 'web' ? 'Connect Wallet' : 'Wallet'}
+        </Text>
+      </TouchableOpacity>
+      
+      <TouchableOpacity
+        className="bg-blue-600 px-4 py-2 rounded-full min-h-[36px] justify-center border border-blue-400"
+        onPress={() => {
+          login();
+          // Tooltip explanation - logic to show it would be here
+        }}
+        disabled={isLoading}
+      >
+        <Text className="text-white font-bold text-xs text-center">
+          {isLoading ? '...' : 'Play with Social'}
+        </Text>
+      </TouchableOpacity>
+    </View>
   );
 };
 

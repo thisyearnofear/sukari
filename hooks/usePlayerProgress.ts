@@ -4,6 +4,7 @@ import { UserMode, SwipeAction } from '@/types/game';
 import { PrivacySettings, PrivacyMode } from '@/types/health';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { analyzePlayerSessions, PlayerAnalytics } from '@/utils/slowMoAnalytics';
+import { useBeam } from '@/context/BeamContext';
 
 export type DailyQuestType = 
   | 'save_healthy' 
@@ -45,6 +46,7 @@ export interface PlayerProgressState {
   dailyQuests: DailyQuest[];
   lastQuestResetAt: number | null;
   kingdomRenown: number; // XP system
+  discoveredLoreIds: string[]; // Track educational lore unlocked
 }
 
 const STORAGE_KEY = 'glucoseWars.playerProgress';
@@ -97,6 +99,7 @@ export const KINGDOM_MILESTONES: KingdomMilestone[] = [
 ];
 
 export function usePlayerProgress() {
+  const { playerAccount, beam } = useBeam();
   const [progress, setProgress] = useState<PlayerProgressState>({
     maxTierUnlocked: 'tier1',
     currentTier: 'tier1',
@@ -120,6 +123,7 @@ export function usePlayerProgress() {
     dailyQuests: DEFAULT_QUESTS,
     lastQuestResetAt: null,
     kingdomRenown: 0,
+    discoveredLoreIds: [],
   });
 
   // Load from AsyncStorage on component mount
@@ -160,10 +164,38 @@ export function usePlayerProgress() {
     loadProgress();
   }, []);
 
+  // Sync with Beam Player Account (ENHANCEMENT FIRST)
+  useEffect(() => {
+    if (playerAccount && beam) {
+      const syncWithBeam = async () => {
+        try {
+          // In a real implementation, we would fetch progress from Beam's Player API
+          // For now, we'll simulate syncing local renown to Beam if Beam is ahead
+          // const beamProgress = await beam.getPlayerProgress(playerAccount.address);
+          // if (beamProgress.renown > progress.kingdomRenown) {
+          //   setProgress(prev => ({ ...prev, kingdomRenown: beamProgress.renown }));
+          // }
+          console.log('Syncing progress with Beam Player Account:', playerAccount.address);
+        } catch (error) {
+          console.error('Failed to sync with Beam:', error);
+        }
+      };
+      syncWithBeam();
+    }
+  }, [playerAccount, beam]);
+
   // Persist to AsyncStorage whenever progress changes
   useEffect(() => {
     AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(progress));
-  }, [progress]);
+    
+    // Also sync to Beam if logged in
+    if (playerAccount && beam) {
+      // beam.updatePlayerProgress(playerAccount.address, { 
+      //   renown: progress.kingdomRenown,
+      //   maxTier: progress.maxTierUnlocked 
+      // });
+    }
+  }, [progress, playerAccount, beam]);
 
   const unlockNextTier = (tier: GameTier) => {
     const tiers: GameTier[] = ['tier1', 'tier2', 'tier3'];
@@ -306,6 +338,21 @@ export function usePlayerProgress() {
     return title;
   }, [progress.kingdomRenown]);
 
+  /**
+   * Discovers new Kingdom Lore (Education via Immersion)
+   */
+  const discoverLore = useCallback((id: string) => {
+    setProgress(prev => {
+      if (prev.discoveredLoreIds.includes(id)) return prev;
+      
+      return {
+        ...prev,
+        discoveredLoreIds: [...prev.discoveredLoreIds, id],
+        kingdomRenown: prev.kingdomRenown + 50, // Reward discovery
+      };
+    });
+  }, []);
+
   return {
     progress,
     unlockNextTier,
@@ -322,5 +369,6 @@ export function usePlayerProgress() {
     getSlowMoAnalytics,
     trackQuestProgress,
     getKingdomTitle,
+    discoverLore,
   };
 }

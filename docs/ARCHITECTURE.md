@@ -178,8 +178,31 @@ const { getFoodCardLabel } = useAccessibility();
 - 🔍 **Reflective gameplay** - Compare predictions vs reality
 - 📊 **Pattern recognition** - Personalized insights over time
 
-#### 4. Onchain Features (Optional Integration)
-**Enhanced user experience with optional blockchain features.**
+#### 4. Onchain Features (Beam SDK Integration)
+**Frictionless onboarding and persistent player-owned identity.**
+
+### Education via Immersion Architecture
+**Gamified learning that prioritizes fun and theme over clinical terminology.**
+
+- **Kingdom Lore & Secrets**: Replaces dry medical facts with immersive "Secrets of the Realm" (e.g., "The Green Aegis" instead of "Fiber benefits").
+- **Grand Library**: A central discovery hub where players (and parents) can review unlocked secrets. Includes a "Parent's Scroll" for deeper clinical context without breaking the game's atmosphere.
+- **Natural Discovery Triggers**: Secrets are unlocked through gameplay milestones (e.g., streaks, specific food interactions), rewarding curiosity and skill.
+- **Fun-First Lexicon**: Core metrics are renamed to thematic primitives (Vigor, Purity, Vitality, Harmony) to reduce "medical fatigue."
+
+### Beam SDK Architecture (`context/BeamContext.tsx`)
+**Frictionless, high-performance blockchain integration** - allows players to own their health identity without the complexity of traditional wallets.
+
+**Key Features:**
+- **Social Login**: Simple onboarding via Google, Apple, or Discord using Account Abstraction.
+- **Gasless Sessions**: High-speed gameplay (60 FPS) without transaction prompts, enabled by background signing.
+- **Persistent Progress**: Kingdom Renown and Tier progression are synced to the Beam Player Account.
+- **Cross-Platform**: Unified identity across Web, iOS, and Android platforms.
+
+**Integration Strategy:**
+1. **Frictionless Onboarding** - Social login on the Main Menu as an alternative to external wallets.
+2. **Session-Based Gameplay** - Automatically report battle results and quest completion to Beam in the background.
+3. **Data Persistence** - `usePlayerProgress` hook syncs local state with Beam's account-based storage.
+4. **Gradual Asset Tokenization** - Future support for trading food cards and trophies on the Beam Marketplace.
 
 ### Role Badge System
 **Optional onchain credentials for learning commitments.**

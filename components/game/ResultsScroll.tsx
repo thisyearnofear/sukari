@@ -1,5 +1,6 @@
  
 // useScrollIntegration is resolved at runtime via Metro's platform-specific file resolution
+import { KINGDOM_LORE } from '@/constants/gameConfig';
 import React, { useEffect, useRef, useState } from 'react';
 import { View, Text, TouchableOpacity, Animated, Share } from 'react-native';
 import { BodyMetrics, GameMode, MorningCondition, GameState, UserMode } from '@/types/game';
@@ -13,15 +14,8 @@ import { useAccessibility } from '@/hooks/useAccessibility';
 import { WeeklyLeaderboard } from './WeeklyLeaderboard';
 import { getWeeklySeed } from '@/utils/random';
 
-// Fun glucose facts and tips
-const GLUCOSE_FACTS = [
-  { emoji: '🧠', fact: 'Your brain uses 20% of daily glucose!', tip: 'Complex carbs = brain fuel' },
-  { emoji: '🏃', fact: 'Exercise lowers blood sugar for 24hrs!', tip: '15-min walk after meals helps' },
-  { emoji: '🥦', fact: 'Fiber slows glucose absorption 50%!', tip: 'Eat veggies first, carbs last' },
-  { emoji: '💤', fact: 'Poor sleep = 25% more insulin resistance!', tip: 'Aim for 7-9 hours nightly' },
-  { emoji: '💧', fact: 'Dehydration spikes blood sugar!', tip: 'Drink water before meals' },
-  { emoji: '🍳', fact: 'Protein breakfast = stable glucose!', tip: 'Start with eggs, not cereal' },
-];
+// Kingdom Lore and Wisdom
+// MOVED TO constants/gameConfig.ts
 
 // Funny share messages based on performance
 const getShareMessage = (score: number, accuracy: number, grade: string) => {
@@ -51,27 +45,27 @@ function getModeSpecificMessage(userMode: UserMode | undefined, tier: GameTier |
   return '';
 }
 
-// Personal Advisor mapping based on performance
-const ADVISOR_TIPS = {
+// Scrolls of Wisdom mapping based on performance
+const SCROLLS_OF_WISDOM = {
   sugar: {
-    reject: 'Good job rejecting refined sugars! They cause rapid spikes.',
-    consume: 'Sugary foods cause rapid spikes. Try pairing with protein next time.',
+    reject: 'The Sugar Horde was successfully repelled! You protected your Harmony.',
+    consume: 'Consuming the Horde causes rapid spikes in the tide. Pair with Vitality next time.',
   },
   processed: {
-    reject: 'Bypassing processed snacks keeps your energy stable longer.',
-    consume: 'Processed foods lack fiber, leading to erratic glucose levels.',
+    reject: 'Bypassing the Alchemist\'s artificial snacks keeps your Vigor stable longer.',
+    consume: 'Artificial snacks lack the Green Aegis (Fiber), leading to erratic Harmony.',
   },
   vegetable: {
-    reject: 'Veggies are your best allies! Don\'t let them go to waste.',
-    consume: 'Excellent! Fiber from vegetables slows down sugar absorption.',
+    reject: 'Veggies are your best allies! Do not let the Aegis go to waste.',
+    consume: 'Excellent! The Green Aegis slows the sugar horde\'s advance.',
   },
   protein: {
-    reject: 'Proteins help flatten the curve. Try to include them in meals.',
-    consume: 'Smart move. Protein provides a steady energy release.',
+    reject: 'Proteins help flatten the tide. Try to include them in your feats.',
+    consume: 'Smart move. Protein provides a steady release of Vigor.',
   },
   hydration: {
-    reject: 'Hydration is key! High glucose can lead to dehydration.',
-    consume: 'Great! Staying hydrated helps your body manage glucose better.',
+    reject: 'Purity is key! A high sugar tide can drain your Pure Stream.',
+    consume: 'Great! Staying pure helps your Kingdom manage the Harmony better.',
   },
 };
 
@@ -121,7 +115,7 @@ export const ResultsScroll: React.FC<ResultsScrollProps> = ({
   const scaleAnim = useRef(new Animated.Value(0.8)).current;
   const [showTipsCard, setShowTipsCard] = useState(false);
   const [showScrollPanel, setShowScrollPanel] = useState(false);
-  const [randomFact] = useState(() => GLUCOSE_FACTS[Math.floor(Math.random() * GLUCOSE_FACTS.length)]);
+  const [randomLore] = useState(() => KINGDOM_LORE[Math.floor(Math.random() * KINGDOM_LORE.length)]);
   const { evaluateAchievements } = useScrollIntegration();
 
   // Evaluate achievements when game ends
@@ -177,15 +171,15 @@ export const ResultsScroll: React.FC<ResultsScrollProps> = ({
   const a11yResultsLabel = getResultsLabel(result, score, gradeInfo.grade);
   const weeklySeed = getWeeklySeed();
 
-  const getEducationalInsight = () => {
+  const getAlchemistObservation = () => {
     if (!gameState) return null;
     
     // Alchemist's Lab specific advice
     if (isWeeklyChallenge) {
       return {
         icon: '🧪',
-        title: 'ALCHEMIST\'S LAB REPORT',
-        message: 'This seeded run tests your consistency. Everyone faces the same foods this week! To rank higher, focus on maintaining a Balanced Zone streak (40-60%) for score multipliers.',
+        title: 'ALCHEMIST\'S OBSERVATION',
+        message: 'This seeded run tests your consistency. Everyone faces the same foods this week! To rank higher, focus on maintaining a Harmony streak (40-60%) for score multipliers.',
       };
     }
 
@@ -195,19 +189,19 @@ export const ResultsScroll: React.FC<ResultsScrollProps> = ({
     if (result === 'defeat') {
       return {
         icon: '👨‍🔬',
-        title: 'ALCHEMIST\'S ADVICE',
-        message: 'When stability drops, focus on fiber-rich allies (🥦) and avoid the sugar horde (🍩). Movement (Exercise Power-up) can also help bring levels back down.',
+        title: 'ALCHEMIST\'S WARNING',
+        message: 'When Harmony drops, focus on the Green Aegis (🥦) and avoid the Sugar Horde (🍩). The Knight\'s March (Exercise Power-up) can also help calm the sugar tide.',
       };
     }
     
     return {
       icon: '🤴',
       title: 'ROYAL COMMENDATION',
-      message: 'Your mastery of the 4-way swipe shows great tactical awareness. Remember: Saving healthy snacks for later (👈) is the mark of a true King!',
+      message: 'Your mastery of the 4-way swipe shows great tactical awareness. Remember: Saving healthy snacks for later (👈) is the mark of a true Guardian!',
     };
   };
 
-  const insight = getEducationalInsight();
+  const observation = getAlchemistObservation();
   
   // Share functionality
   const handleShare = async () => {
@@ -251,9 +245,9 @@ export const ResultsScroll: React.FC<ResultsScrollProps> = ({
 
       {/* Glucose Fact */}
       <View style={{ backgroundColor: 'rgba(59, 130, 246, 0.15)', padding: 12, borderRadius: 10, marginBottom: 10 }}>
-        <Text style={{ fontSize: 24, textAlign: 'center', marginBottom: 6 }}>{randomFact.emoji}</Text>
-        <Text style={{ color: '#93c5fd', fontSize: 13, textAlign: 'center', fontWeight: 'bold' }}>{randomFact.fact}</Text>
-        <Text style={{ color: '#60a5fa', fontSize: 11, textAlign: 'center', marginTop: 4 }}>💡 {randomFact.tip}</Text>
+        <Text style={{ fontSize: 24, textAlign: 'center', marginBottom: 6 }}>{randomLore.emoji}</Text>
+        <Text style={{ color: '#93c5fd', fontSize: 13, textAlign: 'center', fontWeight: 'bold' }}>{randomLore.fact}</Text>
+        <Text style={{ color: '#60a5fa', fontSize: 11, textAlign: 'center', marginTop: 4 }}>💡 {randomLore.tip}</Text>
       </View>
 
       {/* Fun message */}
@@ -368,8 +362,8 @@ export const ResultsScroll: React.FC<ResultsScrollProps> = ({
               <Text style={{ fontSize: 14, fontWeight: 'bold', color: gradeInfo.color }}>{gradeInfo.title}</Text>
             </View>
 
-            {/* Educational Insight - NEW */}
-            {insight && (
+            {/* Alchemist Observation - NEW */}
+            {observation && (
               <View style={{ 
                 backgroundColor: 'rgba(59, 130, 246, 0.1)', 
                 padding: 10, 
@@ -379,10 +373,10 @@ export const ResultsScroll: React.FC<ResultsScrollProps> = ({
                 marginBottom: 10
               }}>
                 <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 4 }}>
-                  <Text style={{ fontSize: 16, marginRight: 6 }}>{insight.icon}</Text>
-                  <Text style={{ color: '#93c5fd', fontSize: 10, fontWeight: 'bold', letterSpacing: 1 }}>{insight.title}</Text>
+                  <Text style={{ fontSize: 16, marginRight: 6 }}>{observation.icon}</Text>
+                  <Text style={{ color: '#93c5fd', fontSize: 10, fontWeight: 'bold', letterSpacing: 1 }}>{observation.title}</Text>
                 </View>
-                <Text style={{ color: '#d1d5db', fontSize: 11, lineHeight: 15 }}>{insight.message}</Text>
+                <Text style={{ color: '#d1d5db', fontSize: 11, lineHeight: 15 }}>{observation.message}</Text>
               </View>
             )}
 
