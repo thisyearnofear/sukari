@@ -78,6 +78,21 @@ export default function HomeScreen() {
     consumeSavedFood,
   } = useBattleGame(logMeal, tierConfig, progress.userMode || undefined);
 
+  // Check if game ended and we need to show results - use useEffect to avoid infinite re-renders
+  useEffect(() => {
+    if (appScreen === 'battle' && !gameState.isGameActive && gameState.gameResult && !hasTransitionedToResults.current) {
+      hasTransitionedToResults.current = true;
+      handleGameResult();
+    }
+  }, [appScreen, gameState.isGameActive, gameState.gameResult]);
+
+  // Reset transition flag when starting a new game
+  useEffect(() => {
+    if (appScreen === 'battle' && gameState.isGameActive) {
+      hasTransitionedToResults.current = false;
+    }
+  }, [appScreen, gameState.isGameActive]);
+
   if (!isClient) {
     return (
       <View style={{ flex: 1, backgroundColor: '#1a1a2e', justifyContent: 'center', alignItems: 'center' }}>
@@ -425,21 +440,6 @@ export default function HomeScreen() {
     stopGlucoseSimulation();
     navigateTo('welcome');
   };
-
-  // Check if game ended and we need to show results - use useEffect to avoid infinite re-renders
-  useEffect(() => {
-    if (appScreen === 'battle' && !gameState.isGameActive && gameState.gameResult && !hasTransitionedToResults.current) {
-      hasTransitionedToResults.current = true;
-      handleGameResult();
-    }
-  }, [appScreen, gameState.isGameActive, gameState.gameResult]);
-
-  // Reset transition flag when starting a new game
-  useEffect(() => {
-    if (appScreen === 'battle' && gameState.isGameActive) {
-      hasTransitionedToResults.current = false;
-    }
-  }, [appScreen, gameState.isGameActive]);
 
   // Render current screen using screen map
   return (
