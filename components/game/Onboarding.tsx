@@ -71,13 +71,13 @@ const CLASSIC_STEPS: OnboardingStep[] = [
   {
     title: 'UNDERSTANDING THE GAME',
     subtitle: 'Here\'s what it all means...',
-    content: '⚔️ KINGDOM = Your Body\n🍎 ALLIES = Healthy Foods\n🍬 ENEMIES = Junk Foods\n🩸 STABILITY = Blood Glucose Level (70-140 mg/dL is healthy)',
+    content: '⚔️ KINGDOM = Your Body\n🍎 ALLIES = Healthy Foods\n🍬 ENEMIES = Junk Foods\n🩸 HARMONY = Blood Harmony Level (70-140 is healthy)',
     emoji: '🔑',
   },
   {
     title: 'RALLY ALLIES',
     subtitle: 'Swipe UP on healthy foods',
-    content: 'Vegetables, proteins, and whole grains strengthen your realm',
+    content: 'Garden harvests and vital proteins strengthen your inner Realm',
     emoji: '💚',
     foods: ['🥦', '🥕', '🐟'],
     allyFoods: true,
@@ -88,7 +88,7 @@ const CLASSIC_STEPS: OnboardingStep[] = [
   {
     title: 'BANISH ENEMIES',
     subtitle: 'Swipe DOWN on junk food',
-    content: 'Sugary snacks and processed foods destabilize your kingdom',
+    content: 'The Sugar Horde and processed spoils destabilize your Harmony',
     emoji: '💔',
     foods: ['🍩', '🍬', '🍔'],
     allyFoods: false,
@@ -98,8 +98,8 @@ const CLASSIC_STEPS: OnboardingStep[] = [
   },
   {
     title: 'OFFENCE > DEFENCE',
-    subtitle: 'Protect your kingdom\'s health',
-    content: '💎 mg/dL = milligrams per deciliter\n🎯 Target: 70-140 mg/dL [blood sugar]\n🏃High sugar? Exercise lowers it!\n😴 Low energy? Healthy foods raise it steadily.',
+    subtitle: 'Protect your Harmony',
+    content: '💎 mg/dL = Vital Balance Metric\n🎯 Target: 70-140 [Harmony Range]\n🏃High sugar? Knights (Exercise) lower it!\n😴 Low energy? Feast Rations raise it steadily.',
     emoji: '💡',
     foods: ['🥦', '🍎', '🐟'],  // Healthy food examples
     direction: 'up',
@@ -130,9 +130,9 @@ const LIFE_MODE_STEPS: OnboardingStep[] = [
     emoji: '🏰',
   },
   {
-    title: 'CONSUME FOOD',
-    subtitle: 'Swipe UP to eat',
-    content: 'Eat healthy foods to boost energy, hydration, and nutrition',
+    title: 'RESTORE VIGOR',
+    subtitle: 'Swipe UP to consume',
+    content: 'Consume Ally foods to boost Vigor, Purity, and Vitality',
     emoji: '🍽️',
     foods: ['🥦', '🥕', '🐟'],
     allyFoods: true,
@@ -141,9 +141,9 @@ const LIFE_MODE_STEPS: OnboardingStep[] = [
     directionLabel: '👆 SWIPE UP',
   },
   {
-    title: 'REJECT JUNK',
+    title: 'REJECT THE HORDE',
     subtitle: 'Swipe DOWN to refuse',
-    content: 'Reject unhealthy foods to maintain stability',
+    content: 'Reject the Sugar Horde to maintain your inner Harmony',
     emoji: '🚫',
     foods: ['🍩', '🍬', '🍔'],
     allyFoods: false,
@@ -173,8 +173,8 @@ const LIFE_MODE_STEPS: OnboardingStep[] = [
   },
   {
     title: 'ROYAL ACTIONS',
-    subtitle: 'Use power-ups wisely',
-    content: 'Train Knights (exercise) to lower stability. Host Royal Feasts (rations) to raise it.',
+    subtitle: 'Use your influence wisely',
+    content: 'Train Knights (Exercise) to lower Harmony levels. Host Royal Feasts (Rations) to raise them.',
     emoji: '⚔️',
   },
   {

@@ -109,6 +109,7 @@ export default function HomeScreen() {
           onStartGame={handleStartGame}
           onSelectGame={handleSelectGame}
           onViewStats={handleViewStats}
+          onUserModeSelected={handleUserModeSelected}
           userModeSelected={progress.userMode !== null}
         />
       </View>
@@ -342,6 +343,11 @@ export default function HomeScreen() {
 
   const handleSelectGame = () => {
     navigateTo('game_selection');
+  };
+
+  const handleUserModeSelected = (mode: string) => {
+    // When a user mode is selected for the first time, guide them to onboarding
+    navigateTo('onboarding');
   };
 
   const handleBackFromGameSelection = () => {

@@ -42,11 +42,11 @@ export function useAccessibility() {
    * Build accessibility label for HUD elements
    */
   const getHUDLabel = (
-    element: 'stability' | 'combo' | 'timer' | 'score',
+    element: 'harmony' | 'combo' | 'timer' | 'score',
     value: number,
   ): string => {
     const labels: Record<string, string> = {
-      stability: `Stability meter at ${value} percent`,
+      harmony: `Harmony meter at ${value} percent`,
       combo: `Combo counter at ${value}`,
       timer: `Time remaining: ${value} seconds`,
       score: `Current score: ${value} points`,
@@ -62,8 +62,8 @@ export function useAccessibility() {
     hasCharges?: number,
   ): string => {
     const labels: Record<string, string> = {
-      exercise: `Exercise button${hasCharges ? ` - ${hasCharges} charges remaining` : ''}. Double tap to call an exercise action to lower blood sugar`,
-      rations: `Emergency rations button${hasCharges ? ` - ${hasCharges} charges remaining` : ''}. Double tap to consume emergency rations to raise blood sugar`,
+      exercise: `Train Knights button${hasCharges ? ` - ${hasCharges} charges remaining` : ''}. Double tap to call an exercise action to lower Harmony`,
+      rations: `Royal Feast button${hasCharges ? ` - ${hasCharges} charges remaining` : ''}. Double tap to consume emergency rations to raise Harmony`,
       pause: 'Pause button. Double tap to pause the game',
       resume: 'Resume button. Double tap to resume the game',
       exit: 'Exit button. Double tap to return to main menu',
@@ -76,7 +76,7 @@ export function useAccessibility() {
    * Build accessibility label for meters/progress
    */
   const getMeterLabel = (
-    meterType: 'energy' | 'hydration' | 'nutrition' | 'stability',
+    meterType: 'vigor' | 'purity' | 'vitality' | 'harmony',
     value: number,
     status?: 'optimal' | 'good' | 'warning' | 'critical',
   ): string => {

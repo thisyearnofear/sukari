@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, Animated } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, Animated, TouchableOpacity, Platform } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { COLORS } from '@/constants/designSystem';
 
 interface LeaderboardEntry {
@@ -116,6 +117,20 @@ export const WeeklyLeaderboard: React.FC<WeeklyLeaderboardProps> = ({ playerScor
               <Text style={styles.entryTitle}>{entry.title}</Text>
             </View>
             <Text style={styles.score}>{entry.score} pts</Text>
+            <TouchableOpacity 
+              onPress={() => {
+                const message = `I just achieved ${entry.score} pts in the Alchemist's Lab! Can you beat my score in #GlucoseWars? ⚔️🧪`;
+                if (Platform.OS === 'web') {
+                  window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(message)}`, '_blank');
+                } else {
+                  // Fallback for native
+                  console.log('Sharing:', message);
+                }
+              }}
+              style={styles.shareBtn}
+            >
+              <Ionicons name="share-social-outline" size={14} color="#a78bfa" />
+            </TouchableOpacity>
           </View>
         ))}
       </ScrollView>
@@ -204,5 +219,13 @@ const styles = StyleSheet.create({
     color: '#fbbf24',
     fontWeight: 'bold',
     fontSize: 14,
+  },
+  shareBtn: {
+    marginLeft: 12,
+    padding: 6,
+    backgroundColor: 'rgba(124, 58, 237, 0.2)',
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: 'rgba(124, 58, 237, 0.4)',
   },
 });
