@@ -38,9 +38,10 @@ export const Web3Provider = ({ children }: { children: ReactNode }) => {
 
           // Check if user is already connected
           // Robust check for window.ethereum to handle conflicts (e.g., Backpack wallet)
+          // We use a safe getter-only access pattern
           const ethereum = typeof window !== 'undefined' ? (window as any).ethereum : undefined;
           
-          if (ethereum) {
+          if (ethereum && typeof ethereum.request === 'function') {
             try {
               const accounts = await ethereum.request({ method: 'eth_accounts' });
               if (accounts && accounts.length > 0) {
@@ -83,7 +84,7 @@ export const Web3Provider = ({ children }: { children: ReactNode }) => {
 
         // Web wallet connection
         const ethereum = typeof window !== 'undefined' ? (window as any).ethereum : undefined;
-        if (ethereum) {
+        if (ethereum && typeof ethereum.request === 'function') {
           const accounts = await ethereum.request({
             method: 'eth_requestAccounts',
           });

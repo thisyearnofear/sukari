@@ -74,7 +74,12 @@ const BEAM_ACHIEVEMENTS: BeamAchievement[] = [
 ];
 
 export const BeamAssets: React.FC<{ onClose: () => void }> = ({ onClose }) => {
-  const { playerAccount, mintAchievement, isLoading: isBeamLoading, fetchAchievements } = useBeam();
+  const beamContext = useBeam();
+  const playerAccount = beamContext?.playerAccount;
+  const mintAchievement = beamContext?.mintAchievement;
+  const isBeamLoading = beamContext?.isLoading;
+  const fetchAchievements = beamContext?.fetchAchievements;
+
   const { progress } = usePlayerProgress();
   const [achievements, setAchievements] = useState<BeamAchievement[]>(BEAM_ACHIEVEMENTS);
   const [loading, setLoading] = useState(false);

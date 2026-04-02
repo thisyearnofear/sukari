@@ -217,7 +217,9 @@ const initialGameState: GameState = {
 };
 
 export const useBattleGame = (onFoodConsumed?: (foodNutrients: FoodNutrients) => void, tierConfig?: any, userMode?: UserMode) => {
-  const { playerAccount, reportGameResult } = useBeam();
+  const beamContext = useBeam();
+  const playerAccount = beamContext?.playerAccount;
+  const reportGameResult = beamContext?.reportGameResult;
   const { discoverLore } = usePlayerProgress();
   const [gameState, setGameState] = useState<GameState>(initialGameState);
 
@@ -404,7 +406,7 @@ export const useBattleGame = (onFoodConsumed?: (foodNutrients: FoodNutrients) =>
     if (plotTwistRef.current) clearTimeout(plotTwistRef.current);
 
     // Sync results with Beam (ENHANCEMENT FIRST & PERFORMANT)
-    if (playerAccount) {
+    if (playerAccount && reportGameResult) {
       reportGameResult(gameState.score, result, {
         correctSwipes: gameState.correctSwipes,
         incorrectSwipes: gameState.incorrectSwipes,

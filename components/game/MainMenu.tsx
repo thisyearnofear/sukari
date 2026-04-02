@@ -86,8 +86,10 @@ export const MainMenu: React.FC<MainMenuProps> = ({ onStartGame, onSelectGame, o
   const [showMintModal, setShowMintModal] = useState(false);
   const [showLibrary, setShowLibrary] = useState(false);
   const [showTreasury, setShowTreasury] = useState(false);
-  const { isConnected } = useWeb3();
-  const { playerAccount, showSyncFeedback } = useBeam();
+  const { isConnected, address, connectWallet, disconnectWallet } = useWeb3();
+  const beamContext = useBeam();
+  const playerAccount = beamContext?.playerAccount;
+  const showSyncFeedback = beamContext?.showSyncFeedback;
   const [showWelcome, setShowWelcome] = useState(false);
   const welcomeAnim = useRef(new Animated.Value(-100)).current;
 
@@ -391,7 +393,12 @@ export const MainMenu: React.FC<MainMenuProps> = ({ onStartGame, onSelectGame, o
          )}
 
          <View className="mb-6">
-           <WalletConnectionButton />
+           <BeamWalletButton 
+             isConnected={isConnected}
+             address={address}
+             connectWallet={connectWallet}
+             disconnectWallet={disconnectWallet}
+           />
          </View>
 
          {progressInfo}
@@ -574,9 +581,17 @@ export const MainMenu: React.FC<MainMenuProps> = ({ onStartGame, onSelectGame, o
   );
 };
 
-const WalletConnectionButton = () => {
-  const { isConnected, address, connectWallet, disconnectWallet } = useWeb3();
-  const { playerAccount, login, logout, isLoading } = useBeam();
+const BeamWalletButton: React.FC<{
+  isConnected: boolean;
+  address: string | null;
+  connectWallet: () => Promise<void>;
+  disconnectWallet: () => void;
+}> = ({ isConnected, address, connectWallet, disconnectWallet }) => {
+  const beamContext = useBeam();
+  const playerAccount = beamContext?.playerAccount;
+  const login = beamContext?.login;
+  const logout = beamContext?.logout;
+  const isLoading = beamContext?.isLoading;
 
   if (playerAccount) {
     const truncatedAddress = `${playerAccount.address.substring(0, 6)}...${playerAccount.address.substring(playerAccount.address.length - 4)}`;
@@ -621,7 +636,7 @@ const WalletConnectionButton = () => {
       <TouchableOpacity
         className="bg-blue-600 px-4 py-2 rounded-full min-h-[36px] justify-center border border-blue-400"
         onPress={() => {
-          login();
+          if (login) login();
           // Tooltip explanation - logic to show it would be here
         }}
         disabled={isLoading}

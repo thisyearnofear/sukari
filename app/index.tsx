@@ -36,6 +36,13 @@ export default function HomeScreen() {
   const [showTierAdvanceModal, setShowTierAdvanceModal] = useState(false);
   const [pendingTierAdvance, setPendingTierAdvance] = useState<GameTier | null>(null);
 
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
+
+  const hasTransitionedToResults = useRef(false);
+
+  // Moved hooks to be called BEFORE early return to satisfy Rules of Hooks
   const {
     progress,
     unlockNextTier,
@@ -70,12 +77,6 @@ export default function HomeScreen() {
     restartGame,
     consumeSavedFood,
   } = useBattleGame(logMeal, tierConfig, progress.userMode || undefined);
-
-  useEffect(() => {
-    setIsClient(true);
-  }, []);
-
-  const hasTransitionedToResults = useRef(false);
 
   if (!isClient) {
     return (
