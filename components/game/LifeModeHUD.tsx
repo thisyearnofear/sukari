@@ -1,5 +1,5 @@
 import React, { useRef, useEffect } from 'react';
-import { View, Text, TouchableOpacity, Dimensions, Animated, Easing, useWindowDimensions } from 'react-native';
+import { View, Text, TouchableOpacity, Animated, Easing, useWindowDimensions } from 'react-native';
 import { BodyMetrics, TimePhase, MorningCondition, PlotTwist, SavedFoodSlot, SocialStats } from '@/types/game';
 import { TIME_PHASES, MORNING_CONDITIONS, METRIC_LABELS } from '@/constants/gameConfig';
 
@@ -47,7 +47,7 @@ const MetricParticle: React.FC<{
     );
     animation.start();
     return () => animation.stop();
-  }, []);
+  }, [anim, delay]);
 
   const translateY = anim.interpolate({
     inputRange: [0, 1],
@@ -108,7 +108,7 @@ const MetricPanel: React.FC<{
     } else {
       pulseAnim.setValue(1);
     }
-  }, [isCritical]);
+  }, [isCritical, pulseAnim]);
 
   useEffect(() => {
     // Increase opacity when value changes significantly or is critical
@@ -238,7 +238,7 @@ const MetricPanel: React.FC<{
 export { SIDE_PANEL_WIDTH };
 
 // Top Header Component - Kingdom themed with day progression
-export const LifeModeHeader: React.FC<{
+const LifeModeHeaderComponent: React.FC<{
   score: number;
   timer: number;
   timePhase: TimePhase;
@@ -510,8 +510,9 @@ export const LifeModeHeader: React.FC<{
   );
 });
 
-// Left Side Panel - Energy & Hydration with enhanced styling
-export const LeftSidePanel: React.FC<{
+LifeModeHeaderComponent.displayName = 'LifeModeHeader';
+export const LifeModeHeader = LifeModeHeaderComponent;
+const LeftSidePanelComponent: React.FC<{
   metrics: BodyMetrics;
 }> = React.memo(({ metrics }) => {
   const { height: screenHeight } = useWindowDimensions();
@@ -565,8 +566,9 @@ export const LeftSidePanel: React.FC<{
   );
 });
 
-// Right Side Panel - Nutrition & Stability with enhanced styling
-export const RightSidePanel: React.FC<{
+LeftSidePanelComponent.displayName = 'LeftSidePanel';
+export const LeftSidePanel = LeftSidePanelComponent;
+const RightSidePanelComponent: React.FC<{
   metrics: BodyMetrics;
 }> = React.memo(({ metrics }) => {
   const { height: screenHeight } = useWindowDimensions();
@@ -620,7 +622,8 @@ export const RightSidePanel: React.FC<{
   );
 });
 
-// Legacy export for backwards compatibility
+RightSidePanelComponent.displayName = 'RightSidePanel';
+export const RightSidePanel = RightSidePanelComponent;
 export const SideMetrics: React.FC<{
   metrics: BodyMetrics;
   side: 'left' | 'right';

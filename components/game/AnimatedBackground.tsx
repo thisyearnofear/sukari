@@ -1,5 +1,5 @@
 import React, { useEffect, useRef } from 'react';
-import { View, Text, Animated, Dimensions, StyleSheet, ImageBackground, useWindowDimensions } from 'react-native';
+import { View, Text, Animated, StyleSheet, useWindowDimensions } from 'react-native';
 import { StabilityZone, TimePhase } from '@/types/game';
 
 // const { width, height } = Dimensions.get('window');
@@ -109,7 +109,7 @@ export const AnimatedBackground: React.FC<AnimatedBackgroundProps> = ({
       rotateLoop.stop();
       waveLoop.stop();
     };
-  }, []);
+  }, [pulseAnim, rotateAnim, waveAnim]);
 
   // Combo-triggered glow effect
   useEffect(() => {
@@ -124,14 +124,16 @@ export const AnimatedBackground: React.FC<AnimatedBackgroundProps> = ({
   // Scale pulse on low timer
   useEffect(() => {
     if (timer <= 10) {
-      Animated.loop(
+      const scaleLoop = Animated.loop(
         Animated.sequence([
           Animated.timing(scaleAnim, { toValue: 1.02, duration: 500, useNativeDriver: true }),
           Animated.timing(scaleAnim, { toValue: 1, duration: 500, useNativeDriver: true }),
         ])
-      ).start();
+      );
+      scaleLoop.start();
+      return () => scaleLoop.stop();
     }
-  }, [timer <= 10]);
+  }, [timer, scaleAnim]);
 
   const getZoneColors = () => {
     switch (zone) {

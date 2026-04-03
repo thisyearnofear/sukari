@@ -13,7 +13,7 @@ import { COLORS } from '@/constants/designSystem';
 import { useAccessibility } from '@/hooks/useAccessibility';
 import { WeeklyLeaderboard } from './WeeklyLeaderboard';
 import { getWeeklySeed } from '@/utils/random';
-import { usePlayerProgress } from '@/hooks/usePlayerProgress';
+import { usePlayerProgressContext } from '@/context/PlayerProgressContext';
 
 // Kingdom Lore and Wisdom
 // MOVED TO constants/gameConfig.ts
@@ -124,7 +124,7 @@ export const ResultsScroll: React.FC<ResultsScrollProps> = ({
   const [showScrollPanel, setShowScrollPanel] = useState(false);
   const [randomLore] = useState(() => KINGDOM_LORE[Math.floor(Math.random() * KINGDOM_LORE.length)]);
   const { evaluateAchievements } = useScrollIntegration();
-  const { getSlowMoAnalytics } = usePlayerProgress();
+  const { getSlowMoAnalytics } = usePlayerProgressContext();
   const playerAnalytics = getSlowMoAnalytics();
 
   // Evaluate achievements when game ends

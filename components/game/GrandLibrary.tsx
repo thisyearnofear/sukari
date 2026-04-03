@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, ScrollView, Animated } from 'react-native';
+import { View, Text, TouchableOpacity, ScrollView } from 'react-native';
 import { KINGDOM_LORE } from '@/constants/gameConfig';
 
 interface GrandLibraryProps {
@@ -26,7 +26,7 @@ export const GrandLibrary: React.FC<GrandLibraryProps> = ({ discoveredLoreIds, o
       <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
         <View>
           <Text style={{ color: '#fbbf24', fontSize: 24, fontWeight: 'bold' }}>📜 THE GRAND LIBRARY</Text>
-          <Text style={{ color: '#94a3b8', fontSize: 12 }}>Uncover the secrets of the Realm\'s Harmony</Text>
+          <Text style={{ color: '#94a3b8', fontSize: 12 }}>Uncover the secrets of the Realm&apos;s Harmony</Text>
         </View>
         <TouchableOpacity onPress={onClose} style={{ padding: 10 }}>
           <Text style={{ color: '#fff', fontSize: 24 }}>✕</Text>
@@ -97,7 +97,7 @@ export const GrandLibrary: React.FC<GrandLibraryProps> = ({ discoveredLoreIds, o
                   </Text>
                   <View style={{ backgroundColor: 'rgba(0,0,0,0.3)', padding: 12, borderRadius: 10 }}>
                     <Text style={{ color: showAncientScrolls ? '#93c5fd' : '#fde68a', fontSize: 12, fontWeight: '600' }}>
-                      💡 {showAncientScrolls ? 'SCRIBE\'S NOTE' : 'ALCHEMIST\'S TIP'}
+                      💡 {showAncientScrolls ? 'SCRIBE&apos;S NOTE' : 'ALCHEMIST&apos;S TIP'}
                     </Text>
                     <Text style={{ color: '#94a3b8', fontSize: 11, marginTop: 4 }}>
                       {showAncientScrolls ? getClinicalTip(lore.id) : lore.tip}

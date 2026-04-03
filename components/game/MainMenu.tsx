@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { View, Text, TouchableOpacity, Animated, Dimensions, Platform, ScrollView } from 'react-native';
+import { View, Text, TouchableOpacity, Animated, Dimensions, Platform, ScrollView , Modal } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { ControlMode, UserMode } from '@/types/game';
-import { usePlayerProgress } from '@/hooks/usePlayerProgress';
+import { usePlayerProgressContext } from '@/context/PlayerProgressContext';
 import { USER_MODE_CONFIGS } from '@/constants/userModes';
 import { PrivacyToggle } from '@/components/PrivacyToggle';
 import { PrivacySettingsModal } from '@/components/PrivacySettings';
@@ -16,7 +16,6 @@ import { ProgressIndicator } from '@/components/game/ProgressIndicator';
 import { DailyQuests } from '@/components/game/DailyQuests';
 import { GrandLibrary } from '@/components/game/GrandLibrary';
 import { BeamAssets } from '@/components/game/BeamAssets';
-import { Modal } from 'react-native';
 
 const { width, height } = Dimensions.get('window');
 const screenWidth = width;
@@ -79,7 +78,7 @@ export const MainMenu: React.FC<MainMenuProps> = ({ onStartGame, onSelectGame, o
   const [showTutorialSettings, setShowTutorialSettings] = useState(false);
   const pulseAnim = useRef(new Animated.Value(1)).current;
   const glowAnim = useRef(new Animated.Value(0)).current;
-  const { progress, setUserMode, setPrivacyMode, updatePrivacySettings, setSkipOnboarding, getKingdomTitle, discoverLore } = usePlayerProgress();
+  const { progress, setUserMode, setPrivacyMode, updatePrivacySettings, setSkipOnboarding, getKingdomTitle, discoverLore } = usePlayerProgressContext();
   const kingdomTitle = getKingdomTitle();
   const [showUserModeSelector, setShowUserModeSelector] = useState(userModeSelected === false);
   const [selectedRole, setSelectedRole] = useState<UserMode | null>(null);

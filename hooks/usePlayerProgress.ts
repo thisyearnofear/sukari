@@ -102,6 +102,7 @@ export function usePlayerProgress() {
   const beamContext = useBeam();
   const playerAccount = beamContext?.playerAccount;
   const beam = beamContext?.beam;
+  const [hydrated, setHydrated] = useState(false);
   const [progress, setProgress] = useState<PlayerProgressState>({
     maxTierUnlocked: 'tier1',
     currentTier: 'tier1',
@@ -160,6 +161,8 @@ export function usePlayerProgress() {
         }
       } catch (error) {
         console.error('Failed to load player progress:', error);
+      } finally {
+        setHydrated(true);
       }
     };
 
@@ -356,6 +359,7 @@ export function usePlayerProgress() {
   }, []);
 
   return {
+    hydrated,
     progress,
     unlockNextTier,
     updateBestScore,

@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { View, Text, TouchableOpacity, ScrollView, Dimensions, Animated } from 'react-native';
 import { GameTier, GAME_TIERS } from '@/constants/gameTiers';
 import { ControlMode, GameMode } from '@/types/game';
-import { usePlayerProgress } from '@/hooks/usePlayerProgress';
+import { usePlayerProgressContext } from '@/context/PlayerProgressContext';
 import { Ionicons } from '@expo/vector-icons';
 import { createPulseAnimation } from '@/utils/animations';
 
@@ -15,7 +15,7 @@ interface GameSelectionScreenProps {
 }
 
 export const GameSelectionScreen: React.FC<GameSelectionScreenProps> = ({ onStartGame, onBack }) => {
-  const { progress } = usePlayerProgress();
+  const { progress } = usePlayerProgressContext();
   const [selectedTier, setSelectedTier] = useState<GameTier>(progress.currentTier || 'tier1');
   const [selectedControlMode, setSelectedControlMode] = useState<ControlMode>('swipe');
   const [gameMode, setGameMode] = useState<GameMode>('classic');

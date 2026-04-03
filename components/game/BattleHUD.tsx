@@ -1,9 +1,9 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { View, Text, TouchableOpacity, Animated, Easing, Dimensions, StyleSheet } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { StabilityZone } from '@/types/game';
 import { COMBO_TIERS } from '@/constants/gameConfig';
-import { COLORS, ANIMATIONS } from '@/constants/designSystem';
+import { COLORS } from '@/constants/designSystem';
 import { useAccessibility } from '@/hooks/useAccessibility';
 
 const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
@@ -85,7 +85,7 @@ const Particle: React.FC<{
     );
     animation.start();
     return () => animation.stop();
-  }, []);
+  }, [anim, delay, type]);
 
   const translateY = anim.interpolate({
     inputRange: [0, 1],
@@ -220,7 +220,7 @@ const ElectricArc: React.FC<{ color: string; active: boolean }> = ({ color, acti
   );
 };
 
-export const BattleHUD: React.FC<BattleHUDProps> = React.memo(({
+const BattleHUDComponent: React.FC<BattleHUDProps> = React.memo(({
   score,
   stability,
   timer,
@@ -239,7 +239,7 @@ export const BattleHUD: React.FC<BattleHUDProps> = React.memo(({
   controlMode = 'swipe',
   onToggleControlMode,
 }) => {
-  const { getButtonLabel, getHUDLabel } = useAccessibility();
+  const { getButtonLabel } = useAccessibility();
   const zone = getStabilityZone(stability);
   const stabilityColor = getStabilityColor(zone);
   const isLowTimer = timer <= 10;
@@ -273,7 +273,7 @@ export const BattleHUD: React.FC<BattleHUDProps> = React.memo(({
       ]).start();
       prevScoreRef.current = score;
     }
-  }, [score]);
+  }, [score, scoreFlashAnim]);
 
   // Continuous border flow animation
   useEffect(() => {
@@ -289,7 +289,7 @@ export const BattleHUD: React.FC<BattleHUDProps> = React.memo(({
       animation.start();
       return () => animation.stop();
     }
-  }, [isPaused]);
+  }, [isPaused, borderFlowAnim]);
 
   // Pattern animation
   useEffect(() => {
@@ -305,7 +305,7 @@ export const BattleHUD: React.FC<BattleHUDProps> = React.memo(({
       patternAnimation.start();
       return () => patternAnimation.stop();
     }
-  }, [isPaused]);
+  }, [isPaused, patternAnim]);
 
   // Pulse animation for critical zones
   useEffect(() => {
@@ -327,7 +327,7 @@ export const BattleHUD: React.FC<BattleHUDProps> = React.memo(({
       pulseAnimation.start();
       return () => pulseAnimation.stop();
     }
-  }, [isCritical, isPaused]);
+  }, [isCritical, isPaused, pulseAnim]);
 
   // Timer shake for low time
   useEffect(() => {
@@ -354,7 +354,7 @@ export const BattleHUD: React.FC<BattleHUDProps> = React.memo(({
       shakeAnimation.start();
       return () => shakeAnimation.stop();
     }
-  }, [isLowTimer, isPaused]);
+  }, [isLowTimer, isPaused, timerShakeAnim]);
 
   const currentTier = [...COMBO_TIERS].reverse().find(t => comboCount >= t.count);
 
@@ -826,6 +826,9 @@ export const BattleHUD: React.FC<BattleHUDProps> = React.memo(({
     </>
   );
 });
+
+BattleHUDComponent.displayName = 'BattleHUD';
+export const BattleHUD = BattleHUDComponent;
 
 const styles = StyleSheet.create({
   // Top HUD styles

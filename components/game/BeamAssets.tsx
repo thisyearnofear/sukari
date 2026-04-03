@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TouchableOpacity, ScrollView, ActivityIndicator, Animated } from 'react-native';
+import { View, Text, TouchableOpacity, ScrollView, ActivityIndicator } from 'react-native';
 import { useBeam } from '@/context/BeamContext';
-import { usePlayerProgress } from '@/hooks/usePlayerProgress';
-import { COLORS } from '@/constants/designSystem';
+import { usePlayerProgressContext } from '@/context/PlayerProgressContext';
 import { Ionicons } from '@expo/vector-icons';
 
 interface BeamAchievement {
@@ -80,14 +79,13 @@ export const BeamAssets: React.FC<{ onClose: () => void }> = ({ onClose }) => {
   const isBeamLoading = beamContext?.isLoading;
   const fetchAchievements = beamContext?.fetchAchievements;
 
-  const { progress } = usePlayerProgress();
+  const { progress } = usePlayerProgressContext();
   const [achievements, setAchievements] = useState<BeamAchievement[]>(BEAM_ACHIEVEMENTS);
-  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     // Sync with player progress and Beam assets
     const syncAssets = async () => {
-      setLoading(true);
+      if (!fetchAchievements) return;
       try {
         const beamOwnedAssets = await fetchAchievements();
         
@@ -118,13 +116,11 @@ export const BeamAssets: React.FC<{ onClose: () => void }> = ({ onClose }) => {
         }));
       } catch (error) {
         console.error('Failed to sync Beam assets:', error);
-      } finally {
-        setLoading(false);
       }
     };
 
     syncAssets();
-  }, [playerAccount, progress.kingdomRenown]);
+  }, [fetchAchievements, progress.discoveredLoreIds.length, progress.gamesPlayed, progress.kingdomRenown]);
 
   const handleMint = async (id: string) => {
     const txHash = await mintAchievement(id);
@@ -216,7 +212,7 @@ export const BeamAssets: React.FC<{ onClose: () => void }> = ({ onClose }) => {
           ))}
 
           <View className="bg-blue-900/10 border border-blue-500/30 rounded-2xl p-4 mt-4">
-            <Text className="text-blue-400 text-xs font-bold mb-1">📜 ALCHEMIST'S NOTE</Text>
+            <Text className="text-blue-400 text-xs font-bold mb-1">📜 ALCHEMIST&apos;S NOTE</Text>
             <Text className="text-gray-400 text-xs leading-5">
               Your deeds are secured on the Beam network. They represent your growth as a Guardian of the Realm and can be showcased to the entire Kingdom.
             </Text>

@@ -19,39 +19,48 @@ npx expo start
 ```
 📁 glucosewars/
 ├── app/
-│   └── index.tsx                 # Main app entry (navigation orchestration)
-├── components/
-│   ├── game/                     # Game-specific components
-│   │   ├── MainMenu.tsx          # Uses: Beam SDK social login, animations, progress
-│   │   ├── BattleScreen.tsx      # Uses: COLORS, keyboard listeners, responsive layout
-│   │   ├── BattleHUD.tsx         # Uses: COLORS, useAccessibility
-│   │   ├── FoodCard.tsx          # Uses: useAccessibility (screen reader labels)
-│   │   ├── ResultsScroll.tsx     # Uses: COLORS, useAccessibility
-│   │   ├── Onboarding.tsx        # Uses: metaphor bridge step + animations
-│   │   └── ProgressIndicator.tsx # Tier progression visualization
-│   ├── WebOnlyConnectButton.tsx  # Cross-platform (consolidated)
-│   └── WebProviders.tsx          # Cross-platform (consolidated)
+│   ├── _layout.tsx                 # Root layout (Providers: WebProviders, PlayerProgressProvider)
+│   ├── index.tsx                   # Main Menu screen
+│   ├── game-selection.tsx          # Tier/mode selection
+│   ├── welcome.tsx                 # Returning player flow
+│   ├── (game)/                     # Game flow route group
+│   │   ├── _layout.tsx            # GameSessionProvider (scoped to game flow)
+│   │   ├── onboarding.tsx         # Tier-specific tutorial screen
+│   │   ├── battle.tsx             # Active gameplay screen
+│   │   └── results.tsx            # End-of-game results screen
+│   └── slowmo/                     # Educational flow route group
+│       ├── index.tsx              # Slow-mo educational mode screen
+│       ├── results.tsx            # Session results screen
+│       └── stats.tsx              # Analytics dashboard screen
 ├── context/
-│   └── BeamContext.tsx           # 💎 Beam SDK state & lifecycle management
-├── constants/
-│   ├── designSystem.ts           # 🎨 Colors, typography, spacing, animations, shadows, z-indexes
-│   ├── navigation.ts             # 🧭 Screen definitions, transitions, validation
-│   ├── gameTiers.ts              # Game tier configurations
-│   ├── gameConfig.ts             # Game mechanics & rules
-│   ├── userModes.ts              # User mode configurations
-│   └── [other configs]
+│   ├── PlayerProgressContext.tsx   # Global progress state (Single source of truth)
+│   ├── GameSessionContext.tsx      # Scoped battle/health state
+│   ├── BeamContext.tsx             # Beam SDK lifecycle
+│   └── Web3Context.tsx            # Web3 wallet integration
+├── components/
+│   ├── game/                      # Pure UI components
+│   │   ├── MainMenu.tsx           # Uses: Beam SDK, animations, progress context
+│   │   ├── BattleScreen.tsx       # Uses: COLORS, keyboard listeners, responsive layout
+│   │   ├── ResultsScroll.tsx      # Uses: COLORS, useAccessibility
+│   │   ├── Onboarding.tsx         # Tutorial UI with mode-specific steps
+│   │   └── [other game components]
+│   ├── WebProviders.tsx           # Cross-platform provider wrapper
 ├── hooks/
-│   ├── useAccessibility.ts       # ♿ Screen reader labels, a11y configs
-│   ├── usePlayerProgress.ts      # Progression tracking & persistence
-│   ├── useBattleGame.ts          # Game state & mechanics
+│   ├── usePlayerProgress.ts       # Progression tracking & AsyncStorage persistence
+│   ├── useBattleGame.ts           # Game state & mechanics
+│   ├── useHealthProfile.ts        # Health simulation engine
+│   ├── useAccessibility.ts        # Screen reader labels
 │   └── [other hooks]
-├── utils/
-│   ├── animations.ts             # ⚡ Reusable animation builders (12+)
-│   └── [other utilities]
+├── constants/
+│   ├── designSystem.ts            # Colors, typography, spacing, animations
+│   ├── gameTiers.ts               # Tier configurations
+│   └── [other configs]
 ├── types/
-│   ├── game.ts                   # Game state types
-│   └── health.ts                 # Health profile types
-└── docs/                         # Documentation
+│   ├── game.ts                    # Game state types
+│   └── health.ts                  # Health profile types
+└── utils/
+    ├── animations.ts              # Reusable animation builders
+    └── [other utilities]
 ```
 
 ### Key Architectural Systems
@@ -64,12 +73,12 @@ npx expo start
 - Shadow/elevation levels
 - Z-index layering rules
 
-**Navigation State Machine** (`constants/navigation.ts`)
-- Screen type definitions
-- Valid transition rules
-- Screen metadata
-- Breadcrumb generation
-- Progress indicators
+**Route-Based Navigation** (`expo-router`)
+- File-based routing with typed routes
+- `(game)` and `slowmo` route groups for scoped providers and logic
+- `router.replace()` for linear flow (battle → results → menu)
+- `router.push()` for back-navigable screens (menu → game-selection)
+- Route params for passing tier/controlMode between screens
 
 **Animation Builders** (`utils/animations.ts`)
 - Reusable animation utilities (pulse, fade, scale, glow, burst, float, wobble)
@@ -172,7 +181,8 @@ const { getFoodCardLabel, getButtonLabel } = useAccessibility();
 2. **Use TYPOGRAPHY presets** - For consistency across app
 3. **Use animation builders** - Instead of inline Animated code
 4. **Add accessibility labels** - All interactive elements must be screen-reader accessible
-5. **Validate navigation** - Use `isValidTransition()` to prevent bad states
+5. **Use context, not direct hooks** - Always use `usePlayerProgressContext()` from `@/context/PlayerProgressContext`, never call `usePlayerProgress()` directly in components
+6. **Navigate with router** - Use `router.replace()` for one-way flow, `router.push()` for back-navigable screens
 
 ## 🛠️ Development Workflow
 
@@ -312,7 +322,7 @@ npm test -- --testNamePattern="Tier1"
 ```typescript
 // Test tier progression
 test('Tier 1 completion unlocks Tier 2', () => {
-  const { unlockNextTier } = usePlayerProgress();
+  const { unlockNextTier } = usePlayerProgressContext();
   unlockNextTier('tier1');
   expect(progress.maxTierUnlocked).toBe('tier2');
 });
@@ -342,8 +352,8 @@ test('New player completes all tiers', async () => {
 
 **Issue:** Tier not unlocking
 ```bash
-# Check progression hook
-console.log(usePlayerProgress().progress);
+# Check progression context
+console.log(usePlayerProgressContext().progress);
 
 # Verify win condition
 console.log(tierConfig.winCondition);

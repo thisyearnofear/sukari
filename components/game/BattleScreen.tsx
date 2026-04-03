@@ -4,7 +4,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { FoodCard } from './FoodCard';
 import { BattleHUD } from './BattleHUD';
 import { BattleTutorialModal } from './BattleTutorialModal';
-import { LifeModeHeader, LifeModeFooter, LeftSidePanel, RightSidePanel, SIDE_PANEL_WIDTH, LifeModePauseOverlay, SavedFoodsPanel, SocialMeterDisplay } from './LifeModeHUD';
+import { LifeModeHeader, LifeModeFooter, LeftSidePanel, RightSidePanel, SIDE_PANEL_WIDTH, LifeModePauseOverlay, SocialMeterDisplay } from './LifeModeHUD';
 import { AnimatedBackground } from './AnimatedBackground';
 import { InsulinControl } from './InsulinControl';
 import { GameState, StabilityZone, ControlMode, SwipeDirection, SwipeAction } from '@/types/game';
@@ -12,16 +12,13 @@ import { HealthProfile } from '@/types/health';
 import { COMBO_TIERS } from '@/constants/gameConfig';
 import { getGlucoseZone } from '@/constants/healthScenarios';
 import { TierConfig } from '@/constants/gameTiers';
-import { COLORS, ANIMATIONS } from '@/constants/designSystem';
-import { createComboBurstAnimation } from '@/utils/animations';
-
-const { width, height } = Dimensions.get('window');
 
 // Screen-wide combo burst effect
 const ComboBurst: React.FC<{
   comboCount: number;
   color: string;
 }> = ({ comboCount, color }) => {
+  const { width, height } = useWindowDimensions();
   const burstAnim = useRef(new Animated.Value(0)).current;
   const [particles, setParticles] = useState<{ id: number; angle: number; distance: number }[]>([]);
   
@@ -43,7 +40,7 @@ const ComboBurst: React.FC<{
         useNativeDriver: true,
       }).start();
     }
-  }, [comboCount]);
+  }, [comboCount, burstAnim]);
 
   if (comboCount < 3) return null;
 
@@ -124,7 +121,7 @@ const ScreenFlash: React.FC<{
         useNativeDriver: true,
       }).start();
     }
-  }, [trigger]);
+  }, [trigger, type, flashAnim]);
 
   if (!type) return null;
 
@@ -185,7 +182,7 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({
   tierConfig,
   onToggleControlMode,
 }) => {
-  const { width: screenWidth, height: screenHeight } = useWindowDimensions();
+  const { width: screenWidth } = useWindowDimensions();
   const shakeAnim = useRef(new Animated.Value(0)).current;
 
   const [showInsulinControl, setShowInsulinControl] = useState(false);
@@ -313,7 +310,7 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({
         Animated.timing(shakeAnim, { toValue: 0, duration: 50, useNativeDriver: true }),
       ]).start();
     }
-  }, [gameState.screenShake]);
+  }, [gameState.screenShake, shakeAnim]);
 
   // Combo burst trigger
   useEffect(() => {
@@ -332,7 +329,7 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({
       setFlashType('error');
       setFlashTrigger(prev => prev + 1);
     }
-  }, [gameState.announcement]);
+  }, [gameState.announcement, gameState.announcementType]);
 
   return (
     <Animated.View 

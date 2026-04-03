@@ -53,25 +53,16 @@ Predictable file structure with domain-driven design
 - **Easing**: LINEAR, EASE_IN, EASE_OUT, EASE_IN_OUT
 - **Accessibility**: Respects user motion preferences
 
-### Navigation State Machine (`constants/navigation.ts`)
+### Navigation State Machine (`expo-router`)
 
-**Type-safe, validated navigation** - prevents invalid screen transitions at runtime.
+**File-based, type-safe routing** using `expo-router` - provides deep-linking, native-feeling transitions, and clean URL structures on web.
 
 **Key Features:**
-- **Screen Definitions**: All 9 app screens as enum (menu, onboarding, battle, results, etc.)
-- **Transition Validation**: `isValidTransition(from, to)` enforces valid flows
-- **Screen Metadata**: Title, description, UI rules for each screen
-- **Breadcrumb Generation**: Shows user location in app (e.g., "Home > Select Game > Battle")
-- **Progress Tracking**: Tier progression info for UI display
-
-**Prevents Bugs Like:**
-```typescript
-// Before: Possible but wrong
-setAppScreen('battle');  // Could jump from menu, skipping onboarding
-
-// After: Validated
-navigateTo('battle');    // ❌ Invalid from 'menu', console.warn fires
-```
+- **Route Groups**: `(game)` and `slowmo` groups isolate scoped providers and logic.
+- **Dynamic Routing**: Tier and control mode selection passed via route params.
+- **Root Layout**: Centralized provider tree in `app/_layout.tsx`.
+- **Game Layout**: Scoped `GameSessionProvider` in `app/(game)/_layout.tsx`.
+- **Safe Navigation**: `router.replace()` used for linear flows (e.g., battle → results) to prevent back-navigation loops.
 
 ### Animation Builders (`utils/animations.ts`)
 
@@ -119,24 +110,29 @@ const { getFoodCardLabel } = useAccessibility();
 
 ### Component Consolidation
 
-**Eliminated platform-specific duplicates** - WebOnlyConnectButton.tsx and WebProviders.tsx now single implementations (was 4 files, now 2).
+**Eliminated platform-specific duplicates** - `.web.tsx` and `.native.tsx` variants for `WebProviders` and other components have been consolidated into single `.tsx` files where possible, leveraging React Native's cross-platform capabilities.
 
 **Pattern:**
-- Before: WebOnlyConnectButton.web.tsx + WebOnlyConnectButton.native.tsx (identical)
-- After: WebOnlyConnectButton.tsx (single cross-platform file)
-- Benefit: Single source of truth, easier maintenance
+- **WebProviders.tsx**: Single entry point for both web and native platforms.
+- **Benefit**: Single source of truth, no dead code, easier maintenance.
 
 ## 🎮 System Overview
 
 ### High-Level Architecture
 ```
 📱 App Launch
-├── usePlayerProgress()  # Load state
-├── GAME_TIERS[tier]     # Get config
-├── WelcomeBack         # Returning flow
-├── OnboardingForTier    # Tier onboarding
-├── BattleScreen         # Gameplay
-└── ResultsScroll        # Results
+├── _layout.tsx              # WebProviders → PlayerProgressProvider
+├── / (index.tsx)            # Menu screen
+├── /game-selection          # Tier/mode picker
+├── /welcome                 # Returning player
+├── /(game)/                 # GameSessionProvider scope
+│   ├── onboarding           # Tier tutorial
+│   ├── battle               # Active gameplay
+│   └── results              # End-of-game
+└── /slowmo/                 # Educational flow
+    ├── index                # Slow-mo mode
+    ├── results              # Session results
+    └── stats                # Analytics
 ```
 
 ### Game Mechanics: Combo System
@@ -237,8 +233,8 @@ export const GAME_TIERS = {
 
 #### Player Progress
 ```typescript
-// hooks/usePlayerProgress.ts
-const { progress, unlockNextTier } = usePlayerProgress()
+// context/PlayerProgressContext.tsx
+const { progress, hydrated, updateBestScore } = usePlayerProgressContext();
 ```
 
 #### Config-Driven UI
@@ -277,19 +273,52 @@ if (tierConfig.showGlucose) { /* ... */ }
 
 ```
 📁 Project Structure
-├── constants/
-│   └── gameTiers.ts      # Tier configurations
+├── app/
+│   ├── _layout.tsx              # Root layout (WebProviders, PlayerProgressProvider)
+│   ├── index.tsx                # Main Menu screen
+│   ├── game-selection.tsx       # Tier/mode selection
+│   ├── welcome.tsx              # Returning player flow
+│   ├── (game)/                  # Game flow route group
+│   │   ├── _layout.tsx          # Scoped GameSessionProvider
+│   │   ├── onboarding.tsx       # Tier-specific tutorial screen
+│   │   ├── battle.tsx           # Active gameplay screen
+│   │   └── results.tsx          # End-of-game results screen
+│   └── slowmo/                  # Educational flow route group
+│       ├── index.tsx            # Slow-mo mode screen
+│       ├── results.tsx          # Session results screen
+│       └── stats.tsx            # Analytics dashboard screen
+├── context/
+│   ├── PlayerProgressContext.tsx # Global progress (Single source of truth)
+│   ├── GameSessionContext.tsx    # Scoped game session state
+│   ├── BeamContext.tsx           # Beam SDK integration
+│   └── Web3Context.tsx          # Web3 wallet integration
 ├── hooks/
-│   └── usePlayerProgress.ts # Progression tracking
-├── components/game/
-│   ├── WelcomeBack.tsx   # Returning player flow
-│   └── OnboardingForTier.tsx # Tier onboarding
-├── types/
-│   ├── game.ts          # Game types
-│   └── health.ts        # Health types
-└── app/
-    └── index.tsx        # Main app entry
+│   ├── usePlayerProgress.ts      # Hydration & persistence logic
+│   ├── useBattleGame.ts          # Core game engine
+│   ├── useHealthProfile.ts       # Glucose simulation logic
+│   └── [other hooks]
+├── components/game/              # Pure UI components
+├── constants/                    # Configurations & design tokens
+├── types/                        # TypeScript definitions
+└── utils/                        # Utilities & helpers
 ```
+
+### State Architecture
+
+**Two-provider pattern** separates global progress from scoped game state:
+
+#### `PlayerProgressProvider` (Root Scope)
+- Wraps entire app at `_layout.tsx`
+- Persists to AsyncStorage via `usePlayerProgress` hook
+- Single instance — no duplicated state
+- Exposes `hydrated` flag to prevent rendering before data loads
+- Components access via `usePlayerProgressContext()` (not `usePlayerProgress()` directly)
+
+#### `GameSessionProvider` (Game Route Scope)
+- Wraps only the `(game)` route group at `(game)/_layout.tsx`
+- Holds battle game state, health profile, and tier config
+- Created fresh per game session — no stale state leaks
+- Provides `useBattleGame`, `useHealthProfile`, and tier config to child routes
 
 ## 📈 Performance
 
@@ -332,5 +361,7 @@ if (tierConfig.showGlucose) { /* ... */ }
 ✅ Progressive enhancement
 ✅ Type-safe throughout
 ✅ Testable components
+✅ Route-scoped providers
+✅ Single source of truth for progress state
 
 **Result:** Maintainable, scalable architecture balancing simplicity with power

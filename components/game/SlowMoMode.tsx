@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, TouchableOpacity, ScrollView, Dimensions, Animated } from 'react-native';
-import { usePlayerProgress } from '@/hooks/usePlayerProgress';
+import { usePlayerProgressContext } from '@/context/PlayerProgressContext';
 import { useHealthProfile } from '@/hooks/useHealthProfile';
 import { GameMode } from '@/types/game';
 import { Ionicons } from '@expo/vector-icons';
@@ -16,7 +16,7 @@ interface SlowMoModeProps {
 }
 
 export const SlowMoMode: React.FC<SlowMoModeProps> = ({ onStartGame, onBack, onComplete }) => {
-  const { progress, recordSlowMoSession } = usePlayerProgress();
+  const { progress, recordSlowMoSession } = usePlayerProgressContext();
   const { healthProfile } = useHealthProfile();
   const [phase, setPhase] = useState<'morning' | 'simulation' | 'evening'>('morning');
   const [plannedMeals, setPlannedMeals] = useState<Meal[]>([]);

@@ -44,7 +44,7 @@ import {
   TIME_SPEED_MODIFIERS,
   MESSAGE_POSITIONS,
 } from '@/constants/gameConfig';
-import { usePlayerProgress } from './usePlayerProgress';
+import { usePlayerProgressContext } from '@/context/PlayerProgressContext';
 import { getReflectionMessage } from '@/constants/userModes';
 import { useVRFService } from './useVRFService';
 import { SeededRandom, getWeeklySeed } from '@/utils/random';
@@ -220,7 +220,7 @@ export const useBattleGame = (onFoodConsumed?: (foodNutrients: FoodNutrients) =>
   const beamContext = useBeam();
   const playerAccount = beamContext?.playerAccount;
   const reportGameResult = beamContext?.reportGameResult;
-  const { discoverLore } = usePlayerProgress();
+  const { discoverLore } = usePlayerProgressContext();
   const [gameState, setGameState] = useState<GameState>(initialGameState);
 
   const timerRef = useRef<number | null>(null);

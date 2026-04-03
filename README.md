@@ -92,11 +92,11 @@ npx expo start
 - **Animations**: Reusable builders (pulse, fade, scale, glow, burst, etc.)
 - **Location**: `constants/designSystem.ts`
 
-### ✅ Navigation State Machine
-- **Validation**: Only valid screen transitions allowed
-- **Metadata**: Screen titles, descriptions, UI rules
-- **Helpers**: Breadcrumb generation, progress tracking
-- **Location**: `constants/navigation.ts`
+### ✅ Navigation (`expo-router`)
+- **File-based Routing**: Typed routes with native-feeling transitions.
+- **Route Groups**: Scoped contexts via `(game)` and `slowmo` groups.
+- **Dynamic Flows**: Flexible navigation for tiers and control modes.
+- **Location**: `app/` directory
 
 ### ✅ Reusable Animation Builders
 - **12+ builders**: Pulse, fade, scale, slide, glow, burst, floating, wobble
@@ -110,9 +110,11 @@ npx expo start
 - **WCAG AA compliance**: Path established
 - **Location**: `hooks/useAccessibility.ts`
 
-### ✅ Component Consolidation
-- **Merged duplicates**: WebOnlyConnectButton, WebProviders (reduced 4 files → 2)
-- **Single implementation**: No platform-specific branching for identical code
+### ✅ Component Architecture
+- **Consolidation**: Single source of truth for providers and UI.
+- **Modular Design**: Composable, testable, independent modules.
+- **Performant Rendering**: Memoized HUD and game components.
+- **Location**: `components/game/` and `context/`
 
 ## 📊 Technical Quality (8/10 → 9/10)
 
