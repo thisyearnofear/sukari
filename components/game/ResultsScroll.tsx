@@ -2,15 +2,13 @@
 // useScrollIntegration is resolved at runtime via Metro's platform-specific file resolution
 import { KINGDOM_LORE } from '@/constants/gameConfig';
 import React, { useEffect, useRef, useState } from 'react';
-import { View, Text, TouchableOpacity, Animated, Share } from 'react-native';
+import { View, Text, TouchableOpacity, Animated, Share , useWindowDimensions } from 'react-native';
 import { BodyMetrics, GameMode, MorningCondition, GameState, UserMode } from '@/types/game';
 import { HealthProfile } from '@/types/health';
 import { useScrollIntegration } from '@/hooks/useScrollIntegration';
 import { ScrollIntegration } from './ScrollIntegration';
 import { GameTier } from '@/constants/gameTiers';
 import { getUserModeConfig } from '@/constants/userModes';
-import { COLORS } from '@/constants/designSystem';
-import { useAccessibility } from '@/hooks/useAccessibility';
 import { WeeklyLeaderboard } from './WeeklyLeaderboard';
 import { getWeeklySeed } from '@/utils/random';
 import { usePlayerProgressContext } from '@/context/PlayerProgressContext';
@@ -52,29 +50,6 @@ function getModeSpecificMessage(userMode: UserMode | undefined, tier: GameTier |
   return '';
 }
 
-// Scrolls of Wisdom mapping based on performance
-const SCROLLS_OF_WISDOM = {
-  sugar: {
-    reject: 'The Sugar Horde was successfully repelled! You protected your Harmony.',
-    consume: 'Consuming the Horde causes rapid spikes in the tide. Pair with Vitality next time.',
-  },
-  processed: {
-    reject: 'Bypassing the Alchemist\'s artificial snacks keeps your Vigor stable longer.',
-    consume: 'Artificial snacks lack the Green Aegis (Fiber), leading to erratic Harmony.',
-  },
-  vegetable: {
-    reject: 'Veggies are your best allies! Do not let the Aegis go to waste.',
-    consume: 'Excellent! The Green Aegis slows the sugar horde\'s advance.',
-  },
-  protein: {
-    reject: 'Proteins help flatten the tide. Try to include them in your feats.',
-    consume: 'Smart move. Protein provides a steady release of Vigor.',
-  },
-  hydration: {
-    reject: 'Purity is key! A high sugar tide can drain your Pure Stream.',
-    consume: 'Great! Staying pure helps your Kingdom manage the Harmony better.',
-  },
-};
 
 interface ResultsScrollProps {
   result: 'victory' | 'defeat';
@@ -102,20 +77,15 @@ export const ResultsScroll: React.FC<ResultsScrollProps> = ({
   glucoseLevel,
   correctSwipes = 0,
   incorrectSwipes = 0,
-  timeInBalanced = 0,
-  comboMax = 0,
   onPlayAgain,
   onMainMenu,
   gameMode = 'classic',
   finalMetrics,
-  morningCondition,
   gameState,
   healthProfile,
   tier,
-  dexcomOption,
   userMode,
 }) => {
-  const { getResultsLabel } = useAccessibility();
   const isVictory = result === 'victory';
   const scrollAnim = useRef(new Animated.Value(-500)).current;
   const fadeAnim = useRef(new Animated.Value(0)).current;
@@ -160,7 +130,7 @@ export const ResultsScroll: React.FC<ResultsScrollProps> = ({
         }),
       ]),
     ]).start();
-  }, []);
+  }, [fadeAnim, scaleAnim, scrollAnim]);
 
   const accuracy = correctSwipes + incorrectSwipes > 0 
     ? Math.round((correctSwipes / (correctSwipes + incorrectSwipes)) * 100) 
@@ -177,7 +147,6 @@ export const ResultsScroll: React.FC<ResultsScrollProps> = ({
   };
 
   const gradeInfo = getGrade();
-  const a11yResultsLabel = getResultsLabel(result, score, gradeInfo.grade);
   const weeklySeed = getWeeklySeed();
 
   const getAlchemistObservation = () => {
@@ -309,7 +278,7 @@ export const ResultsScroll: React.FC<ResultsScrollProps> = ({
     </View>
   );
 
-  const { width: screenWidth } = require('react-native').Dimensions.get('window');
+  const { width: screenWidth } = useWindowDimensions();
   const cardMaxWidth = Math.min(screenWidth * 0.9, 380);
 
   return (
@@ -531,7 +500,7 @@ export const ResultsScroll: React.FC<ResultsScrollProps> = ({
                   }
                 </Text>
                 <Text style={{ fontSize: 12, color: '#cbd5e1', textAlign: 'center' }}>
-                  💡 Tip: In Challenge 1, you'll manage real glucose levels!
+                  💡 Tip: In Challenge 1, you&apos;ll manage real glucose levels!
                 </Text>
               </View>
             )}
@@ -559,12 +528,12 @@ export const ResultsScroll: React.FC<ResultsScrollProps> = ({
                   🏆 Advanced Play Mastered!
                 </Text>
                 <Text style={{ fontSize: 12, color: '#cbd5e1', textAlign: 'center', marginBottom: 8 }}>
-                  You've learned advanced glucose management. Keep practicing these skills:
+                  You&apos;ve learned advanced glucose management. Keep practicing these skills:
                 </Text>
                 <Text style={{ fontSize: 11, color: '#cbd5e1', textAlign: 'center' }}>
                   ✓ Timing matters (meals, exercise, sleep)
                   ✓ Balance, not restriction
-                  ✓ Listen to your body's signals
+                  ✓ Listen to your body&apos;s signals
                 </Text>
               </View>
             )}

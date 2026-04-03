@@ -153,7 +153,7 @@ const AnimatedBorderGlow: React.FC<{
     );
     animation.start();
     return () => animation.stop();
-  }, [intensity]);
+  }, [glowAnim, intensity]);
 
   const opacity = glowAnim.interpolate({
     inputRange: [0, 1],
@@ -200,7 +200,7 @@ const ElectricArc: React.FC<{ color: string; active: boolean }> = ({ color, acti
       animation.start();
       return () => animation.stop();
     }
-  }, [active]);
+  }, [active, arcAnim]);
 
   if (!active) return null;
 

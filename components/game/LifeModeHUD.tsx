@@ -121,7 +121,7 @@ const MetricPanel: React.FC<{
       ]).start();
     }
     prevValue.current = value;
-  }, [value, isCritical]);
+  }, [value, isCritical, opacityAnim]);
 
   useEffect(() => {
     const glow = Animated.loop(
@@ -132,7 +132,7 @@ const MetricPanel: React.FC<{
     );
     glow.start();
     return () => glow.stop();
-  }, []);
+  }, [glowAnim]);
   
   return (
     <Animated.View 
@@ -283,7 +283,7 @@ const LifeModeHeaderComponent: React.FC<{
       shake.start();
       return () => shake.stop();
     }
-  }, [isLowTime]);
+  }, [isLowTime, timerShakeAnim]);
 
   useEffect(() => {
     if (comboCount > 0) {
@@ -296,7 +296,7 @@ const LifeModeHeaderComponent: React.FC<{
       glow.start();
       return () => glow.stop();
     }
-  }, [comboCount]);
+  }, [comboCount, comboGlowAnim]);
   
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
@@ -515,7 +515,6 @@ export const LifeModeHeader = LifeModeHeaderComponent;
 const LeftSidePanelComponent: React.FC<{
   metrics: BodyMetrics;
 }> = React.memo(({ metrics }) => {
-  const { height: screenHeight } = useWindowDimensions();
   return (
     <View 
       style={{ 
@@ -571,7 +570,6 @@ export const LeftSidePanel = LeftSidePanelComponent;
 const RightSidePanelComponent: React.FC<{
   metrics: BodyMetrics;
 }> = React.memo(({ metrics }) => {
-  const { height: screenHeight } = useWindowDimensions();
   return (
     <View 
       style={{ 
@@ -659,7 +657,7 @@ export const LifeModeFooter: React.FC<{
       glow.start();
       return () => glow.stop();
     }
-  }, [exerciseCharges]);
+  }, [exerciseCharges, exerciseGlowAnim]);
 
   useEffect(() => {
     if (rationCharges > 0) {
@@ -672,7 +670,7 @@ export const LifeModeFooter: React.FC<{
       glow.start();
       return () => glow.stop();
     }
-  }, [rationCharges]);
+  }, [rationCharges, rationsGlowAnim]);
   
   const getAnnouncementStyle = () => {
     switch (announcementType) {
@@ -910,7 +908,7 @@ export const LifeModePauseOverlay: React.FC<{
         }),
       ]).start();
     }
-  }, [isPaused]);
+  }, [isPaused, fadeAnim, scaleAnim]);
   
   if (!isPaused) return null;
   

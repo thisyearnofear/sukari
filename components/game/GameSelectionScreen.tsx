@@ -1,13 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { View, Text, TouchableOpacity, ScrollView, Dimensions, Animated } from 'react-native';
+import { View, Text, TouchableOpacity, ScrollView, Animated } from 'react-native';
 import { GameTier, GAME_TIERS } from '@/constants/gameTiers';
 import { ControlMode, GameMode } from '@/types/game';
 import { usePlayerProgressContext } from '@/context/PlayerProgressContext';
 import { Ionicons } from '@expo/vector-icons';
 import { createPulseAnimation } from '@/utils/animations';
-
-const { width } = Dimensions.get('window');
-const maxWidth = Math.min(width * 0.9, 400);
 
 interface GameSelectionScreenProps {
   onStartGame: (tier: GameTier, controlMode: ControlMode, gameMode?: GameMode) => void;
@@ -17,7 +14,7 @@ interface GameSelectionScreenProps {
 export const GameSelectionScreen: React.FC<GameSelectionScreenProps> = ({ onStartGame, onBack }) => {
   const { progress } = usePlayerProgressContext();
   const [selectedTier, setSelectedTier] = useState<GameTier>(progress.currentTier || 'tier1');
-  const [selectedControlMode, setSelectedControlMode] = useState<ControlMode>('swipe');
+  const [selectedControlMode] = useState<ControlMode>('swipe');
   const [gameMode, setGameMode] = useState<GameMode>('classic');
   const [showQuickStart, setShowQuickStart] = useState(true);
   const [showTierInfo, setShowTierInfo] = useState(false);

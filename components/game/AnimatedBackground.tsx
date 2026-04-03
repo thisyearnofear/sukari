@@ -119,7 +119,7 @@ export const AnimatedBackground: React.FC<AnimatedBackgroundProps> = ({
         Animated.timing(glowAnim, { toValue: 0.3, duration: 500, useNativeDriver: true }),
       ]).start();
     }
-  }, [comboCount]);
+  }, [comboCount, glowAnim]);
 
   // Scale pulse on low timer
   useEffect(() => {

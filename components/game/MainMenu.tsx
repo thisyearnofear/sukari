@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { View, Text, TouchableOpacity, Animated, Dimensions, Platform, ScrollView , Modal } from 'react-native';
+import { View, Text, TouchableOpacity, Animated, Platform, ScrollView, Modal, useWindowDimensions } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { ControlMode, UserMode } from '@/types/game';
 import { usePlayerProgressContext } from '@/context/PlayerProgressContext';
@@ -9,21 +9,19 @@ import { PrivacySettingsModal } from '@/components/PrivacySettings';
 import { useWeb3 } from '@/context/Web3Context';
 import { useBeam } from '@/context/BeamContext';
 import { RoleBadgeModal } from '@/components/game/RoleBadgeModal';
-import { GAME_TIERS } from '@/constants/gameTiers';
-import { COLORS, SPACING, ANIMATIONS } from '@/constants/designSystem';
+import { COLORS, ANIMATIONS } from '@/constants/designSystem';
 import { createPulseAnimation, createGlowAnimation, createFloatingAnimation } from '@/utils/animations';
 import { ProgressIndicator } from '@/components/game/ProgressIndicator';
 import { DailyQuests } from '@/components/game/DailyQuests';
 import { GrandLibrary } from '@/components/game/GrandLibrary';
 import { BeamAssets } from '@/components/game/BeamAssets';
 
-const { width, height } = Dimensions.get('window');
-const screenWidth = width;
-const maxWidth = Math.min(screenWidth * 0.9, 400);
+const maxWidth = 400;
 
 const FloatingFood: React.FC<{ emoji: string; delay: number; isAlly: boolean }> = ({ emoji, delay, isAlly }) => {
+  const { width: screenWidth } = useWindowDimensions();
   const translateY = useRef(new Animated.Value(0)).current;
-  const translateX = useRef(new Animated.Value(Math.random() * screenWidth)).current;
+  const translateX = useRef(new Animated.Value(Math.random() * (screenWidth || 400))).current;
   const opacity = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
@@ -46,7 +44,7 @@ const FloatingFood: React.FC<{ emoji: string; delay: number; isAlly: boolean }> 
     };
 
     startAnimation();
-  }, []);
+  }, [delay, opacity, screenWidth, translateX, translateY]);
 
   const borderColor = isAlly ? COLORS.ALLY : COLORS.ENEMY;
   const bgColor = isAlly ? 'rgba(34, 197, 94, 0.2)' : 'rgba(239, 68, 68, 0.2)';
@@ -73,12 +71,14 @@ const FloatingFood: React.FC<{ emoji: string; delay: number; isAlly: boolean }> 
 };
 
 export const MainMenu: React.FC<MainMenuProps> = ({ onStartGame, onSelectGame, onUserModeSelected, userModeSelected, onViewStats }) => {
+  /* eslint-disable @typescript-eslint/no-unused-vars */
   const [selectedMode, setSelectedMode] = useState<ControlMode>('swipe');
   const [showPrivacySettings, setShowPrivacySettings] = useState(false);
   const [showTutorialSettings, setShowTutorialSettings] = useState(false);
   const pulseAnim = useRef(new Animated.Value(1)).current;
   const glowAnim = useRef(new Animated.Value(0)).current;
   const { progress, setUserMode, setPrivacyMode, updatePrivacySettings, setSkipOnboarding, getKingdomTitle, discoverLore } = usePlayerProgressContext();
+  /* eslint-enable @typescript-eslint/no-unused-vars */
   const kingdomTitle = getKingdomTitle();
   const [showUserModeSelector, setShowUserModeSelector] = useState(userModeSelected === false);
   const [selectedRole, setSelectedRole] = useState<UserMode | null>(null);
@@ -101,7 +101,7 @@ export const MainMenu: React.FC<MainMenuProps> = ({ onStartGame, onSelectGame, o
         Animated.timing(welcomeAnim, { toValue: -100, duration: 500, useNativeDriver: true }),
       ]).start(() => setShowWelcome(false));
     }
-  }, [playerAccount]);
+  }, [playerAccount, showWelcome, welcomeAnim]);
 
   useEffect(() => {
     // Pulse animation for start button
@@ -117,7 +117,7 @@ export const MainMenu: React.FC<MainMenuProps> = ({ onStartGame, onSelectGame, o
       minOpacity: 0,
       maxOpacity: 1,
     }).start();
-  }, []);
+  }, [glowAnim, pulseAnim]);
 
   const floatingFoods = [
     { emoji: '🥦', isAlly: true },

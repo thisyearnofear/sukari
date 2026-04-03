@@ -36,7 +36,7 @@ export const NarratorCallout: React.FC<NarratorCalloutProps> = ({
         withTiming(0, { duration: 300 })
       );
     }
-  }, [visible, science]);
+  }, [visible, science, opacity, scale]);
   
   const animatedStyle = useAnimatedStyle(() => ({
     transform: [{ scale: scale.value }],

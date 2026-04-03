@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, Dimensions } from 'react-native';
+import { View, Text } from 'react-native';
 import { GestureDetector, Gesture } from 'react-native-gesture-handler';
 import { FoodUnit } from '@/types/game';
 import { FoodSprite } from './FoodSprite';
@@ -17,7 +17,6 @@ export const BattleArena: React.FC<BattleArenaProps> = ({
   onSwipe,
 }) => {
   const zone = getStabilityZone(stability);
-  const { width, height } = Dimensions.get('window');
   
   const getBackgroundGradient = () => {
     switch (zone) {

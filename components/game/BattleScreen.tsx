@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { View, Text, Animated, Dimensions, StyleSheet, TouchableOpacity, useWindowDimensions, Platform } from 'react-native';
+import { View, Text, Animated, StyleSheet, TouchableOpacity, Platform } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { FoodCard } from './FoodCard';
 import { BattleHUD } from './BattleHUD';
@@ -18,7 +18,6 @@ const ComboBurst: React.FC<{
   comboCount: number;
   color: string;
 }> = ({ comboCount, color }) => {
-  const { width, height } = useWindowDimensions();
   const burstAnim = useRef(new Animated.Value(0)).current;
   const [particles, setParticles] = useState<{ id: number; angle: number; distance: number }[]>([]);
   
@@ -182,7 +181,6 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({
   tierConfig,
   onToggleControlMode,
 }) => {
-  const { width: screenWidth } = useWindowDimensions();
   const shakeAnim = useRef(new Animated.Value(0)).current;
 
   const [showInsulinControl, setShowInsulinControl] = useState(false);

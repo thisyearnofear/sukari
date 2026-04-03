@@ -7,7 +7,7 @@
 
 import React from 'react';
 import { View, Text, Dimensions } from 'react-native';
-import { COLORS, SPACING } from '@/constants/designSystem';
+import { COLORS } from '@/constants/designSystem';
 import { GameTier } from '@/constants/gameTiers';
 
 const { width } = Dimensions.get('window');

@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { View, Text, Animated, Modal, TouchableOpacity } from 'react-native';
+import { Text, Animated, Modal, TouchableOpacity } from 'react-native';
 import { FoodDefinition } from '@/types/game';
 
 interface BattleTutorialModalProps {
@@ -46,7 +46,7 @@ export const BattleTutorialModal: React.FC<BattleTutorialModalProps> = ({
       fadeAnim.setValue(0);
       scaleAnim.setValue(0.8);
     }
-  }, [visible, onDismiss]);
+  }, [visible, onDismiss, fadeAnim, scaleAnim]);
 
   if (!food) return null;
 

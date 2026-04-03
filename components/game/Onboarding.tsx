@@ -1,10 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { View, Text, TouchableOpacity, Animated, Dimensions, ActivityIndicator } from 'react-native';
+import { View, Text, TouchableOpacity, Animated, ActivityIndicator } from 'react-native';
 import { ControlMode, GameMode, UserMode } from '@/types/game';
 import { HealthProfile } from '@/types/health';
 import { USER_MODE_CONFIGS } from '@/constants/userModes';
-
-const { width, height } = Dimensions.get('window');
 
 interface OnboardingProps {
   onComplete: (controlMode: ControlMode) => void;
@@ -192,13 +190,13 @@ const LIFE_MODE_STEPS: OnboardingStep[] = [
   },
 ];
 
-export const Onboarding: React.FC<OnboardingProps> = ({ onComplete, onSkip, defaultControlMode = 'swipe', gameMode, healthProfile, userMode }) => {
+export const Onboarding: React.FC<OnboardingProps> = ({ onComplete, onSkip, defaultControlMode = 'swipe', gameMode, userMode }) => {
   // Build steps array with mode-specific intro if available
   const baseSteps = gameMode === 'life' ? LIFE_MODE_STEPS : CLASSIC_STEPS;
   const ONBOARDING_STEPS = userMode ? [getModeIntroStep(userMode), ...baseSteps] : baseSteps;
   
   const [currentStep, setCurrentStep] = useState(0);
-  const [selectedControlMode, setSelectedControlMode] = useState<ControlMode>(defaultControlMode);
+  const [selectedControlMode] = useState<ControlMode>(defaultControlMode);
   const [isLoading, setIsLoading] = useState(true);
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const scaleAnim = useRef(new Animated.Value(0.9)).current;
@@ -220,7 +218,6 @@ export const Onboarding: React.FC<OnboardingProps> = ({ onComplete, onSkip, defa
   
   // Get theme colors based on game mode
   const themeColor = gameMode === 'life' ? '#fbbf24' : '#f59e0b';
-  const themeBg = gameMode === 'life' ? 'rgba(251, 191, 36, 0.1)' : 'rgba(245, 158, 11, 0.1)';
 
   // Initial loading animation
   useEffect(() => {
@@ -234,7 +231,7 @@ export const Onboarding: React.FC<OnboardingProps> = ({ onComplete, onSkip, defa
     ]).start(() => {
       setIsLoading(false);
     });
-  }, []);
+  }, [loadingAnim]);
 
   useEffect(() => {
     if (isLoading) return;
@@ -306,7 +303,7 @@ export const Onboarding: React.FC<OnboardingProps> = ({ onComplete, onSkip, defa
     }
 
     return () => pulseLoop.stop();
-  }, [currentStep, isLoading, progressPercentage]);
+  }, [currentStep, isLoading, progressPercentage, directionArrowAnim, emojiSlideAnim, fadeAnim, foodAnims, pulseAnim, scaleAnim, step.direction, step.foods]);
 
   const handleNext = () => {
     if (isLastStep) return;

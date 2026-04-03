@@ -213,7 +213,7 @@ export const RoleBadgeModal: React.FC<RoleBadgeModalProps> = ({
 
           {/* Footer */}
           <Text className="text-gray-500 text-xs text-center">
-            Minting is optional and doesn't affect gameplay or learning
+            Minting is optional and doesn&apos;t affect gameplay or learning
           </Text>
         </View>
       </View>

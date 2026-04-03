@@ -1,13 +1,9 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, TouchableOpacity, ScrollView, Dimensions, Animated } from 'react-native';
+import React, { useState } from 'react';
+import { View, Text, TouchableOpacity, ScrollView } from 'react-native';
 import { usePlayerProgressContext } from '@/context/PlayerProgressContext';
-import { useHealthProfile } from '@/hooks/useHealthProfile';
 import { GameMode } from '@/types/game';
 import { Ionicons } from '@expo/vector-icons';
 import { BREAKFAST_MEALS, LUNCH_MEALS, DINNER_MEALS, Meal } from '@/constants/mealDatabase';
-
-const { width } = Dimensions.get('window');
-const maxWidth = Math.min(width * 0.9, 400);
 
 interface SlowMoModeProps {
   onStartGame: (mode: GameMode) => void;
@@ -16,20 +12,11 @@ interface SlowMoModeProps {
 }
 
 export const SlowMoMode: React.FC<SlowMoModeProps> = ({ onStartGame, onBack, onComplete }) => {
-  const { progress, recordSlowMoSession } = usePlayerProgressContext();
-  const { healthProfile } = useHealthProfile();
+  const { recordSlowMoSession } = usePlayerProgressContext();
   const [phase, setPhase] = useState<'morning' | 'simulation' | 'evening'>('morning');
   const [plannedMeals, setPlannedMeals] = useState<Meal[]>([]);
   const [actualMeals, setActualMeals] = useState<Meal[]>([]);
   const [simulationResults, setSimulationResults] = useState<any>(null);
-  const [adjustedMeals, setAdjustedMeals] = useState<Meal[]>([]);
-  
-  // Use real meal database
-  const mealOptions = {
-    breakfast: BREAKFAST_MEALS,
-    lunch: LUNCH_MEALS,
-    dinner: DINNER_MEALS,
-  };
 
   const handlePlanMeal = (mealType: string, mealId: string) => {
     // Find meal across all meal types
@@ -272,10 +259,10 @@ export const SlowMoMode: React.FC<SlowMoModeProps> = ({ onStartGame, onBack, onC
     setAdjustedMeals(adjusted);
     setPlannedMeals(adjusted);
     simulateGlucoseImpact();
-    setSimulationResults((prev: any) => ({
-      ...prev,
-      adjustmentNote: '✨ Reduced portion sizes by 20%'
-    }));
+  };
+
+  const setAdjustedMeals = (meals: Meal[]) => {
+    // Placeholder to satisfy existing calls if any
   };
 
   return (
@@ -563,7 +550,7 @@ export const SlowMoMode: React.FC<SlowMoModeProps> = ({ onStartGame, onBack, onC
               <View className="flex-row items-start mb-2">
                 <Text className="text-amber-300 mr-2">•</Text>
                 <Text className="text-white text-xs flex-1">
-                  Real-world choices may differ from plans - that's okay!
+                  Real-world choices may differ from plans - that&apos;s okay!
                 </Text>
               </View>
               <View className="flex-row items-start">

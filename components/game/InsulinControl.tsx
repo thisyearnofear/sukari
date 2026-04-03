@@ -4,12 +4,10 @@
  * Only available when health profile is active
  */
 
-import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, Modal, Dimensions } from 'react-native';
+import React from 'react';
+import { View, Text, TouchableOpacity, Modal } from 'react-native';
 import { HealthProfile, InsulinType } from '@/types/health';
 import { INSULIN_PROFILES } from '@/constants/healthScenarios';
-
-const { width } = Dimensions.get('window');
 
 interface InsulinControlProps {
   healthProfile: HealthProfile;
@@ -24,12 +22,8 @@ export const InsulinControl: React.FC<InsulinControlProps> = ({
   isVisible,
   onClose,
 }) => {
-  const [selectedDose, setSelectedDose] = useState<number>(2); // 2 units default
-  const [showDoseSelector, setShowDoseSelector] = useState(false);
-
   const handleInsulinDose = (units: number) => {
     onAdministerInsulin(units, healthProfile.insulinType);
-    setShowDoseSelector(false);
   };
 
   const doseOptions = [1, 2, 4, 6, 10]; // Common insulin doses

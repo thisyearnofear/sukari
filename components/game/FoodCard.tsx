@@ -1,7 +1,7 @@
 import React, { useRef, useEffect, useState } from 'react';
 import { View, Text, Animated, PanResponder, useWindowDimensions, TouchableOpacity } from 'react-native';
 import { FoodUnit, ControlMode, SwipeDirection, SwipeAction } from '@/types/game';
-import { SWIPE_THRESHOLD, SWIPE_DIRECTIONS } from '@/constants/gameConfig';
+import { SWIPE_THRESHOLD } from '@/constants/gameConfig';
 import { useAccessibility } from '@/hooks/useAccessibility';
 
 // const { height: screenHeight, width: screenWidth } = Dimensions.get('window');
@@ -35,7 +35,7 @@ const ExplosionParticle: React.FC<{
         useNativeDriver: true,
       }),
     ]).start();
-  }, []);
+  }, [anim, delay]);
 
   const translateX = anim.interpolate({
     inputRange: [0, 1],
@@ -108,7 +108,7 @@ const ShockwaveRing: React.FC<{
         useNativeDriver: true,
       }),
     ]).start();
-  }, []);
+  }, [anim, delay]);
 
   const scale = anim.interpolate({
     inputRange: [0, 1],
@@ -151,7 +151,7 @@ const SwipeTrail: React.FC<{
       duration: 300,
       useNativeDriver: true,
     }).start();
-  }, []);
+  }, [anim]);
 
   const isVertical = direction === 'up' || direction === 'down';
   const isPositive = direction === 'down' || direction === 'right';
@@ -218,7 +218,7 @@ const ElectricArc: React.FC<{ color: string }> = ({ color }) => {
     );
     animation.start();
     return () => animation.stop();
-  }, []);
+  }, [anim]);
 
   return (
     <Animated.View
@@ -340,7 +340,7 @@ export const FoodCard: React.FC<FoodCardProps> = ({ food, onSwipe, controlMode, 
       pulse.stop();
       glow.stop();
     };
-  }, []);
+  }, [glowIntensity, opacity, pulseAnim, scale]);
 
   const triggerExplosion = (type: 'rally' | 'banish' | 'save' | 'share') => {
     setExplosionType(type);
@@ -462,24 +462,19 @@ export const FoodCard: React.FC<FoodCardProps> = ({ food, onSwipe, controlMode, 
   // Handle tap actions - supports all 4 directions in Life Mode
   const handleTapAction = (action: 'rally' | 'banish' | 'save' | 'share') => {
     let direction: SwipeDirection;
-    let swipeAction: SwipeAction;
     
     switch (action) {
       case 'rally':
         direction = 'up';
-        swipeAction = 'consume';
         break;
       case 'banish':
         direction = 'down';
-        swipeAction = 'reject';
         break;
       case 'save':
         direction = 'left';
-        swipeAction = 'save';
         break;
       case 'share':
         direction = 'right';
-        swipeAction = 'share';
         break;
     }
     

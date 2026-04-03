@@ -1,7 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, Animated, TouchableOpacity, Platform } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { COLORS } from '@/constants/designSystem';
 
 interface LeaderboardEntry {
   rank: number;
@@ -30,15 +29,15 @@ export const WeeklyLeaderboard: React.FC<WeeklyLeaderboardProps> = ({ playerScor
   const [showProclamation, setShowProclamation] = useState(false);
   const [proclamation, setProclamation] = useState('');
 
-  const PROCLAMATIONS = [
-    "Sir Glucose just reached a 50x combo!",
-    "Lady Insulin has secured the Royal Treasury.",
-    "Knight Fiber is leading the Alchemist's Lab.",
-    "A new Squire has entered the Realm!",
-    "The Sugar Horde is retreating in Sector 7."
-  ];
-
   useEffect(() => {
+    const PROCLAMATIONS = [
+      "Alchemist Scribe just unlocked a new Deed!",
+      "Lady Insulin has secured the Royal Treasury.",
+      "Knight Fiber is leading the Alchemist's Lab.",
+      "A new Squire has entered the Realm!",
+      "The Sugar Horde is retreating in Sector 7."
+    ];
+
     const cycleProclamations = () => {
       setProclamation(PROCLAMATIONS[Math.floor(Math.random() * PROCLAMATIONS.length)]);
       setShowProclamation(true);
@@ -55,7 +54,7 @@ export const WeeklyLeaderboard: React.FC<WeeklyLeaderboardProps> = ({ playerScor
 
     const timer = setTimeout(cycleProclamations, 2000);
     return () => clearTimeout(timer);
-  }, []);
+  }, [proclamationAnim]);
 
   // In a real app, we'd fetch based on seed. Here we just show mock data.
   const displayData = [...MOCK_LEADERBOARD];

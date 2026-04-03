@@ -33,7 +33,7 @@ export const WelcomeBack: React.FC<WelcomeBackProps> = ({
         Welcome back! 👋
       </Text>
       <Text style={{ fontSize: 14, color: '#9ca3af', marginBottom: 24 }}>
-        You've unlocked up to {GAME_TIERS[maxTierUnlocked].name}
+        You&apos;ve unlocked up to {GAME_TIERS[maxTierUnlocked].name}
       </Text>
 
       {/* Main action: Resume */}
