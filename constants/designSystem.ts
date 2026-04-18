@@ -18,7 +18,7 @@ export const COLORS = {
   // Stability Zones (from gameConfig)
   ZONES: {
     balanced: '#10b981',      // Green - healthy glucose
-    warningLow: '#f59e0b',    // Amber - low blood sugar
+    warningLow: '#38bdf8',    // Sky blue - low blood sugar
     warningHigh: '#f59e0b',   // Amber - high blood sugar
     criticalLow: '#06b6d4',   // Cyan - dangerously low
     criticalHigh: '#ef4444',  // Red - dangerously high
@@ -84,42 +84,42 @@ export const TYPOGRAPHY = {
     LOOSE: 2,
   } as const,
 
-  // Presets for common text styles
+  // Presets for common text styles (lineHeight must be absolute px for React Native)
   PRESETS: {
     TITLE_LARGE: {
       fontSize: 36,
-      fontWeight: '700',
-      lineHeight: 1.2,
+      fontWeight: '700' as const,
+      lineHeight: 43, // 36 * 1.2
     },
     TITLE_MEDIUM: {
       fontSize: 24,
-      fontWeight: '700',
-      lineHeight: 1.3,
+      fontWeight: '700' as const,
+      lineHeight: 31, // 24 * 1.3
     },
     TITLE_SMALL: {
       fontSize: 18,
-      fontWeight: '600',
-      lineHeight: 1.4,
+      fontWeight: '600' as const,
+      lineHeight: 25, // 18 * 1.4
     },
     BODY_LARGE: {
       fontSize: 16,
-      fontWeight: '400',
-      lineHeight: 1.5,
+      fontWeight: '400' as const,
+      lineHeight: 24, // 16 * 1.5
     },
     BODY_SMALL: {
       fontSize: 14,
-      fontWeight: '400',
-      lineHeight: 1.5,
+      fontWeight: '400' as const,
+      lineHeight: 21, // 14 * 1.5
     },
     CAPTION: {
       fontSize: 12,
-      fontWeight: '400',
-      lineHeight: 1.4,
+      fontWeight: '400' as const,
+      lineHeight: 17, // 12 * 1.4
     },
     BUTTON: {
       fontSize: 16,
-      fontWeight: '600',
-      lineHeight: 1.5,
+      fontWeight: '600' as const,
+      lineHeight: 24, // 16 * 1.5
     },
   } as const,
 } as const;
@@ -159,12 +159,13 @@ export const ANIMATIONS = {
     SLOWEST: 1500,
   } as const,
 
-  // Easing functions (React Native Easing equivalents)
+  // Easing function names — use with Easing[key] from 'react-native'
+  // e.g. Easing[ANIMATIONS.EASING.EASE_IN] or use the helpers below
   EASING: {
     LINEAR: 'linear',
-    EASE_IN: 'ease-in',
-    EASE_OUT: 'ease-out',
-    EASE_IN_OUT: 'ease-in-out',
+    EASE_IN: 'in',
+    EASE_OUT: 'out',
+    EASE_IN_OUT: 'inOut',
   } as const,
 
   // Common animation configurations

@@ -5,6 +5,7 @@ import { StabilityZone } from '@/types/game';
 import { COMBO_TIERS } from '@/constants/gameConfig';
 import { COLORS } from '@/constants/designSystem';
 import { useAccessibility } from '@/hooks/useAccessibility';
+import { getStabilityZone } from '@/utils/gameLogic';
 
 const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
 
@@ -27,14 +28,6 @@ interface BattleHUDProps {
   controlMode?: 'swipe' | 'tap';
   onToggleControlMode?: () => void;
 }
-
-const getStabilityZone = (stability: number): StabilityZone => {
-  if (stability >= 40 && stability <= 60) return 'balanced';
-  if (stability >= 25 && stability < 40) return 'warning-low';
-  if (stability > 60 && stability <= 75) return 'warning-high';
-  if (stability < 25) return 'critical-low';
-  return 'critical-high';
-};
 
 const getStabilityColor = (zone: StabilityZone): string => {
   switch (zone) {
@@ -239,7 +232,7 @@ const BattleHUDComponent: React.FC<BattleHUDProps> = React.memo(({
   controlMode = 'swipe',
   onToggleControlMode,
 }) => {
-  const { getButtonLabel } = useAccessibility();
+  const { getButtonLabel, getHUDLabel } = useAccessibility();
   const zone = getStabilityZone(stability);
   const stabilityColor = getStabilityColor(zone);
   const isLowTimer = timer <= 10;
@@ -447,7 +440,7 @@ const BattleHUDComponent: React.FC<BattleHUDProps> = React.memo(({
           {/* Main content */}
           <View style={styles.topHudContent}>
             {/* Score section with crown */}
-            <View style={styles.scoreSection}>
+            <View style={styles.scoreSection} accessible accessibilityLabel={getHUDLabel('score', score)} accessibilityRole="text">
               <Text style={styles.crownIcon}>👑</Text>
               <Animated.View style={{ transform: [{ scale: scoreScale }] }}>
                 <Text style={styles.scoreText}>{score.toLocaleString()}</Text>
@@ -456,7 +449,7 @@ const BattleHUDComponent: React.FC<BattleHUDProps> = React.memo(({
             </View>
 
             {/* Center - Timer with dramatic styling */}
-            <View style={styles.timerSection}>
+            <View style={styles.timerSection} accessible accessibilityLabel={getHUDLabel('timer', timer)} accessibilityRole="timer">
               <Animated.View 
                 style={[
                   styles.timerContainer,
@@ -498,6 +491,8 @@ const BattleHUDComponent: React.FC<BattleHUDProps> = React.memo(({
                 <TouchableOpacity
                   onPress={onPause}
                   style={styles.pauseButton}
+                  accessibilityLabel={getButtonLabel('pause')}
+                  accessibilityRole="button"
                 >
                   <Text style={styles.pauseIcon}>⏸️</Text>
                 </TouchableOpacity>
@@ -506,7 +501,7 @@ const BattleHUDComponent: React.FC<BattleHUDProps> = React.memo(({
           </View>
 
           {/* Stability meter - Epic styled */}
-          <View style={styles.stabilitySection}>
+          <View style={styles.stabilitySection} accessible accessibilityLabel={getHUDLabel('harmony', Math.round(stability))} accessibilityRole="progressbar">
             <View style={styles.stabilityLabelContainer}>
               <Text style={[styles.stabilityLabel, { color: stabilityColor }]}>
                 {getZoneLabel(zone)}
@@ -586,6 +581,8 @@ const BattleHUDComponent: React.FC<BattleHUDProps> = React.memo(({
             <TouchableOpacity
               onPress={onResume}
               style={styles.resumeButton}
+              accessibilityLabel={getButtonLabel('resume')}
+              accessibilityRole="button"
             >
               <Text style={styles.resumeButtonText}>▶️ RESUME BATTLE</Text>
             </TouchableOpacity>
@@ -611,6 +608,8 @@ const BattleHUDComponent: React.FC<BattleHUDProps> = React.memo(({
               <TouchableOpacity
                 onPress={onRestart}
                 style={styles.restartButtonSmall}
+                accessibilityLabel={getButtonLabel('restart')}
+                accessibilityRole="button"
               >
                 <Text style={styles.restartButtonText}>🔄 RESTART</Text>
               </TouchableOpacity>
@@ -619,6 +618,8 @@ const BattleHUDComponent: React.FC<BattleHUDProps> = React.memo(({
                 <TouchableOpacity
                   onPress={onPause}
                   style={styles.exitButtonSmall}
+                  accessibilityLabel={getButtonLabel('exit')}
+                  accessibilityRole="button"
                 >
                   <Text style={styles.exitButtonText}>🚪 EXIT</Text>
                 </TouchableOpacity>
@@ -632,7 +633,7 @@ const BattleHUDComponent: React.FC<BattleHUDProps> = React.memo(({
           COMBO INDICATOR - FLOATING BANNER
           ═══════════════════════════════════════════════════════════════════════════ */}
       {(showComboCounter !== false) && comboCount >= 3 && (
-        <View style={styles.comboContainer}>
+        <View style={styles.comboContainer} accessible accessibilityLabel={getHUDLabel('combo', comboCount)} accessibilityRole="text">
           <Animated.View 
             style={[
               styles.comboBanner,
@@ -658,7 +659,7 @@ const BattleHUDComponent: React.FC<BattleHUDProps> = React.memo(({
           ANNOUNCEMENT BANNER
           ═══════════════════════════════════════════════════════════════════════════ */}
       {announcement && (
-        <View style={styles.announcementContainer}>
+        <View style={styles.announcementContainer} accessible accessibilityLabel={announcement} accessibilityRole="alert" accessibilityLiveRegion="assertive">
           <View 
             style={[
               styles.announcementBanner,

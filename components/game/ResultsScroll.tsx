@@ -202,7 +202,7 @@ export const ResultsScroll: React.FC<ResultsScrollProps> = ({
       message = `Fought well in Glucose Wars! ${score} pts. ${accuracy}% accuracy.`;
     }
 
-    const url = 'https://748aff3b-fb26-4f04-8101-7fe9e9b19d93.canvases.tempo.build';
+    const url = process.env.EXPO_PUBLIC_APP_URL || 'https://glucosewars.app';
 
     try {
       await Share.share({

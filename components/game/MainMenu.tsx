@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { View, Text, TouchableOpacity, Animated, Platform, ScrollView, Modal, useWindowDimensions } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { router } from 'expo-router';
 import { ControlMode, UserMode } from '@/types/game';
 import { usePlayerProgressContext } from '@/context/PlayerProgressContext';
 import { USER_MODE_CONFIGS } from '@/constants/userModes';
@@ -15,6 +16,7 @@ import { ProgressIndicator } from '@/components/game/ProgressIndicator';
 import { DailyQuests } from '@/components/game/DailyQuests';
 import { GrandLibrary } from '@/components/game/GrandLibrary';
 import { BeamAssets } from '@/components/game/BeamAssets';
+import { track } from '@/utils/analytics';
 
 const maxWidth = 400;
 
@@ -25,12 +27,15 @@ const FloatingFood: React.FC<{ emoji: string; delay: number; isAlly: boolean }> 
   const opacity = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
+    let mounted = true;
+
     const startAnimation = () => {
+      if (!mounted) return;
       createFloatingAnimation(translateY, {
         duration: 8000,
         distance: 600,
         delay: delay,
-      }).start(() => startAnimation());
+      }).start(() => { if (mounted) startAnimation(); });
       
       opacity.setValue(0);
       Animated.sequence([
@@ -44,6 +49,12 @@ const FloatingFood: React.FC<{ emoji: string; delay: number; isAlly: boolean }> 
     };
 
     startAnimation();
+
+    return () => {
+      mounted = false;
+      translateY.stopAnimation();
+      opacity.stopAnimation();
+    };
   }, [delay, opacity, screenWidth, translateX, translateY]);
 
   const borderColor = isAlly ? COLORS.ALLY : COLORS.ENEMY;
@@ -91,6 +102,12 @@ export const MainMenu: React.FC<MainMenuProps> = ({ onStartGame, onSelectGame, o
   const showSyncFeedback = beamContext?.showSyncFeedback;
   const [showWelcome, setShowWelcome] = useState(false);
   const welcomeAnim = useRef(new Animated.Value(-100)).current;
+
+  useEffect(() => {
+    if (showUserModeSelector) {
+      track('user_mode_selector_shown', { privacy_mode: progress.privacyMode });
+    }
+  }, [showUserModeSelector, progress.privacyMode]);
 
   useEffect(() => {
     if (playerAccount && !showWelcome) {
@@ -212,6 +229,7 @@ export const MainMenu: React.FC<MainMenuProps> = ({ onStartGame, onSelectGame, o
                     setSelectedRole(mode);
                     setUserMode(mode);
                     setShowUserModeSelector(false);
+                    track('user_mode_selected', { user_mode: mode, privacy_mode: progress.privacyMode });
                     onUserModeSelected?.(mode);
                   }}
                   className={`w-64 h-72 rounded-2xl border-2 p-4 ${roleData.color} ${roleData.bg}`}
@@ -515,6 +533,26 @@ export const MainMenu: React.FC<MainMenuProps> = ({ onStartGame, onSelectGame, o
             <View className="flex-row items-center justify-center">
               <Text className="text-2xl mr-2">🎮</Text>
               <Text className="text-white text-base font-bold">CUSTOMIZE BATTLE</Text>
+            </View>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            onPress={() => {
+              track('challenge_hub_viewed', { source: 'main_menu' });
+              router.push('/challenge' as any);
+            }}
+            className="px-6 py-4 rounded-2xl border-4 bg-purple-900 border-purple-400 w-full mt-3"
+            style={{
+              shadowColor: '#a78bfa',
+              shadowOffset: { width: 0, height: 0 },
+              shadowOpacity: 0.5,
+              shadowRadius: 10,
+              elevation: 5,
+            }}
+          >
+            <View className="flex-row items-center justify-center">
+              <Text className="text-2xl mr-2">🧩</Text>
+              <Text className="text-white text-base font-bold">CHALLENGES</Text>
             </View>
           </TouchableOpacity>
 

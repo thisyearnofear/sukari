@@ -12,6 +12,8 @@ import "../global.css";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import WebProviders from "@/components/WebProviders";
 import { PlayerProgressProvider } from "@/context/PlayerProgressContext";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
+import { initAnalytics, track } from "@/utils/analytics";
 
 // Prevent the splash screen from auto-hiding before asset loading is complete.
 SplashScreen.preventAutoHideAsync();
@@ -27,26 +29,34 @@ export default function RootLayout() {
     }
   }, [loaded]);
 
+  useEffect(() => {
+    if (!loaded) return;
+    initAnalytics().then(() => track('app_open'));
+  }, [loaded]);
+
   if (!loaded) {
     return null;
   }
 
   return (
-    <WebProviders>
-      <PlayerProgressProvider>
-        <SafeAreaProvider>
-          <ThemeProvider value={DefaultTheme}>
-            <Stack screenOptions={{ headerShown: false }}>
-              <Stack.Screen name="index" />
-              <Stack.Screen name="game-selection" />
-              <Stack.Screen name="welcome" />
-              <Stack.Screen name="(game)" />
-              <Stack.Screen name="slowmo" />
-            </Stack>
-            <StatusBar style="auto" />
-          </ThemeProvider>
-        </SafeAreaProvider>
-      </PlayerProgressProvider>
-    </WebProviders>
+    <ErrorBoundary>
+      <WebProviders>
+        <PlayerProgressProvider>
+          <SafeAreaProvider>
+            <ThemeProvider value={DefaultTheme}>
+              <Stack screenOptions={{ headerShown: false }}>
+                <Stack.Screen name="index" />
+                <Stack.Screen name="game-selection" />
+                <Stack.Screen name="welcome" />
+                <Stack.Screen name="(game)" />
+                <Stack.Screen name="challenge" />
+                <Stack.Screen name="slowmo" />
+              </Stack>
+              <StatusBar style="auto" />
+            </ThemeProvider>
+          </SafeAreaProvider>
+        </PlayerProgressProvider>
+      </WebProviders>
+    </ErrorBoundary>
   );
 }

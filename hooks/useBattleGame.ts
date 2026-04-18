@@ -49,6 +49,8 @@ import { getReflectionMessage } from '@/constants/userModes';
 import { useVRFService } from './useVRFService';
 import { SeededRandom, getWeeklySeed } from '@/utils/random';
 import { useBeam } from '@/context/BeamContext';
+import { ChallengeModifier } from '@/types/challenge';
+import { getStabilityZone } from '@/utils/gameLogic';
 
 const { width, height } = Dimensions.get('window');
 
@@ -61,14 +63,6 @@ const getRandomAnnouncement = (category: keyof typeof ANNOUNCEMENTS): string => 
 const getRandomPosition = () => {
   const positions = MESSAGE_POSITIONS;
   return positions[Math.floor(Math.random() * positions.length)] as { x: 'left' | 'center' | 'right'; y: 'top' | 'middle' | 'bottom' };
-};
-
-const getStabilityZone = (stability: number): StabilityZone => {
-  if (stability >= 40 && stability <= 60) return 'balanced';
-  if (stability >= 25 && stability < 40) return 'warning-low';
-  if (stability > 60 && stability <= 75) return 'warning-high';
-  if (stability < 25) return 'critical-low';
-  return 'critical-high';
 };
 
 // Get current time phase based on timer
@@ -216,7 +210,12 @@ const initialGameState: GameState = {
   shareableMoments: [],
 };
 
-export const useBattleGame = (onFoodConsumed?: (foodNutrients: FoodNutrients) => void, tierConfig?: any, userMode?: UserMode) => {
+export const useBattleGame = (
+  onFoodConsumed?: (foodNutrients: FoodNutrients) => void,
+  tierConfig?: any,
+  userMode?: UserMode,
+  challenge?: { id: string; seed: string; modifiers: ChallengeModifier[] },
+) => {
   const beamContext = useBeam();
   const playerAccount = beamContext?.playerAccount;
   const reportGameResult = beamContext?.reportGameResult;
@@ -229,6 +228,10 @@ export const useBattleGame = (onFoodConsumed?: (foodNutrients: FoodNutrients) =>
   const announcementRef = useRef<number | null>(null);
   const comboTimerRef = useRef<number | null>(null);
   const plotTwistRef = useRef<number | null>(null);
+  const comboWindowMsRef = useRef<number>(COMBO_WINDOW);
+  const balancedRangeRef = useRef<{ min: number; max: number }>({ min: 40, max: 60 });
+  const powerupsDisabledRef = useRef<boolean>(false);
+  const challengeIdRef = useRef<string | null>(null);
 
   const showAnnouncement = useCallback((text: string, type: 'info' | 'success' | 'warning' | 'error' | 'plot_twist' | 'joke' | 'fact' | 'special_mode' | 'reflection' = 'info', science?: string) => {
     setGameState(prev => ({ ...prev, announcement: text, announcementType: type, announcementScience: science || null }));
@@ -256,12 +259,51 @@ export const useBattleGame = (onFoodConsumed?: (foodNutrients: FoodNutrients) =>
   const seededRandomRef = useRef<SeededRandom | null>(null);
 
   useEffect(() => {
-    if (tierConfig?.tier === 'weekly') {
+    const stringToSeed = (s: string) => {
+      let hash = 0;
+      for (let i = 0; i < s.length; i++) {
+        hash = (hash * 31 + s.charCodeAt(i)) >>> 0;
+      }
+      return hash || 1;
+    };
+
+    if (challenge?.seed) {
+      seededRandomRef.current = new SeededRandom(stringToSeed(challenge.seed));
+      challengeIdRef.current = challenge.id;
+    } else if (tierConfig?.tier === 'weekly') {
       seededRandomRef.current = new SeededRandom(getWeeklySeed());
+      challengeIdRef.current = null;
     } else {
       seededRandomRef.current = null;
+      challengeIdRef.current = null;
     }
-  }, [tierConfig?.tier]);
+  }, [tierConfig?.tier, challenge?.seed, challenge?.id]);
+
+  // Apply challenge modifiers (if present)
+  useEffect(() => {
+    if (!challenge) {
+      comboWindowMsRef.current = COMBO_WINDOW;
+      balancedRangeRef.current = { min: 40, max: 60 };
+      powerupsDisabledRef.current = false;
+      return;
+    }
+
+    // Defaults
+    comboWindowMsRef.current = COMBO_WINDOW;
+    balancedRangeRef.current = { min: 40, max: 60 };
+    powerupsDisabledRef.current = false;
+
+    if (challenge.modifiers?.includes('short_combo_window')) {
+      comboWindowMsRef.current = Math.max(250, Math.round(COMBO_WINDOW * 0.65));
+    }
+    if (challenge.modifiers?.includes('thin_margins')) {
+      // Narrow balanced zone from 40-60 -> 45-55
+      balancedRangeRef.current = { min: 45, max: 55 };
+    }
+    if (challenge.modifiers?.includes('no_powerups')) {
+      powerupsDisabledRef.current = true;
+    }
+  }, [challenge]);
 
   const triggerPlotTwist = useCallback(async () => {
     try {
@@ -379,6 +421,13 @@ export const useBattleGame = (onFoodConsumed?: (foodNutrients: FoodNutrients) =>
       metrics: startingMetrics,
       stability: startingMetrics.stability,
       timePhase: 'morning',
+      // Apply challenge-driven multipliers
+      spawnRateMultiplier: challenge?.modifiers?.includes('fast_spawn')
+        ? 1.25
+        : challenge?.modifiers?.includes('slow_spawn')
+          ? 0.8
+          : 1.0,
+      speedMultiplier: challenge?.modifiers?.includes('fast_fall') ? 1.25 : 1.0,
     });
 
     setTimeout(() => {
@@ -391,37 +440,43 @@ export const useBattleGame = (onFoodConsumed?: (foodNutrients: FoodNutrients) =>
         showAnnouncement(getRandomAnnouncement('GAME_START'), 'info');
       }
     }, 500);
-  }, [showAnnouncement]);
+  }, [showAnnouncement, challenge?.modifiers]);
 
   const endGame = useCallback(async (result: 'victory' | 'defeat') => {
-    setGameState(prev => ({
-      ...prev,
-      isGameActive: false,
-      gameResult: result,
-    }));
+    setGameState(prev => {
+      // Capture final state inside the updater to avoid stale closures
+      if (playerAccount && reportGameResult) {
+        reportGameResult(prev.score, result, {
+          correctSwipes: prev.correctSwipes,
+          incorrectSwipes: prev.incorrectSwipes,
+          comboMax: prev.comboCount,
+          timeInBalanced: prev.timeInBalanced,
+          finalHarmony: prev.stability,
+        });
+      }
+
+      return {
+        ...prev,
+        isGameActive: false,
+        gameResult: result,
+      };
+    });
 
     if (timerRef.current) clearInterval(timerRef.current);
     if (spawnRef.current) clearInterval(spawnRef.current);
     if (moveRef.current) clearInterval(moveRef.current);
     if (plotTwistRef.current) clearTimeout(plotTwistRef.current);
 
-    // Sync results with Beam (ENHANCEMENT FIRST & PERFORMANT)
-    if (playerAccount && reportGameResult) {
-      reportGameResult(gameState.score, result, {
-        correctSwipes: gameState.correctSwipes,
-        incorrectSwipes: gameState.incorrectSwipes,
-        comboMax: gameState.comboCount, // Fixed: use comboCount instead of comboMax
-        timeInBalanced: gameState.timeInBalanced,
-        finalHarmony: gameState.stability
-      });
+    try {
+      Haptics.notificationAsync(
+        result === 'victory'
+          ? Haptics.NotificationFeedbackType.Success
+          : Haptics.NotificationFeedbackType.Error
+      );
+    } catch {
+      // Haptics may not be available on web/simulators
     }
-
-    Haptics.notificationAsync(
-      result === 'victory'
-        ? Haptics.NotificationFeedbackType.Success
-        : Haptics.NotificationFeedbackType.Error
-    );
-  }, [playerAccount, reportGameResult, gameState.score, gameState.correctSwipes, gameState.incorrectSwipes, gameState.comboCount, gameState.timeInBalanced, gameState.stability]);
+  }, [playerAccount, reportGameResult]);
 
   // Timer countdown with Life Mode support
   useEffect(() => {
@@ -431,7 +486,7 @@ export const useBattleGame = (onFoodConsumed?: (foodNutrients: FoodNutrients) =>
       setGameState(prev => {
         if (prev.isPaused) return prev;
         const newTimer = prev.timer - 1;
-        const zone = getStabilityZone(prev.stability);
+        const zone = getStabilityZone(prev.stability, balancedRangeRef.current);
         const newTimePhase = getTimePhase(newTimer);
         const conditionConfig = getMorningConditionConfig(prev.morningCondition);
 
@@ -579,7 +634,8 @@ export const useBattleGame = (onFoodConsumed?: (foodNutrients: FoodNutrients) =>
     const getSpawnInterval = () => {
       const elapsed = GAME_DURATION - gameState.timer;
       const reduction = Math.floor(elapsed / 10) * SPAWN_CONFIG.INTERVAL_DECREASE;
-      return Math.max(SPAWN_CONFIG.MIN_INTERVAL, SPAWN_CONFIG.INITIAL_INTERVAL - reduction);
+      const base = Math.max(SPAWN_CONFIG.MIN_INTERVAL, SPAWN_CONFIG.INITIAL_INTERVAL - reduction);
+      return Math.max(80, Math.round(base / (gameState.spawnRateMultiplier || 1)));
     };
 
     const spawnFood = () => {
@@ -633,7 +689,8 @@ export const useBattleGame = (onFoodConsumed?: (foodNutrients: FoodNutrients) =>
             continue;
           }
 
-          const newY = food.y + food.speed;
+          const speedMult = prev.speedMultiplier || 1;
+          const newY = food.y + food.speed * speedMult;
 
           // Food reached the gate - miss penalty
           if (newY >= food.targetY) {
@@ -710,7 +767,7 @@ export const useBattleGame = (onFoodConsumed?: (foodNutrients: FoodNutrients) =>
       if (!food) return prev;
 
       const now = Date.now();
-      const isComboActive = now - prev.lastSwipeTime < COMBO_WINDOW;
+      const isComboActive = now - prev.lastSwipeTime < comboWindowMsRef.current;
 
       // In Classic mode, only up/down are valid
       if (prev.gameMode === 'classic') {
@@ -739,8 +796,8 @@ export const useBattleGame = (onFoodConsumed?: (foodNutrients: FoodNutrients) =>
           const comboTier = COMBO_TIERS.find(t => t.count === newComboCount);
           if (comboTier) showAnnouncement(comboTier.title, 'success');
 
-          const oldZone = getStabilityZone(prev.stability);
-          const newZone = getStabilityZone(newStability);
+          const oldZone = getStabilityZone(prev.stability, balancedRangeRef.current);
+          const newZone = getStabilityZone(newStability, balancedRangeRef.current);
 
           if (newZone === 'critical-high' && oldZone !== 'critical-high') {
             showAnnouncement(getRandomAnnouncement('CRITICAL_HIGH'), 'error');
@@ -778,6 +835,7 @@ export const useBattleGame = (onFoodConsumed?: (foodNutrients: FoodNutrients) =>
 
       // Life Mode - 4 direction swipes
       let isOptimalSwipe = false;
+      let isCorrectAction = false;
       let points = food.points;
       let multiplier = 1;
       let newMetrics = { ...prev.metrics };
@@ -812,6 +870,7 @@ export const useBattleGame = (onFoodConsumed?: (foodNutrients: FoodNutrients) =>
         case 'consume': // UP - Eat the food
           if (food.faction === 'ally' || (food.faction === 'contextual' && food.isContextuallyGood)) {
             // Good food consumed - apply positive effects
+            isCorrectAction = true;
             Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
             const foodDef = ALL_FOODS.find(f => f.type === food.type);
             const timeModifier = foodDef?.timeModifiers?.[prev.timePhase] || 1;
@@ -863,6 +922,7 @@ export const useBattleGame = (onFoodConsumed?: (foodNutrients: FoodNutrients) =>
         case 'reject': // DOWN - Banish the food
           if (food.faction === 'enemy' || (food.faction === 'contextual' && !food.isContextuallyGood)) {
             // Correctly rejected bad food
+            isCorrectAction = true;
             Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
             points = Math.round(food.points * multiplier);
 
@@ -965,7 +1025,8 @@ export const useBattleGame = (onFoodConsumed?: (foodNutrients: FoodNutrients) =>
         foods: prev.foods.filter(f => f.id !== foodId),
         comboCount: newComboCount,
         lastSwipeTime: now,
-        correctSwipes: isOptimalSwipe ? prev.correctSwipes + 1 : prev.correctSwipes,
+        correctSwipes: isCorrectAction ? prev.correctSwipes + 1 : prev.correctSwipes,
+        incorrectSwipes: !isCorrectAction ? prev.incorrectSwipes + 1 : prev.incorrectSwipes,
         optimalSwipes: isOptimalSwipe ? prev.optimalSwipes + 1 : prev.optimalSwipes,
         savedFoods: newSavedFoods,
         socialStats: newSocialStats,
@@ -977,6 +1038,7 @@ export const useBattleGame = (onFoodConsumed?: (foodNutrients: FoodNutrients) =>
   // Use exercise power-up
   const useExercise = useCallback(() => {
     setGameState(prev => {
+      if (powerupsDisabledRef.current) return prev;
       if (prev.exerciseCharges <= 0) return prev;
 
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
@@ -1006,6 +1068,7 @@ export const useBattleGame = (onFoodConsumed?: (foodNutrients: FoodNutrients) =>
   // Use rations power-up
   const useRations = useCallback(() => {
     setGameState(prev => {
+      if (powerupsDisabledRef.current) return prev;
       if (prev.rationCharges <= 0) return prev;
 
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
@@ -1136,7 +1199,7 @@ export const useBattleGame = (onFoodConsumed?: (foodNutrients: FoodNutrients) =>
         }
       }, 500);
     },
-    getStabilityZone: () => getStabilityZone(gameState.stability),
+    getStabilityZone: () => getStabilityZone(gameState.stability, balancedRangeRef.current),
     getTimePhase: () => getTimePhase(gameState.timer),
     getMorningConditionConfig: () => getMorningConditionConfig(gameState.morningCondition),
     // VRF Functions

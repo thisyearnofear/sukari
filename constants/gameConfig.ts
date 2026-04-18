@@ -87,7 +87,7 @@ export const ALLY_FOODS: FoodDefinition[] = [
     effects: { energy: 12, hydration: 2, nutrition: 15, stability: 5 } },
   { type: 'protein', faction: 'ally', name: 'Chicken Knight', sprite: '🍗', color: '#d97706', glowColor: '#f59e0b', glucoseImpact: 4, basePoints: 13, spawnWeight: 12,
     effects: { energy: 14, hydration: -2, nutrition: 13, stability: 4 } },
-  { type: 'protein', faction: 'ally', name: 'Tofu Monk', sprite: '🧈', color: '#fef9c3', glowColor: '#fef08a', glucoseImpact: 3, basePoints: 10, spawnWeight: 8,
+  { type: 'protein', faction: 'ally', name: 'Tofu Monk', sprite: '🧊', color: '#fef9c3', glowColor: '#fef08a', glucoseImpact: 3, basePoints: 10, spawnWeight: 8,
     effects: { energy: 8, hydration: 2, nutrition: 10, stability: 3 } },
   
   // Whole grains - Sustained energy
@@ -143,40 +143,40 @@ export const ALLY_FOODS: FoodDefinition[] = [
 export const ENEMY_FOODS: FoodDefinition[] = [
   // Sugary foods - Energy spike then crash, bad for stability
   { type: 'sugar', faction: 'enemy', name: 'Donut Demon', sprite: '🍩', color: '#ec4899', glowColor: '#f472b6', glucoseImpact: -8, basePoints: 15, spawnWeight: 18,
-    effects: { energy: 8, hydration: -5, nutrition: -8, stability: -12 } },
+    effects: { energy: 8, hydration: -5, nutrition: -8, stability: -7 } },
   { type: 'candy', faction: 'enemy', name: 'Candy Curse', sprite: '🍬', color: '#a855f7', glowColor: '#c084fc', glucoseImpact: -10, basePoints: 18, spawnWeight: 15,
-    effects: { energy: 10, hydration: -3, nutrition: -10, stability: -15 } },
+    effects: { energy: 10, hydration: -3, nutrition: -10, stability: -8 } },
   { type: 'sugar', faction: 'enemy', name: 'Cake Calamity', sprite: '🍰', color: '#f9a8d4', glowColor: '#fbcfe8', glucoseImpact: -15, basePoints: 25, spawnWeight: 8,
-    effects: { energy: 12, hydration: -6, nutrition: -12, stability: -18 } },
+    effects: { energy: 12, hydration: -6, nutrition: -12, stability: -10 } },
   { type: 'candy', faction: 'enemy', name: 'Ice Cream Imp', sprite: '🍦', color: '#fef3c7', glowColor: '#fef9c3', glucoseImpact: -9, basePoints: 16, spawnWeight: 10,
-    effects: { energy: 8, hydration: -4, nutrition: -8, stability: -12 } },
+    effects: { energy: 8, hydration: -4, nutrition: -8, stability: -7 } },
   { type: 'sugar', faction: 'enemy', name: 'Cookie Chaos', sprite: '🍪', color: '#d97706', glowColor: '#f59e0b', glucoseImpact: -7, basePoints: 12, spawnWeight: 15,
-    effects: { energy: 7, hydration: -4, nutrition: -6, stability: -10 } },
+    effects: { energy: 7, hydration: -4, nutrition: -6, stability: -6 } },
   { type: 'candy', faction: 'enemy', name: 'Chocolate Chimera', sprite: '🍫', color: '#78350f', glowColor: '#92400e', glucoseImpact: -8, basePoints: 14, spawnWeight: 12,
-    effects: { energy: 9, hydration: -3, nutrition: -5, stability: -11 } },
+    effects: { energy: 9, hydration: -3, nutrition: -5, stability: -6 } },
   
   // Sodas & Drinks - Dehydrating, sugar bombs
   { type: 'soda', faction: 'enemy', name: 'Soda Specter', sprite: '🥤', color: '#ef4444', glowColor: '#f87171', glucoseImpact: -12, basePoints: 20, spawnWeight: 15,
-    effects: { energy: 12, hydration: -12, nutrition: -5, stability: -15 } },
+    effects: { energy: 12, hydration: -12, nutrition: -5, stability: -9 } },
   { type: 'energy_drink', faction: 'enemy', name: 'Energy Elemental', sprite: '🧃', color: '#22d3ee', glowColor: '#67e8f9', glucoseImpact: -10, basePoints: 18, spawnWeight: 10,
-    effects: { energy: 20, hydration: -10, nutrition: -8, stability: -12 },
+    effects: { energy: 20, hydration: -10, nutrition: -8, stability: -7 },
     timeModifiers: { morning: 0.8, midday: 1.0, afternoon: 1.2, evening: 1.5 } },
   
   // Processed foods - Low nutrition, moderate energy
   { type: 'processed', faction: 'enemy', name: 'Chip Chaos', sprite: '🍟', color: '#eab308', glowColor: '#facc15', glucoseImpact: -6, basePoints: 12, spawnWeight: 18,
-    effects: { energy: 6, hydration: -8, nutrition: -10, stability: -8 } },
+    effects: { energy: 6, hydration: -8, nutrition: -10, stability: -5 } },
   { type: 'fast_food', faction: 'enemy', name: 'Burger Beast', sprite: '🍔', color: '#b45309', glowColor: '#d97706', glucoseImpact: -7, basePoints: 14, spawnWeight: 15,
-    effects: { energy: 10, hydration: -6, nutrition: -8, stability: -10 } },
+    effects: { energy: 10, hydration: -6, nutrition: -8, stability: -6 } },
   { type: 'fast_food', faction: 'enemy', name: 'Pizza Phantom', sprite: '🍕', color: '#dc2626', glowColor: '#ef4444', glucoseImpact: -6, basePoints: 13, spawnWeight: 15,
-    effects: { energy: 9, hydration: -5, nutrition: -7, stability: -8 } },
+    effects: { energy: 9, hydration: -5, nutrition: -7, stability: -5 } },
   { type: 'fast_food', faction: 'enemy', name: 'Hotdog Horror', sprite: '🌭', color: '#f97316', glowColor: '#fb923c', glucoseImpact: -5, basePoints: 11, spawnWeight: 12,
-    effects: { energy: 7, hydration: -6, nutrition: -9, stability: -7 } },
+    effects: { energy: 7, hydration: -6, nutrition: -9, stability: -4 } },
   { type: 'processed', faction: 'enemy', name: 'Pretzel Poltergeist', sprite: '🥨', color: '#d97706', glowColor: '#f59e0b', glucoseImpact: -4, basePoints: 10, spawnWeight: 10,
-    effects: { energy: 5, hydration: -8, nutrition: -5, stability: -6 } },
+    effects: { energy: 5, hydration: -8, nutrition: -5, stability: -4 } },
   
   // Alcohol - Dehydrating, affects all metrics
   { type: 'alcohol', faction: 'enemy', name: 'Beer Banshee', sprite: '🍺', color: '#fbbf24', glowColor: '#fcd34d', glucoseImpact: -8, basePoints: 16, spawnWeight: 8,
-    effects: { energy: -5, hydration: -15, nutrition: -5, stability: -10 },
+    effects: { energy: -5, hydration: -15, nutrition: -5, stability: -6 },
     timeModifiers: { morning: 1.5, midday: 1.2, afternoon: 1.0, evening: 0.8 } },
   { type: 'alcohol', faction: 'enemy', name: 'Wine Wraith', sprite: '🍷', color: '#7c2d12', glowColor: '#9a3412', glucoseImpact: -6, basePoints: 14, spawnWeight: 6,
     effects: { energy: -3, hydration: -12, nutrition: -3, stability: -8 } },

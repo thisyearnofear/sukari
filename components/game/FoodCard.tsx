@@ -734,47 +734,7 @@ export const FoodCard: React.FC<FoodCardProps> = ({ food, onSwipe, controlMode, 
           </View>
         )}
 
-        {/* Tap buttons (tap mode) - 2 directions for Classic, 4 for Life Mode */}
-         {controlMode === 'tap' && gameMode === 'classic' && (
-           <View style={{ marginTop: 6, flexDirection: 'row', gap: 4 }}>
-             <TouchableOpacity
-               onPress={() => handleTapAction('rally')}
-               style={{
-                 flex: 1,
-                 height: 28,
-                 borderRadius: 6,
-                 backgroundColor: '#22c55e',
-                 alignItems: 'center',
-                 justifyContent: 'center',
-                 shadowColor: '#22c55e',
-                 shadowOffset: { width: 0, height: 0 },
-                 shadowOpacity: 0.8,
-                 shadowRadius: 4,
-               }}
-             >
-               <Text style={{ color: 'white', fontSize: 9, fontWeight: 'bold' }}>👆</Text>
-             </TouchableOpacity>
-             <TouchableOpacity
-               onPress={() => handleTapAction('banish')}
-               style={{
-                 flex: 1,
-                 height: 28,
-                 borderRadius: 6,
-                 backgroundColor: '#ef4444',
-                 alignItems: 'center',
-                 justifyContent: 'center',
-                 shadowColor: '#ef4444',
-                 shadowOffset: { width: 0, height: 0 },
-                 shadowOpacity: 0.8,
-                 shadowRadius: 4,
-               }}
-             >
-               <Text style={{ color: 'white', fontSize: 9, fontWeight: 'bold' }}>👇</Text>
-             </TouchableOpacity>
-           </View>
-         )}
-
-         {/* Tap buttons (tap mode) - 4 directions for Life Mode */}
+        {/* Tap buttons (tap mode) - 4 directions for Life Mode */}
          {controlMode === 'tap' && gameMode === 'life' && (
            <View style={{ marginTop: 6 }}>
             {/* Top row - Consume */}

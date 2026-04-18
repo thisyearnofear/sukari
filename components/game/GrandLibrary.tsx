@@ -24,11 +24,11 @@ export const GrandLibrary: React.FC<GrandLibraryProps> = ({ discoveredLoreIds, o
     }}>
       {/* Header */}
       <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
-        <View>
+        <View accessible accessibilityRole="header">
           <Text style={{ color: '#fbbf24', fontSize: 24, fontWeight: 'bold' }}>📜 THE GRAND LIBRARY</Text>
           <Text style={{ color: '#94a3b8', fontSize: 12 }}>Uncover the secrets of the Realm&apos;s Harmony</Text>
         </View>
-        <TouchableOpacity onPress={onClose} style={{ padding: 10 }}>
+        <TouchableOpacity onPress={onClose} style={{ padding: 10 }} accessibilityLabel="Close library" accessibilityRole="button">
           <Text style={{ color: '#fff', fontSize: 24 }}>✕</Text>
         </TouchableOpacity>
       </View>
@@ -126,6 +126,8 @@ function getMedicalContext(id: string): string {
     sleep: "Sleep deprivation can lead to higher blood sugar levels and increased insulin resistance. It also affects hormones that control hunger.",
     hydration: "When blood sugar levels are high, the kidneys try to remove excess sugar through urine, leading to dehydration if fluids aren't replaced.",
     breakfast: "A high-protein breakfast helps stabilize postprandial (after-meal) glucose levels and can reduce glycemic variability throughout the day.",
+    protein: "Protein slows gastric emptying and stimulates incretin hormones, which help moderate the post-meal glucose rise and promote longer satiety.",
+    timing: "Chrononutrition research shows that identical meals produce different glucose responses depending on time of day, due to circadian insulin sensitivity.",
   };
   return contexts[id] || "Medical information for this topic.";
 }
@@ -138,6 +140,8 @@ function getClinicalTip(id: string): string {
     sleep: "Maintain a consistent sleep schedule. Poor sleep can mimic the effects of a high-carb meal on insulin resistance.",
     hydration: "Water is the best choice. Avoid sugary drinks which cause rapid spikes and further dehydration.",
     breakfast: "Combining protein with complex carbohydrates in the morning creates a steady energy release curve.",
+    protein: "Include 20-30g of protein per meal. Eating protein before carbohydrates can reduce the glucose spike by up to 40%.",
+    timing: "Try to eat your largest meal earlier in the day when insulin sensitivity is highest, and keep evening meals lighter.",
   };
   return tips[id] || "Consult with your healthcare provider for personalized advice.";
 }

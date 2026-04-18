@@ -12,6 +12,7 @@ import { HealthProfile } from '@/types/health';
 import { COMBO_TIERS } from '@/constants/gameConfig';
 import { getGlucoseZone } from '@/constants/healthScenarios';
 import { TierConfig } from '@/constants/gameTiers';
+import { getStabilityZone } from '@/utils/gameLogic';
 
 // Screen-wide combo burst effect
 const ComboBurst: React.FC<{
@@ -157,13 +158,6 @@ interface BattleScreenProps {
   onToggleControlMode?: () => void;
 }
 
-const getStabilityZone = (stability: number): StabilityZone => {
-  if (stability >= 40 && stability <= 60) return 'balanced';
-  if (stability >= 25 && stability < 40) return 'warning-low';
-  if (stability > 60 && stability <= 75) return 'warning-high';
-  if (stability < 25) return 'critical-low';
-  return 'critical-high';
-};
 
 export const BattleScreen: React.FC<BattleScreenProps> = ({
   gameState,

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, StyleSheet, RefreshControl } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, StyleSheet, RefreshControl, Linking, Alert } from 'react-native';
 import { FairnessBadge } from './FairnessBadge';
 
 interface VerificationEvent {
@@ -16,16 +16,24 @@ interface FairnessMetrics {
   totalEvents: number;
   integrityScore: number; // 0-100
   recentVerifications: VerificationEvent[];
+  vrfEnabled?: boolean;
+  blockchainSynced?: boolean;
 }
 
 interface FairnessDashboardProps {
   metrics: FairnessMetrics;
   onRefresh?: () => void;
+  onVerifyAll?: () => void;
+  scrollscanBaseUrl?: string;
+  contractAddress?: string;
 }
 
 export const FairnessDashboard: React.FC<FairnessDashboardProps> = ({
   metrics,
   onRefresh,
+  onVerifyAll,
+  scrollscanBaseUrl = 'https://sepolia.scrollscan.com/address',
+  contractAddress = '0xf36223131aDA53e94B08F0c098A6A93424D68EE3',
 }) => {
   const [refreshing, setRefreshing] = useState(false);
 
@@ -73,7 +81,7 @@ export const FairnessDashboard: React.FC<FairnessDashboardProps> = ({
         <Text style={styles.sectionTitle}>🔐 ZK PROOF STATUS</Text>
         <View style={styles.statusRow}>
           <Text style={styles.statusText}>VRF Enabled</Text>
-          <View style={[styles.statusIndicator, styles.statusActive]} />
+          <View style={[styles.statusIndicator, metrics.vrfEnabled !== false ? styles.statusActive : styles.statusInactive]} />
         </View>
         <View style={styles.statusRow}>
           <Text style={styles.statusText}>Last Verification</Text>
@@ -85,7 +93,7 @@ export const FairnessDashboard: React.FC<FairnessDashboardProps> = ({
         </View>
         <View style={styles.statusRow}>
           <Text style={styles.statusText}>Blockchain Sync</Text>
-          <View style={[styles.statusIndicator, styles.statusActive]} />
+          <View style={[styles.statusIndicator, metrics.blockchainSynced !== false ? styles.statusActive : styles.statusInactive]} />
         </View>
       </View>
 
@@ -128,14 +136,29 @@ export const FairnessDashboard: React.FC<FairnessDashboardProps> = ({
       <View style={styles.card}>
         <Text style={styles.sectionTitle}>🔧 VERIFICATION TOOLS</Text>
         <View style={styles.actionsRow}>
-          <TouchableOpacity style={styles.actionButton}>
+          <TouchableOpacity
+            style={styles.actionButton}
+            onPress={onVerifyAll}
+            accessibilityLabel="Verify all events"
+            accessibilityRole="button"
+          >
             <Text style={styles.actionButtonText}>🔄 VERIFY ALL</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.actionButton}>
+          <TouchableOpacity
+            style={styles.actionButton}
+            onPress={() => Alert.alert('Report', 'Fairness report generation is coming soon.')}
+            accessibilityLabel="Generate fairness report"
+            accessibilityRole="button"
+          >
             <Text style={styles.actionButtonText}>📋 REPORT</Text>
           </TouchableOpacity>
         </View>
-        <TouchableOpacity style={styles.fullButton}>
+        <TouchableOpacity
+          style={styles.fullButton}
+          onPress={() => Linking.openURL(`${scrollscanBaseUrl}/${contractAddress}`)}
+          accessibilityLabel="View proof on ScrollScan"
+          accessibilityRole="link"
+        >
           <Text style={styles.fullButtonText}>VIEW PROOF ON SCROLLSCAN</Text>
         </TouchableOpacity>
       </View>
@@ -206,6 +229,9 @@ const styles = StyleSheet.create({
   },
   statusActive: {
     backgroundColor: '#22c55e',
+  },
+  statusInactive: {
+    backgroundColor: '#6b7280',
   },
   verificationsList: {
     marginBottom: -16,
