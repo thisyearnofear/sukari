@@ -11,6 +11,7 @@ import { GameTier } from '@/constants/gameTiers';
 import { getUserModeConfig } from '@/constants/userModes';
 import { WeeklyLeaderboard } from './WeeklyLeaderboard';
 import { getWeeklySeed } from '@/utils/random';
+import { useBeam } from '@/context/BeamContext';
 import { usePlayerProgressContext } from '@/context/PlayerProgressContext';
 
 // Kingdom Lore and Wisdom
@@ -94,8 +95,10 @@ export const ResultsScroll: React.FC<ResultsScrollProps> = ({
   const [showScrollPanel, setShowScrollPanel] = useState(false);
   const [randomLore] = useState(() => KINGDOM_LORE[Math.floor(Math.random() * KINGDOM_LORE.length)]);
   const { evaluateAchievements } = useScrollIntegration();
-  const { getSlowMoAnalytics } = usePlayerProgressContext();
+  const { getSlowMoAnalytics, progress } = usePlayerProgressContext();
+  const beamContext = useBeam();
   const playerAnalytics = getSlowMoAnalytics();
+  const isFirstVictory = isVictory && progress.gamesPlayed <= 1;
 
   // Evaluate achievements when game ends
   useEffect(() => {
@@ -536,6 +539,28 @@ export const ResultsScroll: React.FC<ResultsScrollProps> = ({
                   ✓ Listen to your body&apos;s signals
                 </Text>
               </View>
+            )}
+
+            {/* Post-game blockchain prompt — contextual, shown on first victory */}
+            {isFirstVictory && !beamContext?.playerAccount && (
+              <TouchableOpacity
+                onPress={() => beamContext?.login?.()}
+                style={{
+                  backgroundColor: 'rgba(139, 92, 246, 0.2)',
+                  padding: 12, borderRadius: 12,
+                  borderWidth: 1, borderColor: '#a78bfa',
+                  marginBottom: 10,
+                }}
+                accessibilityLabel="Save this achievement on-chain with social login"
+                accessibilityRole="button"
+              >
+                <Text style={{ color: '#c4b5fd', fontSize: 12, fontWeight: 'bold', textAlign: 'center' }}>
+                  👑 Save this Deed of Valor on-chain?
+                </Text>
+                <Text style={{ color: '#9ca3af', fontSize: 10, textAlign: 'center', marginTop: 2 }}>
+                  Sign in with Google or Apple — no wallet needed
+                </Text>
+              </TouchableOpacity>
             )}
 
             {/* Buttons */}

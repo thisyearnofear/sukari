@@ -14,6 +14,7 @@ import WebProviders from "@/components/WebProviders";
 import { PlayerProgressProvider } from "@/context/PlayerProgressContext";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { initAnalytics, track } from "@/utils/analytics";
+import { initErrorMonitoring } from "@/utils/errorMonitoring";
 
 // Prevent the splash screen from auto-hiding before asset loading is complete.
 SplashScreen.preventAutoHideAsync();
@@ -31,6 +32,7 @@ export default function RootLayout() {
 
   useEffect(() => {
     if (!loaded) return;
+    initErrorMonitoring();
     initAnalytics().then(() => track('app_open'));
   }, [loaded]);
 

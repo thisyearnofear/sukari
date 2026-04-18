@@ -247,7 +247,17 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({
    
    // Tutorial for tier1 - show modal for first 2 foods
    const [tutorialFood, setTutorialFood] = useState<any>(null);
+   const [shownContextualTip, setShownContextualTip] = useState(false);
    const isTier1Tutorial = tierConfig?.tier === 'tier1' && tierConfig.tutorialMode;
+
+   // Show one-time tooltip when first contextual food appears
+   useEffect(() => {
+     if (shownContextualTip) return;
+     const contextualFood = gameState.foods.find(f => f.faction === 'contextual');
+     if (contextualFood) {
+       setShownContextualTip(true);
+     }
+   }, [gameState.foods, shownContextualTip]);
    const currentTutorialFoodId = useRef<string | null>(null);
    const tutorialTimeout = useRef<number | null>(null);
 
@@ -360,6 +370,25 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({
          controlMode={controlMode}
          key={`${showTutorial}-${tutorialFood?.id}`}
        />
+
+       {/* Contextual food tooltip — shown once when first contextual food appears */}
+       {shownContextualTip && gameState.foods.some(f => f.faction === 'contextual') && (
+         <View style={{ position: 'absolute', top: 120, left: 20, right: 20, zIndex: 60, alignItems: 'center' }}>
+           <View
+             style={{
+               backgroundColor: 'rgba(139, 92, 246, 0.95)',
+               paddingHorizontal: 16, paddingVertical: 10,
+               borderRadius: 12, borderWidth: 1, borderColor: '#a78bfa',
+             }}
+             accessible accessibilityRole="alert"
+             accessibilityLabel="Contextual food: this food's effect depends on the time of day"
+           >
+             <Text style={{ color: 'white', fontSize: 12, fontWeight: 'bold', textAlign: 'center' }}>
+               ☕ This food&apos;s effect depends on the time of day!
+             </Text>
+           </View>
+         </View>
+       )}
 
        {/* Health Profile Glucose Display - only show if tier config enables it */}
       {tierConfig?.showGlucose && healthProfile && (

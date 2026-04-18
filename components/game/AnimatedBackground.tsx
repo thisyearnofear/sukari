@@ -1,6 +1,7 @@
 import React, { useEffect, useRef } from 'react';
 import { View, Text, Animated, StyleSheet, useWindowDimensions } from 'react-native';
 import { StabilityZone, TimePhase } from '@/types/game';
+import { useReducedMotion } from '@/hooks/useReducedMotion';
 
 // const { width, height } = Dimensions.get('window');
 
@@ -70,11 +71,18 @@ export const AnimatedBackground: React.FC<AnimatedBackgroundProps> = ({
   gameMode = 'classic',
 }) => {
   const { width, height } = useWindowDimensions();
+  const reducedMotion = useReducedMotion();
   const pulseAnim = useRef(new Animated.Value(0)).current;
   const rotateAnim = useRef(new Animated.Value(0)).current;
   const scaleAnim = useRef(new Animated.Value(1)).current;
   const waveAnim = useRef(new Animated.Value(0)).current;
   const glowAnim = useRef(new Animated.Value(0)).current;
+
+  // Skip non-essential animations when user prefers reduced motion
+  if (reducedMotion) {
+    const bgColor = zone === 'balanced' ? '#0a1a0a' : zone.includes('critical') ? '#1a0a0a' : '#0a0a12';
+    return <View style={[StyleSheet.absoluteFill, { backgroundColor: bgColor }]} />;
+  }
 
   // Continuous background animation
   useEffect(() => {
