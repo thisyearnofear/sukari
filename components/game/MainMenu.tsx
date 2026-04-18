@@ -203,7 +203,7 @@ export const MainMenu: React.FC<MainMenuProps> = ({ onStartGame, onSelectGame, o
           <ScrollView 
             horizontal 
             showsHorizontalScrollIndicator={false} 
-            contentContainerStyle={{ gap: 16, paddingHorizontal: 8 }} 
+            contentContainerStyle={{ gap: 16, paddingHorizontal: 8, flexGrow: 1, justifyContent: 'center' }} 
             className="mb-6 h-80"
           >
             {(Object.keys(USER_MODE_CONFIGS) as UserMode[]).map((mode) => {
