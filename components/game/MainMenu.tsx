@@ -232,6 +232,9 @@ export const MainMenu: React.FC<MainMenuProps> = ({ onStartGame, onSelectGame, o
                     track('user_mode_selected', { user_mode: mode, privacy_mode: progress.privacyMode });
                     onUserModeSelected?.(mode);
                   }}
+                  accessibilityLabel={`${config.name} role. ${config.description}. ${roleData.learningFocus}`}
+                  accessibilityRole="button"
+                  accessibilityHint="Double tap to choose this path"
                   className={`w-64 h-72 rounded-2xl border-2 p-4 ${roleData.color} ${roleData.bg}`}
                 >
                   <View className="items-center mb-3">
@@ -370,6 +373,8 @@ export const MainMenu: React.FC<MainMenuProps> = ({ onStartGame, onSelectGame, o
         </View>
         <TouchableOpacity 
           onPress={() => setShowTreasury(true)}
+          accessibilityLabel="Open Royal Treasury"
+          accessibilityRole="button"
           style={{ backgroundColor: 'rgba(88, 28, 135, 0.4)', padding: 10, borderRadius: 12, borderWidth: 1, borderColor: 'rgba(167, 139, 250, 0.3)' }}
         >
           <Ionicons name="trophy-outline" size={20} color="#a78bfa" />
@@ -439,6 +444,8 @@ export const MainMenu: React.FC<MainMenuProps> = ({ onStartGame, onSelectGame, o
             <TouchableOpacity
               className="p-2 ml-2 active:bg-cyan-400/20 rounded"
               onPress={() => setShowPrivacySettings(true)}
+              accessibilityLabel="Open privacy settings"
+              accessibilityRole="button"
             >
               <Text className="text-cyan-400 text-2xl">⚙️</Text>
             </TouchableOpacity>
@@ -459,6 +466,8 @@ export const MainMenu: React.FC<MainMenuProps> = ({ onStartGame, onSelectGame, o
                     setSkipOnboarding(true);
                   }
                 }}
+                accessibilityLabel={`Tutorial ${progress.skipOnboarding ? 'disabled' : 'enabled'}. Double tap to toggle.`}
+                accessibilityRole="switch"
                 className={`flex-row items-center gap-2`}
               >
                 <View className={`w-10 h-5 rounded-full p-1 ${progress.skipOnboarding ? 'bg-red-600' : 'bg-green-600'}`}>
@@ -483,6 +492,9 @@ export const MainMenu: React.FC<MainMenuProps> = ({ onStartGame, onSelectGame, o
           <View className="flex-row gap-2">
             <TouchableOpacity
               onPress={() => setSelectedMode('swipe')}
+              accessibilityLabel={`Swipe controls${selectedMode === 'swipe' ? ', selected' : ''}`}
+              accessibilityRole="radio"
+              accessibilityState={{ selected: selectedMode === 'swipe' }}
               className={`flex-1 p-2 rounded-lg border ${selectedMode === 'swipe' ? 'bg-green-600/30 border-green-500' : 'bg-gray-800/50 border-gray-600'}`}
             >
               <Text className="text-xl text-center">👆</Text>
@@ -491,6 +503,9 @@ export const MainMenu: React.FC<MainMenuProps> = ({ onStartGame, onSelectGame, o
 
             <TouchableOpacity
               onPress={() => setSelectedMode('tap')}
+              accessibilityLabel={`Tap controls${selectedMode === 'tap' ? ', selected' : ''}`}
+              accessibilityRole="radio"
+              accessibilityState={{ selected: selectedMode === 'tap' }}
               className={`flex-1 p-2 rounded-lg border ${selectedMode === 'tap' ? 'bg-blue-600/30 border-blue-500' : 'bg-gray-800/50 border-gray-600'}`}
             >
               <Text className="text-xl text-center">🖱️</Text>
@@ -503,6 +518,8 @@ export const MainMenu: React.FC<MainMenuProps> = ({ onStartGame, onSelectGame, o
           <Animated.View style={{ transform: [{ scale: pulseAnim }] }}>
             <TouchableOpacity
               onPress={() => onStartGame(selectedMode)}
+              accessibilityLabel="Quick start game"
+              accessibilityRole="button"
               className="px-6 py-5 rounded-2xl border-4 bg-green-600 border-green-400 w-full"
               style={{
                 shadowColor: '#22c55e',
@@ -521,6 +538,8 @@ export const MainMenu: React.FC<MainMenuProps> = ({ onStartGame, onSelectGame, o
 
           <TouchableOpacity
             onPress={() => onSelectGame?.()}
+            accessibilityLabel="Customize battle settings"
+            accessibilityRole="button"
             className="px-6 py-4 rounded-2xl border-4 bg-amber-600 border-amber-400 w-full mt-3"
             style={{
               shadowColor: COLORS.ZONES.warningHigh,
@@ -541,6 +560,8 @@ export const MainMenu: React.FC<MainMenuProps> = ({ onStartGame, onSelectGame, o
               track('challenge_hub_viewed', { source: 'main_menu' });
               router.push('/challenge' as any);
             }}
+            accessibilityLabel="Open challenges"
+            accessibilityRole="button"
             className="px-6 py-4 rounded-2xl border-4 bg-purple-900 border-purple-400 w-full mt-3"
             style={{
               shadowColor: '#a78bfa',
@@ -558,6 +579,8 @@ export const MainMenu: React.FC<MainMenuProps> = ({ onStartGame, onSelectGame, o
 
           <TouchableOpacity
             onPress={() => setShowLibrary(true)}
+            accessibilityLabel="Open Grand Library"
+            accessibilityRole="button"
             className="px-6 py-4 rounded-2xl border-4 bg-blue-900 border-blue-400 w-full mt-3"
             style={{
               shadowColor: '#3b82f6',
@@ -664,6 +687,8 @@ const BeamWalletButton: React.FC<{
       <TouchableOpacity
         className="bg-amber-600 px-4 py-2 rounded-full min-h-[36px] justify-center"
         onPress={connectWallet}
+        accessibilityLabel="Connect crypto wallet"
+        accessibilityRole="button"
       >
         <Text className="text-white font-bold text-xs text-center">
           {Platform.OS === 'web' ? 'Connect Wallet' : 'Wallet'}
@@ -677,6 +702,8 @@ const BeamWalletButton: React.FC<{
           // Tooltip explanation - logic to show it would be here
         }}
         disabled={isLoading}
+        accessibilityLabel="Sign in with social account"
+        accessibilityRole="button"
       >
         <Text className="text-white font-bold text-xs text-center">
           {isLoading ? '...' : 'Play with Social'}

@@ -1,15 +1,15 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { BeamClient, ClientConfig, ChainId } from '@onbeam/sdk';
 import { Platform } from 'react-native';
+import { identifyUser, track } from '@/utils/analytics';
 
-// These should be moved to environment variables in a real app
-const BEAM_PUBLISHABLE_KEY = 'pk_test_sample_key'; // Placeholder
-const BEAM_CHALLENGE_ID = 'sample_challenge_id'; // Placeholder
+const BEAM_PUBLISHABLE_KEY = process.env.EXPO_PUBLIC_BEAM_PUBLISHABLE_KEY || '';
+const BEAM_CHAIN_ID = process.env.EXPO_PUBLIC_BEAM_MAINNET === 'true' ? ChainId.BEAM : ChainId.BEAM_TESTNET;
 
 interface BeamContextType {
   beam: BeamClient | null;
   isInitialized: boolean;
-  playerAccount: any | null;
+  playerAccount: { address: string; name?: string; provider?: string } | null;
   login: () => Promise<void>;
   logout: () => Promise<void>;
   isLoading: boolean;
@@ -17,6 +17,7 @@ interface BeamContextType {
   mintAchievement: (achievementId: string) => Promise<string | null>;
   fetchAchievements: () => Promise<any[]>;
   reportGameResult: (score: number, result: 'victory' | 'defeat', metrics?: any) => Promise<boolean>;
+  error: string | null;
 }
 
 const BeamContext = createContext<BeamContextType | undefined>(undefined);
@@ -24,11 +25,11 @@ const BeamContext = createContext<BeamContextType | undefined>(undefined);
 export const BeamProvider = ({ children }: { children: ReactNode }) => {
   const [beam, setBeam] = useState<BeamClient | null>(null);
   const [isInitialized, setIsInitialized] = useState(false);
-  const [playerAccount, setPlayerAccount] = useState<any | null>(null);
+  const [playerAccount, setPlayerAccount] = useState<BeamContextType['playerAccount']>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [showSyncFeedback, setShowSyncFeedback] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  // Trigger sync feedback (visual glow)
   const triggerSyncFeedback = () => {
     setShowSyncFeedback(true);
     setTimeout(() => setShowSyncFeedback(false), 2000);
@@ -36,25 +37,38 @@ export const BeamProvider = ({ children }: { children: ReactNode }) => {
 
   useEffect(() => {
     const initBeam = async () => {
+      if (!BEAM_PUBLISHABLE_KEY) {
+        console.warn('[Beam] No publishable key configured — running in offline mode');
+        setIsInitialized(true);
+        setIsLoading(false);
+        return;
+      }
+
       try {
         const config: ClientConfig = {
-          chains: [
-            {
-              id: ChainId.BEAM_TESTNET,
-              publishableKey: BEAM_PUBLISHABLE_KEY,
-            }
-          ],
-          chainId: ChainId.BEAM_TESTNET,
+          chains: [{ id: BEAM_CHAIN_ID, publishableKey: BEAM_PUBLISHABLE_KEY }],
+          chainId: BEAM_CHAIN_ID,
         };
-        const beamInstance = new BeamClient(config);
-        setBeam(beamInstance);
+        const client = new BeamClient(config);
+        setBeam(client);
         setIsInitialized(true);
-        
-        // Check for existing session
-        // const account = await beamInstance.getPlayerAccount();
-        // if (account) setPlayerAccount(account);
-      } catch (error) {
-        console.error('Failed to initialize Beam SDK:', error);
+
+        // Restore existing session
+        try {
+          const session = await (client as any).getActiveSession?.();
+          if (session?.account) {
+            setPlayerAccount({
+              address: session.account.address,
+              name: session.account.name,
+              provider: session.account.provider,
+            });
+          }
+        } catch {
+          // No active session — that's fine
+        }
+      } catch (err) {
+        console.error('[Beam] Init failed:', err);
+        setError('Failed to initialize Beam SDK');
       } finally {
         setIsLoading(false);
       }
@@ -64,21 +78,30 @@ export const BeamProvider = ({ children }: { children: ReactNode }) => {
   }, []);
 
   const login = async () => {
-    if (!beam) return;
+    if (!beam) {
+      setError('Beam SDK not initialized. Check EXPO_PUBLIC_BEAM_PUBLISHABLE_KEY.');
+      return;
+    }
     try {
       setIsLoading(true);
-      // In a real implementation, this would trigger the Social Login flow
-      // const account = await beam.login({ provider: 'google' });
-      // For now, we simulate a successful login to demonstrate the "User Ready" state
-      const mockAccount = {
-        address: '0x748a...93c5',
-        name: 'Guardian-748',
-        provider: 'google',
-      };
-      setPlayerAccount(mockAccount);
-      console.log('Beam login triggered - simulation successful');
-    } catch (error) {
-      console.error('Beam login failed:', error);
+      setError(null);
+      track('beam_login_clicked');
+
+      const result = await (beam as any).connectSocial?.();
+      if (result?.account) {
+        const account = {
+          address: result.account.address,
+          name: result.account.name || `Hero-${result.account.address.slice(2, 6)}`,
+          provider: result.account.provider || 'social',
+        };
+        setPlayerAccount(account);
+        identifyUser(account.address, { auth_provider: account.provider, account_type: 'beam' });
+        track('beam_login_success', { auth_provider: account.provider });
+      }
+    } catch (err: any) {
+      track('beam_login_error', { error: err?.message });
+      setError(err?.message || 'Login failed');
+      console.error('[Beam] Login failed:', err);
     } finally {
       setIsLoading(false);
     }
@@ -88,62 +111,68 @@ export const BeamProvider = ({ children }: { children: ReactNode }) => {
     if (!beam) return;
     try {
       setIsLoading(true);
-      // await beam.logout();
+      await (beam as any).disconnect?.();
       setPlayerAccount(null);
-    } catch (error) {
-      console.error('Beam logout failed:', error);
+    } catch (err) {
+      console.error('[Beam] Logout failed:', err);
     } finally {
       setIsLoading(false);
     }
   };
 
-  const mintAchievement = async (achievementId: string) => {
+  const mintAchievement = async (achievementId: string): Promise<string | null> => {
     if (!beam || !playerAccount) return null;
     try {
       setIsLoading(true);
+      setError(null);
       triggerSyncFeedback();
-      // In a real implementation, this would call the Beam Asset API
-      // const asset = await beam.assets.mint({
-      //   receiver: playerAccount.address,
-      //   assetId: achievementId,
-      // });
-      console.log(`Minting achievement ${achievementId} on Beam for ${playerAccount.address}`);
-      return '0x_beam_tx_hash_placeholder';
-    } catch (error) {
-      console.error('Beam minting failed:', error);
+
+      const result = await (beam as any).assets?.mint?.({
+        receiver: playerAccount.address,
+        assetId: achievementId,
+      });
+
+      track('beam_mint_success', { achievementId });
+      return result?.transactionHash || result?.hash || null;
+    } catch (err: any) {
+      console.error('[Beam] Minting failed:', err);
+      setError(err?.message || 'Minting failed');
+      track('beam_mint_error', { achievementId, error: err?.message });
       return null;
     } finally {
       setIsLoading(false);
     }
   };
 
-  const fetchAchievements = async () => {
+  const fetchAchievements = async (): Promise<any[]> => {
     if (!beam || !playerAccount) return [];
     try {
-      // return await beam.assets.getOwnedAssets(playerAccount.address);
-      return [];
-    } catch (error) {
-      console.error('Beam fetch achievements failed:', error);
+      const assets = await (beam as any).assets?.getOwned?.(playerAccount.address);
+      return assets || [];
+    } catch (err) {
+      console.error('[Beam] Fetch achievements failed:', err);
       return [];
     }
   };
 
-  const reportGameResult = async (score: number, result: 'victory' | 'defeat', metrics?: any) => {
+  const reportGameResult = async (score: number, result: 'victory' | 'defeat', metrics?: any): Promise<boolean> => {
     if (!beam || !playerAccount) return false;
     try {
       triggerSyncFeedback();
-      console.log(`Reporting game results to Beam for ${playerAccount.address}:`, { score, result, metrics });
-      
-      // In a real implementation, this would use the Beam Session to sign and send the result
-      // This ensures progression is persistent and verifiable on the Beam network
-      // await beam.sessions.signAndSend({
-      //   to: BEAM_CHALLENGE_ID,
-      //   data: encodeResultData(score, result, metrics),
-      // });
-      
+
+      await (beam as any).sessions?.execute?.({
+        interactions: [{
+          contractAddress: process.env.EXPO_PUBLIC_BEAM_GAME_CONTRACT || '',
+          functionName: 'reportResult',
+          functionArgs: [score, result === 'victory' ? 1 : 0],
+        }],
+      });
+
+      track('beam_result_reported', { score, result });
       return true;
-    } catch (error) {
-      console.error('Failed to report game result to Beam:', error);
+    } catch (err: any) {
+      // Non-critical — game still works without on-chain reporting
+      console.warn('[Beam] Result reporting failed (non-critical):', err?.message);
       return false;
     }
   };
@@ -161,6 +190,7 @@ export const BeamProvider = ({ children }: { children: ReactNode }) => {
         mintAchievement,
         fetchAchievements,
         reportGameResult,
+        error,
       }}
     >
       {children}
@@ -168,10 +198,8 @@ export const BeamProvider = ({ children }: { children: ReactNode }) => {
   );
 };
 
-export const useBeam = () => {
+export const useBeam = (): BeamContextType | null => {
   const context = useContext(BeamContext);
-  if (context === undefined) {
-    return null as any; // Return null instead of throwing to prevent app crash if used outside provider
-  }
+  if (context === undefined) return null;
   return context;
 };

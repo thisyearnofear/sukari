@@ -105,12 +105,6 @@ const CLASSIC_STEPS: OnboardingStep[] = [
     directionLabel: '👆 HEALTHY',
   },
   {
-    title: 'SECURE YOUR DEEDS',
-    subtitle: 'Kingdom Treasury',
-    content: 'Log in with your Social Account (Google, Apple) to sync your progress across the Realm and secure your achievements as digital deeds on the Beam network.',
-    emoji: '👑',
-  },
-  {
     title: 'CHOOSE CONTROLS',
     subtitle: 'How will you fight?',
     content: '',
@@ -174,12 +168,6 @@ const LIFE_MODE_STEPS: OnboardingStep[] = [
     subtitle: 'Use your influence wisely',
     content: 'Train Knights (Exercise) to lower Harmony levels. Host Royal Feasts (Rations) to raise them.',
     emoji: '⚔️',
-  },
-  {
-    title: 'SECURE YOUR DEEDS',
-    subtitle: 'Kingdom Treasury',
-    content: 'Log in with your Social Account (Google, Apple) to sync your progress across the Realm and secure your achievements as digital deeds on the Beam network.',
-    emoji: '👑',
   },
   {
     title: 'CHOOSE CONTROLS',
@@ -429,6 +417,9 @@ export const Onboarding: React.FC<OnboardingProps> = ({ onComplete, onSkip, defa
 
       {/* Main content card */}
       <Animated.View
+        accessible
+        accessibilityLabel={`Step ${currentStep + 1} of ${ONBOARDING_STEPS.length}. ${step.title}. ${step.subtitle}. ${step.content}`}
+        accessibilityRole="text"
         style={{
           alignItems: 'center',
           paddingHorizontal: 32,
@@ -534,6 +525,8 @@ export const Onboarding: React.FC<OnboardingProps> = ({ onComplete, onSkip, defa
           <View style={{ width: '100%', marginTop: 8 }}>
             <TouchableOpacity
               onPress={() => handleSelectControl('swipe')}
+              accessibilityLabel={`Swipe controls. ${gameMode === 'life' ? '4 directions' : 'Best for mobile'}`}
+              accessibilityRole="button"
               style={{
                 backgroundColor: 'rgba(34, 197, 94, 0.2)',
                 padding: 16,
@@ -559,6 +552,8 @@ export const Onboarding: React.FC<OnboardingProps> = ({ onComplete, onSkip, defa
 
             <TouchableOpacity
               onPress={() => handleSelectControl('tap')}
+              accessibilityLabel={`Tap controls. ${gameMode === 'life' ? 'Button controls' : 'Best for web'}`}
+              accessibilityRole="button"
               style={{
                 backgroundColor: 'rgba(59, 130, 246, 0.2)',
                 padding: 16,
@@ -585,6 +580,8 @@ export const Onboarding: React.FC<OnboardingProps> = ({ onComplete, onSkip, defa
         {!isLastStep && (
           <TouchableOpacity
             onPress={handleNext}
+            accessibilityLabel="Next step"
+            accessibilityRole="button"
             style={{
               marginTop: 24,
               backgroundColor: `${themeColor}E6`,
@@ -606,6 +603,8 @@ export const Onboarding: React.FC<OnboardingProps> = ({ onComplete, onSkip, defa
         {!isLastStep && (
           <TouchableOpacity
             onPress={() => onSkip(selectedControlMode)}
+            accessibilityLabel="Skip tutorial"
+            accessibilityRole="button"
             style={{
               marginTop: 8,
               backgroundColor: 'rgba(99, 102, 241, 0.2)',
@@ -625,6 +624,8 @@ export const Onboarding: React.FC<OnboardingProps> = ({ onComplete, onSkip, defa
         {currentStep > 0 && (
           <TouchableOpacity
             onPress={handleBack}
+            accessibilityLabel="Go back"
+            accessibilityRole="button"
             style={{
               marginTop: 12,
               backgroundColor: 'rgba(168, 85, 247, 0.2)',
