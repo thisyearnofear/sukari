@@ -1,5 +1,4 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { Dimensions } from 'react-native';
 import * as Haptics from 'expo-haptics';
 import {
   GameState,
@@ -26,122 +25,27 @@ import {
   INITIAL_STABILITY,
   COMBO_WINDOW,
   COMBO_TIERS,
-  ALLY_FOODS,
-  ENEMY_FOODS,
   ALL_FOODS,
-  SPAWN_CONFIG,
   ANNOUNCEMENTS,
   POWER_UPS,
-  STABILITY_ZONES,
-  TIME_PHASES,
-  MORNING_CONDITIONS,
-  PLOT_TWISTS,
-  MODE_PLOT_TWISTS,
   INITIAL_METRICS,
-  METRIC_DRAIN_RATES,
-  SPECIAL_MODES,
-  MISS_PENALTIES,
-  TIME_SPEED_MODIFIERS,
-  MESSAGE_POSITIONS,
+  MORNING_CONDITIONS,
 } from '@/constants/gameConfig';
 import { usePlayerProgressContext } from '@/context/PlayerProgressContext';
 import { getReflectionMessage } from '@/constants/userModes';
-import { useVRFService } from './useVRFService';
 import { SeededRandom, getWeeklySeed } from '@/utils/random';
 import { useBeam } from '@/context/BeamContext';
 import { ChallengeModifier } from '@/types/challenge';
 import { getStabilityZone } from '@/utils/gameLogic';
-
-const { width, height } = Dimensions.get('window');
-
-const getRandomAnnouncement = (category: keyof typeof ANNOUNCEMENTS): string => {
-  const options = ANNOUNCEMENTS[category];
-  if (!options || !Array.isArray(options)) return '';
-  return options[Math.floor(Math.random() * options.length)];
-};
-
-const getRandomPosition = () => {
-  const positions = MESSAGE_POSITIONS;
-  return positions[Math.floor(Math.random() * positions.length)] as { x: 'left' | 'center' | 'right'; y: 'top' | 'middle' | 'bottom' };
-};
-
-// Get current time phase based on timer
-const getTimePhase = (timer: number): TimePhase => {
-  if (timer >= 46) return 'morning';
-  if (timer >= 31) return 'midday';
-  if (timer >= 16) return 'afternoon';
-  return 'evening';
-};
+import { useGameTimer, getTimePhase, getMorningConditionConfig, getRandomAnnouncement } from './useGameTimer';
+import { useFoodSpawner } from './useFoodSpawner';
+import { useFoodMovement } from './useFoodMovement';
+import { usePlotTwists } from './usePlotTwists';
 
 // Get random morning condition
 const getRandomMorningCondition = (): MorningCondition => {
   const conditions: MorningCondition[] = ['well_rested', 'poor_sleep', 'sick_day', 'marathon_day', 'stressed', 'recovery_day', 'normal_day'];
   return conditions[Math.floor(Math.random() * conditions.length)];
-};
-
-// Get morning condition config
-const getMorningConditionConfig = (condition: MorningCondition) => {
-  return MORNING_CONDITIONS.find(c => c.id === condition) || MORNING_CONDITIONS.find(c => c.id === 'normal_day')!;
-};
-
-// Check if a metric is in critical state
-const isMetricCritical = (value: number): boolean => value <= 15 || value >= 85;
-const isMetricWarning = (value: number): boolean => (value > 15 && value <= 30) || (value >= 70 && value < 85);
-
-// Default food effects for backwards compatibility
-const DEFAULT_EFFECTS: FoodEffects = { energy: 0, hydration: 0, nutrition: 0, stability: 0 };
-
-const selectRandomFood = (isAlly: boolean, timePhase?: TimePhase, seededRandom?: SeededRandom | null): FoodDefinition => {
-  const foods = isAlly ? ALLY_FOODS : ENEMY_FOODS;
-  const totalWeight = foods.reduce((sum, f) => sum + f.spawnWeight, 0);
-  let random = seededRandom ? seededRandom.next() * totalWeight : Math.random() * totalWeight;
-
-  for (const food of foods) {
-    random -= food.spawnWeight;
-    if (random <= 0) return food;
-  }
-  return foods[0];
-};
-
-const SIDE_PANEL_WIDTH = 80; // Match the side panel width from LifeModeHUD
-
-const createFoodUnit = (definition: FoodDefinition, timePhase?: TimePhase, gameMode?: GameMode, seededRandom?: SeededRandom | null): FoodUnit => {
-  // For life mode, spawn within the narrower center area
-  const leftMargin = gameMode === 'life' ? SIDE_PANEL_WIDTH + 20 : 40;
-  const rightMargin = gameMode === 'life' ? SIDE_PANEL_WIDTH + 20 : 40;
-  const randomX = seededRandom ? seededRandom.next() : Math.random();
-  const spawnX = leftMargin + randomX * (width - leftMargin - rightMargin);
-  const spawnY = -60;
-
-  // Determine if contextual food is good based on time
-  let isContextuallyGood = true;
-  if (definition.faction === 'contextual' && definition.timeModifiers && timePhase) {
-    const modifier = definition.timeModifiers[timePhase] || 1;
-    isContextuallyGood = modifier > 0;
-  }
-
-  const randomSpeed = seededRandom ? seededRandom.next() : Math.random();
-  const randomId = seededRandom ? seededRandom.nextInt(0, 1000000).toString() : Math.random().toString(36).substr(2, 9);
-
-  return {
-    id: `food-${Date.now()}-${randomId}`,
-    type: definition.type,
-    faction: definition.faction,
-    name: definition.name,
-    sprite: definition.sprite,
-    x: spawnX,
-    y: spawnY,
-    targetY: height - 200, // Stop well above the bottom (was 120, now 200)
-    speed: 1.2 + randomSpeed * 0.8,
-    points: definition.basePoints,
-    glucoseImpact: definition.glucoseImpact,
-    effects: definition.effects || DEFAULT_EFFECTS,
-    isBeingDragged: false,
-    swipeDirection: null,
-    opacity: 1,
-    scale: 1,
-    isContextuallyGood,
-  };
 };
 
 const initialGameState: GameState = {
@@ -223,11 +127,8 @@ export const useBattleGame = (
   const [gameState, setGameState] = useState<GameState>(initialGameState);
 
   const timerRef = useRef<number | null>(null);
-  const spawnRef = useRef<number | null>(null);
-  const moveRef = useRef<number | null>(null);
   const announcementRef = useRef<number | null>(null);
   const comboTimerRef = useRef<number | null>(null);
-  const plotTwistRef = useRef<number | null>(null);
   const comboWindowMsRef = useRef<number>(COMBO_WINDOW);
   const balancedRangeRef = useRef<{ min: number; max: number }>({ min: 40, max: 60 });
   const powerupsDisabledRef = useRef<boolean>(false);
@@ -251,11 +152,6 @@ export const useBattleGame = (
     }, 200);
   }, []);
 
-  // Trigger a plot twist (Life Mode only)
-  // Initialize VRF service
-  const { generateFairPlotTwist, getVerifiableRandom } = useVRFService();
-
-  const [vrfEnabled, setVrfEnabled] = useState(false); // Toggle for testing VRF fairness
   const seededRandomRef = useRef<SeededRandom | null>(null);
 
   useEffect(() => {
@@ -304,104 +200,6 @@ export const useBattleGame = (
       powerupsDisabledRef.current = true;
     }
   }, [challenge]);
-
-  const triggerPlotTwist = useCallback(async () => {
-    try {
-      let twist, fairnessProof, isVerifiable;
-
-      if (vrfEnabled) {
-        // Use VRF for provably fair plot twists
-        const result = await generateFairPlotTwist(gameState.gameMode, Date.now());
-        twist = result.plotTwist;
-        fairnessProof = result.fairnessProof;
-        isVerifiable = result.isVerifiable;
-      } else {
-        // Use mode-specific plot twists if userMode is available, otherwise use default
-        const availableTwists = userMode
-          ? MODE_PLOT_TWISTS[userMode].filter(t => Math.random() > 0.3) // Random selection
-          : PLOT_TWISTS.filter(t => Math.random() > 0.3); // Use default for backward compatibility
-
-        if (availableTwists.length === 0) return;
-
-        twist = availableTwists[Math.floor(Math.random() * availableTwists.length)];
-        fairnessProof = undefined; // No fairness proof when not using VRF
-        isVerifiable = false;
-      }
-
-      setGameState(prev => {
-        if (prev.gameMode !== 'life' || prev.activePlotTwist || prev.plotTwistsTriggered >= 2) return prev;
-
-        // Apply immediate effect
-        const newMetrics = { ...prev.metrics };
-        if (twist.effect.energy) newMetrics.energy = Math.max(0, Math.min(100, newMetrics.energy + twist.effect.energy));
-        if (twist.effect.hydration) newMetrics.hydration = Math.max(0, Math.min(100, newMetrics.hydration + twist.effect.hydration));
-        if (twist.effect.nutrition) newMetrics.nutrition = Math.max(0, Math.min(100, newMetrics.nutrition + twist.effect.nutrition));
-        if (twist.effect.stability) newMetrics.stability = Math.max(0, Math.min(100, newMetrics.stability + twist.effect.stability));
-
-        return {
-          ...prev,
-          activePlotTwist: twist,
-          plotTwistTimer: twist.duration,
-          plotTwistsTriggered: prev.plotTwistsTriggered + 1,
-          metrics: newMetrics,
-        };
-      });
-
-      // Show the plot twist announcement with bonus condition as science text (if available)
-      // Include fairness proof badge if this is a verifiable plot twist
-      if (twist.bonusCondition) {
-        const announcementText = isVerifiable
-          ? `${twist.icon} ${twist.name} ⚖️ FAIR`
-          : `${twist.icon} ${twist.name}`;
-        showAnnouncement(announcementText, 'plot_twist', twist.bonusCondition);
-      } else {
-        const announcementText = isVerifiable
-          ? `${twist.icon} ${twist.name} ⚖️ FAIR`
-          : `${twist.icon} ${twist.name}`;
-        showAnnouncement(announcementText, 'plot_twist');
-      }
-      triggerScreenShake(12);
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
-    } catch (error) {
-      console.error('Error triggering plot twist:', error);
-      // Fallback to regular plot twist on VRF error
-      const availableTwists = userMode
-        ? MODE_PLOT_TWISTS[userMode].filter(t => Math.random() > 0.3) // Random selection
-        : PLOT_TWISTS.filter(t => Math.random() > 0.3); // Use default for backward compatibility
-
-      if (availableTwists.length === 0) return;
-
-      const fallbackTwist = availableTwists[Math.floor(Math.random() * availableTwists.length)];
-
-      setGameState(prev => {
-        if (prev.gameMode !== 'life' || prev.activePlotTwist || prev.plotTwistsTriggered >= 2) return prev;
-
-        // Apply immediate effect
-        const newMetrics = { ...prev.metrics };
-        if (fallbackTwist.effect.energy) newMetrics.energy = Math.max(0, Math.min(100, newMetrics.energy + fallbackTwist.effect.energy));
-        if (fallbackTwist.effect.hydration) newMetrics.hydration = Math.max(0, Math.min(100, newMetrics.hydration + fallbackTwist.effect.hydration));
-        if (fallbackTwist.effect.nutrition) newMetrics.nutrition = Math.max(0, Math.min(100, newMetrics.nutrition + fallbackTwist.effect.nutrition));
-        if (fallbackTwist.effect.stability) newMetrics.stability = Math.max(0, Math.min(100, newMetrics.stability + fallbackTwist.effect.stability));
-
-        return {
-          ...prev,
-          activePlotTwist: fallbackTwist,
-          plotTwistTimer: fallbackTwist.duration,
-          plotTwistsTriggered: prev.plotTwistsTriggered + 1,
-          metrics: newMetrics,
-        };
-      });
-
-      // Show the plot twist announcement with bonus condition as science text (if available)
-      if (fallbackTwist.bonusCondition) {
-        showAnnouncement(`${fallbackTwist.icon} ${fallbackTwist.name}`, 'plot_twist', fallbackTwist.bonusCondition);
-      } else {
-        showAnnouncement(`${fallbackTwist.icon} ${fallbackTwist.name}`, 'plot_twist');
-      }
-      triggerScreenShake(12);
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
-    }
-  }, [showAnnouncement, triggerScreenShake, userMode, vrfEnabled, generateFairPlotTwist, gameState.gameMode]);
 
   const startGame = useCallback((mode: GameMode = 'classic') => {
     const morningCondition = mode === 'life' ? getRandomMorningCondition() : 'normal_day';
@@ -478,287 +276,13 @@ export const useBattleGame = (
     }
   }, [playerAccount, reportGameResult]);
 
-  // Timer countdown with Life Mode support
-  useEffect(() => {
-    if (!gameState.isGameActive || gameState.isPaused) return;
-
-    timerRef.current = setInterval(() => {
-      setGameState(prev => {
-        if (prev.isPaused) return prev;
-        const newTimer = prev.timer - 1;
-        const zone = getStabilityZone(prev.stability, balancedRangeRef.current);
-        const newTimePhase = getTimePhase(newTimer);
-        const conditionConfig = getMorningConditionConfig(prev.morningCondition);
-
-        // Track time in zones
-        let timeInBalanced = prev.timeInBalanced;
-        let timeInWarning = prev.timeInWarning;
-        let timeInCritical = prev.timeInCritical;
-
-        if (zone === 'balanced') timeInBalanced++;
-        else if (zone.includes('warning')) timeInWarning++;
-        else timeInCritical++;
-
-        // Life Mode: Apply metric drain and condition multipliers
-        let newMetrics = { ...prev.metrics };
-        if (prev.gameMode === 'life') {
-          const drainMultipliers = conditionConfig.needsMultipliers;
-          newMetrics.energy = Math.max(0, newMetrics.energy - (METRIC_DRAIN_RATES.energy * (drainMultipliers.energy || 1)));
-          newMetrics.hydration = Math.max(0, newMetrics.hydration - (METRIC_DRAIN_RATES.hydration * (drainMultipliers.hydration || 1)));
-          newMetrics.nutrition = Math.max(0, newMetrics.nutrition - (METRIC_DRAIN_RATES.nutrition * (drainMultipliers.nutrition || 1)));
-          newMetrics.stability = Math.max(0, Math.min(100, newMetrics.stability - (METRIC_DRAIN_RATES.stability * (drainMultipliers.stability || 1))));
-
-          // Apply ongoing plot twist effects
-          if (prev.activePlotTwist?.ongoingEffect) {
-            const ongoing = prev.activePlotTwist.ongoingEffect;
-            if (ongoing.energy) newMetrics.energy = Math.max(0, Math.min(100, newMetrics.energy + ongoing.energy));
-            if (ongoing.hydration) newMetrics.hydration = Math.max(0, Math.min(100, newMetrics.hydration + ongoing.hydration));
-            if (ongoing.nutrition) newMetrics.nutrition = Math.max(0, Math.min(100, newMetrics.nutrition + ongoing.nutrition));
-            if (ongoing.stability) newMetrics.stability = Math.max(0, Math.min(100, newMetrics.stability + ongoing.stability));
-          }
-        }
-
-        // Record metrics history for end-game graph
-        const metricsHistory = [...prev.metricsHistory, { ...newMetrics }];
-
-        // Handle plot twist timer
-        let activePlotTwist = prev.activePlotTwist;
-        let plotTwistTimer = prev.plotTwistTimer;
-        if (activePlotTwist && plotTwistTimer > 0) {
-          plotTwistTimer--;
-          if (plotTwistTimer <= 0) {
-            activePlotTwist = null;
-          }
-        }
-
-        // Phase change announcement (Life Mode)
-        if (prev.gameMode === 'life' && newTimePhase !== prev.timePhase) {
-          const phaseKey = `PHASE_${newTimePhase.toUpperCase()}` as keyof typeof ANNOUNCEMENTS;
-          if (ANNOUNCEMENTS[phaseKey]) {
-            showAnnouncement(getRandomAnnouncement(phaseKey), 'info');
-          }
-        }
-
-        // Final wave announcement
-        if (newTimer === 10) {
-          showAnnouncement(getRandomAnnouncement('FINAL_WAVE'), 'warning');
-        }
-
-          // Check for game end
-          if (newTimer <= 0) {
-            const isVictory = prev.gameMode === 'classic'
-              ? (prev.stability >= 30 && prev.stability <= 70 && prev.score > 0)
-              : (newMetrics.energy > 15 && newMetrics.hydration > 15 && newMetrics.nutrition > 15 && newMetrics.stability > 15 && prev.score > 0);
-
-            endGame(isVictory ? 'victory' : 'defeat');
-
-            return {
-              ...prev,
-              timer: 0,
-              isGameActive: false,
-              gameResult: isVictory ? 'victory' : 'defeat',
-              timeInBalanced,
-              timeInWarning,
-              timeInCritical,
-              metrics: newMetrics,
-              stability: prev.gameMode === 'life' ? newMetrics.stability : prev.stability,
-              metricsHistory,
-              activePlotTwist,
-              plotTwistTimer,
-            };
-          }
-
-          // Life Mode: Check for critical metrics (game over)
-          if (prev.gameMode === 'life') {
-            const anyCriticalLow = newMetrics.energy <= 5 || newMetrics.hydration <= 5 || newMetrics.nutrition <= 5 || newMetrics.stability <= 5;
-            if (anyCriticalLow) {
-              endGame('defeat');
-
-              return {
-                ...prev,
-                timer: newTimer,
-                isGameActive: false,
-                gameResult: 'defeat',
-                metrics: newMetrics,
-                metricsHistory,
-              };
-            }
-          }
-
-        return {
-          ...prev,
-          timer: newTimer,
-          timePhase: newTimePhase,
-          timeInBalanced,
-          timeInWarning,
-          timeInCritical,
-          metrics: newMetrics,
-          stability: prev.gameMode === 'life' ? newMetrics.stability : prev.stability,
-          metricsHistory,
-          activePlotTwist,
-          plotTwistTimer,
-        };
-      });
-    }, 1000);
-
-    return () => {
-      if (timerRef.current) clearInterval(timerRef.current);
-    };
-  }, [gameState.isGameActive, gameState.isPaused, endGame, showAnnouncement]);
-
-  // Plot twist trigger (Life Mode) - trigger at random times
-  useEffect(() => {
-    if (!gameState.isGameActive || gameState.gameMode !== 'life') return;
-
-    // Schedule plot twists at random intervals
-    const scheduleNextTwist = () => {
-      const delay = 15000 + Math.random() * 20000; // Between 15-35 seconds
-      plotTwistRef.current = setTimeout(() => {
-        if (gameState.timer > 10 && gameState.plotTwistsTriggered < 2) {
-          triggerPlotTwist();
-        }
-      }, delay);
-    };
-
-    scheduleNextTwist();
-
-    return () => {
-      if (plotTwistRef.current) clearTimeout(plotTwistRef.current);
-    };
-  }, [gameState.isGameActive, gameState.gameMode, triggerPlotTwist, userMode]);
-
-  // Spawn foods
-  useEffect(() => {
-    if (!gameState.isGameActive || gameState.isPaused) return;
-
-    const getSpawnInterval = () => {
-      const elapsed = GAME_DURATION - gameState.timer;
-      const reduction = Math.floor(elapsed / 10) * SPAWN_CONFIG.INTERVAL_DECREASE;
-      const base = Math.max(SPAWN_CONFIG.MIN_INTERVAL, SPAWN_CONFIG.INITIAL_INTERVAL - reduction);
-      return Math.max(80, Math.round(base / (gameState.spawnRateMultiplier || 1)));
-    };
-
-    const spawnFood = () => {
-      setGameState(prev => {
-        if (prev.foods.length >= SPAWN_CONFIG.MAX_FOODS_ON_SCREEN || prev.isPaused) return prev;
-
-        const randomVal = seededRandomRef.current ? seededRandomRef.current.next() : Math.random();
-        const isAlly = randomVal < SPAWN_CONFIG.ALLY_SPAWN_CHANCE;
-        const definition = selectRandomFood(isAlly, prev.timePhase, seededRandomRef.current);
-        const newFood = createFoodUnit(definition, prev.timePhase, prev.gameMode, seededRandomRef.current);
-
-        return {
-          ...prev,
-          foods: [...prev.foods, newFood],
-        };
-      });
-    };
-
-    // Initial spawn
-    spawnFood();
-    setTimeout(spawnFood, 400);
-    setTimeout(spawnFood, 800);
-
-    spawnRef.current = setInterval(spawnFood, getSpawnInterval());
-
-    return () => {
-      if (spawnRef.current) clearInterval(spawnRef.current);
-    };
-  }, [gameState.isGameActive, gameState.isPaused, gameState.timer]);
-
-  // Move foods
-  useEffect(() => {
-    if (!gameState.isGameActive || gameState.isPaused) return;
-
-    moveRef.current = setInterval(() => {
-      setGameState(prev => {
-        if (prev.isPaused) return prev;
-        const updatedFoods: FoodUnit[] = [];
-        let newStability = prev.stability;
-        let newMetrics = { ...prev.metrics };
-        let missedCount = 0;
-
-        // Get tier-specific penalties (fallback to tier1 if tierConfig not provided)
-        const tierKey = (tierConfig?.tier || 'tier1') as keyof typeof MISS_PENALTIES;
-        const penalties = MISS_PENALTIES[tierKey];
-        let comboBreaker = false;
-
-        for (const food of prev.foods) {
-          if (food.isBeingDragged) {
-            updatedFoods.push(food);
-            continue;
-          }
-
-          const speedMult = prev.speedMultiplier || 1;
-          const newY = food.y + food.speed * speedMult;
-
-          // Food reached the gate - miss penalty
-          if (newY >= food.targetY) {
-            missedCount++;
-            comboBreaker = true; // All misses break combo
-
-            if (prev.gameMode === 'life') {
-              // Life Mode: scale penalties by tier
-              if (food.faction === 'enemy') {
-                // Enemy got through - apply tier-scaled penalty
-                newMetrics.stability = Math.max(0, Math.min(100, newMetrics.stability - penalties.enemyGetThrough));
-                // Tier 3 also damages energy
-                if (tierConfig?.tier === 'tier3') {
-                  newMetrics.energy = Math.max(0, newMetrics.energy - 10);
-                }
-              } else {
-                // Ally missed - tier-scaled nutrition penalty
-                newMetrics.nutrition = Math.max(0, newMetrics.nutrition - penalties.allyMissed);
-              }
-              newStability = newMetrics.stability;
-            } else {
-              // Classic mode: tier-scaled stability penalties
-              if (food.faction === 'enemy') {
-                newStability = Math.max(0, newStability - penalties.enemyGetThrough);
-              } else {
-                newStability = Math.max(0, newStability - penalties.allyMissed);
-              }
-            }
-          } else {
-            updatedFoods.push({ ...food, y: newY });
-          }
-        }
-
-        // Show combo break announcement if streak was lost
-        if (comboBreaker && prev.comboCount > 0) {
-          showAnnouncement(getRandomAnnouncement('COMBO_BREAK'), 'warning');
-        }
-
-        // Check for critical stability (Classic mode)
-        if (prev.gameMode === 'classic' && (newStability <= 5 || newStability >= 95)) {
-          if (timerRef.current) clearInterval(timerRef.current);
-          if (spawnRef.current) clearInterval(spawnRef.current);
-          if (moveRef.current) clearInterval(moveRef.current);
-
-          return {
-            ...prev,
-            foods: updatedFoods,
-            stability: newStability,
-            isGameActive: false,
-            gameResult: 'defeat',
-          };
-        }
-
-        return {
-          ...prev,
-          foods: updatedFoods,
-          stability: newStability,
-          metrics: newMetrics,
-          // Break combo on any missed food
-          comboCount: comboBreaker ? 0 : prev.comboCount,
-        };
-      });
-    }, 32); // ~30fps
-
-    return () => {
-      if (moveRef.current) clearInterval(moveRef.current);
-    };
-  }, [gameState.isGameActive, gameState.isPaused, endGame, tierConfig?.tier]);
+  // ═══════════════════════════════════════════════════════════════
+  // Delegated hooks — timer, spawning, movement, plot twists
+  // ═══════════════════════════════════════════════════════════════
+  useGameTimer({ gameState, setGameState, balancedRangeRef, endGame, showAnnouncement });
+  const { spawnRef } = useFoodSpawner({ gameState, setGameState, seededRandomRef });
+  const { moveRef } = useFoodMovement({ gameState, setGameState, tierConfig, showAnnouncement });
+  const { plotTwistRef } = usePlotTwists({ gameState, setGameState, userMode, showAnnouncement, triggerScreenShake });
 
   // Handle swipe on food - supports 4 directions in Life Mode
   const handleSwipe = useCallback((foodId: string, direction: SwipeDirection, action: SwipeAction) => {
@@ -1202,9 +726,5 @@ export const useBattleGame = (
     getStabilityZone: () => getStabilityZone(gameState.stability, balancedRangeRef.current),
     getTimePhase: () => getTimePhase(gameState.timer),
     getMorningConditionConfig: () => getMorningConditionConfig(gameState.morningCondition),
-    // VRF Functions
-    enableVRF: () => setVrfEnabled(true),
-    disableVRF: () => setVrfEnabled(false),
-    isVRFEnabled: vrfEnabled,
   };
 };
