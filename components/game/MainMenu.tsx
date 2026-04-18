@@ -96,6 +96,7 @@ export const MainMenu: React.FC<MainMenuProps> = ({ onStartGame, onSelectGame, o
   const [showMintModal, setShowMintModal] = useState(false);
   const [showLibrary, setShowLibrary] = useState(false);
   const [showTreasury, setShowTreasury] = useState(false);
+  const [showSettings, setShowSettings] = useState(false);
   const { isConnected, address, connectWallet, disconnectWallet } = useWeb3();
   const beamContext = useBeam();
   const playerAccount = beamContext?.playerAccount;
@@ -414,7 +415,7 @@ export const MainMenu: React.FC<MainMenuProps> = ({ onStartGame, onSelectGame, o
            </View>
          )}
 
-         <View className="mb-6">
+         <View className="mb-4">
            <BeamWalletButton 
              isConnected={isConnected}
              address={address}
@@ -423,182 +424,127 @@ export const MainMenu: React.FC<MainMenuProps> = ({ onStartGame, onSelectGame, o
            />
          </View>
 
+        {/* ═══ ACTION BUTTONS — front and center ═══ */}
+        <View style={{ width: maxWidth }} className="space-y-3 mb-6">
+          <Animated.View style={{ transform: [{ scale: pulseAnim }] }}>
+            <TouchableOpacity
+              onPress={() => onStartGame(selectedMode)}
+              accessibilityLabel="Quick start game"
+              accessibilityRole="button"
+              style={{
+                backgroundColor: '#16a34a', borderWidth: 3, borderColor: '#22c55e',
+                paddingVertical: 18, borderRadius: 16, width: '100%',
+                shadowColor: '#22c55e', shadowOffset: { width: 0, height: 0 },
+                shadowOpacity: 0.9, shadowRadius: 25, elevation: 15,
+              }}
+            >
+              <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center' }}>
+                <Text style={{ fontSize: 22, marginRight: 8 }}>⚡</Text>
+                <Text style={{ color: 'white', fontSize: 18, fontWeight: 'bold' }}>DEFEND THE REALM</Text>
+              </View>
+            </TouchableOpacity>
+          </Animated.View>
+
+          <View style={{ flexDirection: 'row', gap: 8, marginTop: 8 }}>
+            <TouchableOpacity
+              onPress={() => onSelectGame?.()}
+              accessibilityLabel="Customize battle" accessibilityRole="button"
+              style={{ flex: 1, backgroundColor: 'rgba(217,119,6,0.3)', borderWidth: 2, borderColor: '#f59e0b', paddingVertical: 12, borderRadius: 12, alignItems: 'center' }}
+            >
+              <Text style={{ fontSize: 16 }}>🎮</Text>
+              <Text style={{ color: '#fde68a', fontSize: 10, fontWeight: 'bold', marginTop: 2 }}>CUSTOMIZE</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              onPress={() => { track('challenge_hub_viewed', { source: 'main_menu' }); router.push('/challenge' as any); }}
+              accessibilityLabel="Open challenges" accessibilityRole="button"
+              style={{ flex: 1, backgroundColor: 'rgba(139,92,246,0.2)', borderWidth: 2, borderColor: '#a78bfa', paddingVertical: 12, borderRadius: 12, alignItems: 'center' }}
+            >
+              <Text style={{ fontSize: 16 }}>🧩</Text>
+              <Text style={{ color: '#c4b5fd', fontSize: 10, fontWeight: 'bold', marginTop: 2 }}>CHALLENGES</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              onPress={() => setShowLibrary(true)}
+              accessibilityLabel="Open Grand Library" accessibilityRole="button"
+              style={{ flex: 1, backgroundColor: 'rgba(59,130,246,0.2)', borderWidth: 2, borderColor: '#3b82f6', paddingVertical: 12, borderRadius: 12, alignItems: 'center' }}
+            >
+              <Text style={{ fontSize: 16 }}>📜</Text>
+              <Text style={{ color: '#93c5fd', fontSize: 10, fontWeight: 'bold', marginTop: 2 }}>LIBRARY</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+
          {progressInfo}
 
-         <View style={{ width: maxWidth }} className="mt-6">
+         <View style={{ width: maxWidth }} className="mt-4">
            <DailyQuests 
              quests={progress.dailyQuests} 
              renown={progress.kingdomRenown} 
            />
          </View>
 
-        <View style={{ width: maxWidth }} className="bg-black/60 p-3 rounded-xl border border-cyan-700 mb-4 mt-2">
+        {/* ═══ COLLAPSIBLE SETTINGS ═══ */}
+        <TouchableOpacity
+          onPress={() => setShowSettings(!showSettings)}
+          style={{ width: maxWidth, marginTop: 12, marginBottom: 4 }}
+          accessibilityLabel={`${showSettings ? 'Hide' : 'Show'} settings`}
+          accessibilityRole="button"
+        >
+          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center' }}>
+            <Text style={{ color: '#6b7280', fontSize: 12 }}>⚙️ Settings {showSettings ? '▲' : '▼'}</Text>
+          </View>
+        </TouchableOpacity>
+
+        {showSettings && (
+          <>
+        <View style={{ width: maxWidth }} className="bg-black/60 p-3 rounded-xl border border-cyan-700 mb-3">
           <View className="flex-row justify-between items-center">
             <View className="flex-1">
               <Text className="text-cyan-400 text-xs font-bold mb-1">🔐 PRIVACY</Text>
-              <PrivacyToggle
-                currentMode={progress.privacyMode}
-                onToggle={(mode) => setPrivacyMode(mode)}
-              />
+              <PrivacyToggle currentMode={progress.privacyMode} onToggle={(mode) => setPrivacyMode(mode)} />
             </View>
-            <TouchableOpacity
-              className="p-2 ml-2 active:bg-cyan-400/20 rounded"
-              onPress={() => setShowPrivacySettings(true)}
-              accessibilityLabel="Open privacy settings"
-              accessibilityRole="button"
-            >
+            <TouchableOpacity className="p-2 ml-2" onPress={() => setShowPrivacySettings(true)} accessibilityLabel="Open privacy settings" accessibilityRole="button">
               <Text className="text-cyan-400 text-2xl">⚙️</Text>
             </TouchableOpacity>
           </View>
         </View>
 
-        {/* Tutorial Toggle */}
-        <View style={{ width: maxWidth }} className="bg-black/60 p-3 rounded-xl border border-purple-700 mb-4">
+        <View style={{ width: maxWidth }} className="bg-black/60 p-3 rounded-xl border border-purple-700 mb-3">
           <View className="flex-row justify-between items-center">
             <View className="flex-1">
               <Text className="text-purple-400 text-xs font-bold mb-1">📚 TUTORIAL</Text>
               <TouchableOpacity
-                onPress={() => {
-                  // Toggle tutorial: if currently skipped, show tutorial; if not skipped, skip it
-                  if (progress.skipOnboarding) {
-                    setSkipOnboarding(false);
-                  } else {
-                    setSkipOnboarding(true);
-                  }
-                }}
-                accessibilityLabel={`Tutorial ${progress.skipOnboarding ? 'disabled' : 'enabled'}. Double tap to toggle.`}
+                onPress={() => setSkipOnboarding(!progress.skipOnboarding)}
+                accessibilityLabel={`Tutorial ${progress.skipOnboarding ? 'disabled' : 'enabled'}`}
                 accessibilityRole="switch"
-                className={`flex-row items-center gap-2`}
+                className="flex-row items-center gap-2"
               >
                 <View className={`w-10 h-5 rounded-full p-1 ${progress.skipOnboarding ? 'bg-red-600' : 'bg-green-600'}`}>
                   <View className={`w-3 h-3 rounded-full bg-white ${progress.skipOnboarding ? 'ml-5' : 'ml-0'}`} />
                 </View>
-                <Text className="text-white text-xs">
-                  {progress.skipOnboarding ? 'Skip Tutorial' : 'Show Tutorial'}
-                </Text>
+                <Text className="text-white text-xs">{progress.skipOnboarding ? 'Skip Tutorial' : 'Show Tutorial'}</Text>
               </TouchableOpacity>
             </View>
-            <TouchableOpacity
-              className="p-2 ml-2 active:bg-purple-400/20 rounded"
-              onPress={() => setShowTutorialSettings(true)}
-            >
-              <Text className="text-purple-400 text-2xl">ℹ️</Text>
-            </TouchableOpacity>
           </View>
         </View>
 
-        <View style={{ width: maxWidth }} className="bg-black/60 p-3 rounded-2xl border-2 border-purple-700 mb-4">
+        <View style={{ width: maxWidth }} className="bg-black/60 p-3 rounded-xl border border-purple-700 mb-3">
           <Text className="text-amber-400 text-xs font-bold text-center mb-2">🎮 CONTROLS</Text>
           <View className="flex-row gap-2">
-            <TouchableOpacity
-              onPress={() => setSelectedMode('swipe')}
-              accessibilityLabel={`Swipe controls${selectedMode === 'swipe' ? ', selected' : ''}`}
-              accessibilityRole="radio"
-              accessibilityState={{ selected: selectedMode === 'swipe' }}
-              className={`flex-1 p-2 rounded-lg border ${selectedMode === 'swipe' ? 'bg-green-600/30 border-green-500' : 'bg-gray-800/50 border-gray-600'}`}
-            >
+            <TouchableOpacity onPress={() => setSelectedMode('swipe')} accessibilityLabel={`Swipe controls${selectedMode === 'swipe' ? ', selected' : ''}`} accessibilityRole="radio" accessibilityState={{ selected: selectedMode === 'swipe' }} className={`flex-1 p-2 rounded-lg border ${selectedMode === 'swipe' ? 'bg-green-600/30 border-green-500' : 'bg-gray-800/50 border-gray-600'}`}>
               <Text className="text-xl text-center">👆</Text>
               <Text className={`text-center font-bold text-xs ${selectedMode === 'swipe' ? 'text-green-400' : 'text-gray-400'}`}>SWIPE</Text>
             </TouchableOpacity>
-
-            <TouchableOpacity
-              onPress={() => setSelectedMode('tap')}
-              accessibilityLabel={`Tap controls${selectedMode === 'tap' ? ', selected' : ''}`}
-              accessibilityRole="radio"
-              accessibilityState={{ selected: selectedMode === 'tap' }}
-              className={`flex-1 p-2 rounded-lg border ${selectedMode === 'tap' ? 'bg-blue-600/30 border-blue-500' : 'bg-gray-800/50 border-gray-600'}`}
-            >
+            <TouchableOpacity onPress={() => setSelectedMode('tap')} accessibilityLabel={`Tap controls${selectedMode === 'tap' ? ', selected' : ''}`} accessibilityRole="radio" accessibilityState={{ selected: selectedMode === 'tap' }} className={`flex-1 p-2 rounded-lg border ${selectedMode === 'tap' ? 'bg-blue-600/30 border-blue-500' : 'bg-gray-800/50 border-gray-600'}`}>
               <Text className="text-xl text-center">🖱️</Text>
               <Text className={`text-center font-bold text-xs ${selectedMode === 'tap' ? 'text-blue-400' : 'text-gray-400'}`}>TAP</Text>
             </TouchableOpacity>
           </View>
         </View>
+          </>
+        )}
 
-        <View className="w-full max-w-[350px] space-y-3 mt-4">
-          <Animated.View style={{ transform: [{ scale: pulseAnim }] }}>
-            <TouchableOpacity
-              onPress={() => onStartGame(selectedMode)}
-              accessibilityLabel="Quick start game"
-              accessibilityRole="button"
-              className="px-6 py-5 rounded-2xl border-4 bg-green-600 border-green-400 w-full"
-              style={{
-                shadowColor: '#22c55e',
-                shadowOffset: { width: 0, height: 0 },
-                shadowOpacity: 0.9,
-                shadowRadius: 25,
-                elevation: 15,
-              }}
-            >
-              <View className="flex-row items-center justify-center">
-                <Text className="text-2xl mr-2">⚡</Text>
-                <Text className="text-white text-base font-bold">QUICK START</Text>
-              </View>
-            </TouchableOpacity>
-          </Animated.View>
-
-          <TouchableOpacity
-            onPress={() => onSelectGame?.()}
-            accessibilityLabel="Customize battle settings"
-            accessibilityRole="button"
-            className="px-6 py-4 rounded-2xl border-4 bg-amber-600 border-amber-400 w-full mt-3"
-            style={{
-              shadowColor: COLORS.ZONES.warningHigh,
-              shadowOffset: { width: 0, height: 0 },
-              shadowOpacity: 0.7,
-              shadowRadius: 15,
-              elevation: 8,
-            }}
-          >
-            <View className="flex-row items-center justify-center">
-              <Text className="text-2xl mr-2">🎮</Text>
-              <Text className="text-white text-base font-bold">CUSTOMIZE BATTLE</Text>
-            </View>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            onPress={() => {
-              track('challenge_hub_viewed', { source: 'main_menu' });
-              router.push('/challenge' as any);
-            }}
-            accessibilityLabel="Open challenges"
-            accessibilityRole="button"
-            className="px-6 py-4 rounded-2xl border-4 bg-purple-900 border-purple-400 w-full mt-3"
-            style={{
-              shadowColor: '#a78bfa',
-              shadowOffset: { width: 0, height: 0 },
-              shadowOpacity: 0.5,
-              shadowRadius: 10,
-              elevation: 5,
-            }}
-          >
-            <View className="flex-row items-center justify-center">
-              <Text className="text-2xl mr-2">🧩</Text>
-              <Text className="text-white text-base font-bold">CHALLENGES</Text>
-            </View>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            onPress={() => setShowLibrary(true)}
-            accessibilityLabel="Open Grand Library"
-            accessibilityRole="button"
-            className="px-6 py-4 rounded-2xl border-4 bg-blue-900 border-blue-400 w-full mt-3"
-            style={{
-              shadowColor: '#3b82f6',
-              shadowOffset: { width: 0, height: 0 },
-              shadowOpacity: 0.5,
-              shadowRadius: 10,
-              elevation: 5,
-            }}
-          >
-            <View className="flex-row items-center justify-center">
-              <Text className="text-2xl mr-2">📜</Text>
-              <Text className="text-white text-base font-bold">GRAND LIBRARY</Text>
-            </View>
-          </TouchableOpacity>
-        </View>
-
-        <View className="mt-6">
-          <Text className="text-purple-400 text-xs text-center">💡 Chain correct actions for COMBO bonuses!</Text>
+        <View style={{ marginTop: 12 }}>
+          <Text style={{ color: '#6b7280', fontSize: 11, textAlign: 'center' }}>💡 Chain correct actions for COMBO bonuses!</Text>
         </View>
       </ScrollView>
 
