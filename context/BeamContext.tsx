@@ -1,13 +1,11 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { BeamClient, ClientConfig, ChainId } from '@onbeam/sdk';
 import { Platform } from 'react-native';
 import { identifyUser, track } from '@/utils/analytics';
 
 const BEAM_PUBLISHABLE_KEY = process.env.EXPO_PUBLIC_BEAM_PUBLISHABLE_KEY || '';
-const BEAM_CHAIN_ID = process.env.EXPO_PUBLIC_BEAM_MAINNET === 'true' ? ChainId.BEAM : ChainId.BEAM_TESTNET;
 
 interface BeamContextType {
-  beam: BeamClient | null;
+  beam: any | null;
   isInitialized: boolean;
   playerAccount: { address: string; name?: string; provider?: string } | null;
   login: () => Promise<void>;
@@ -45,11 +43,14 @@ export const BeamProvider = ({ children }: { children: ReactNode }) => {
       }
 
       try {
-        const config: ClientConfig = {
-          chains: [{ id: BEAM_CHAIN_ID, publishableKey: BEAM_PUBLISHABLE_KEY }],
-          chainId: BEAM_CHAIN_ID,
-        };
-        const client = new BeamClient(config);
+        // Dynamic import to avoid Metro SSR crash (uuid ESM wrapper issue)
+        const { BeamClient, ChainId } = await import('@onbeam/sdk');
+        const chainId = process.env.EXPO_PUBLIC_BEAM_MAINNET === 'true' ? ChainId.BEAM : ChainId.BEAM_TESTNET;
+
+        const client = new BeamClient({
+          chains: [{ id: chainId, publishableKey: BEAM_PUBLISHABLE_KEY }],
+          chainId,
+        });
         setBeam(client);
         setIsInitialized(true);
 
