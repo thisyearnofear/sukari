@@ -79,44 +79,30 @@ async function ensureInitialized() {
       return;
     }
 
-    if (Platform.OS === 'web') {
-      const { default: posthogJs } = await import('posthog-js');
-      posthog = posthogJs;
-      posthog.init(key, {
-        api_host: host,
-        autocapture: false,
-        capture_pageview: false,
-        capture_pageleave: false,
-      });
-
-      const anonId = await getOrCreateAnonymousId();
-      posthog.identify(anonId);
-    } else {
-      // Native: use lightweight HTTP capture via PostHog API
-      const anonId = await getOrCreateAnonymousId();
-      posthog = {
-        _key: key,
-        _host: host,
-        _distinctId: anonId,
-        identify(id: string, props?: Properties) {
-          this._distinctId = id;
-          this.capture('$identify', { $set: props });
-        },
-        capture(event: string, props?: Properties) {
-          fetch(`${this._host}/capture/`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              api_key: this._key,
-              event,
-              distinct_id: this._distinctId,
-              properties: { ...props, $lib: 'glucosewars-native' },
-              timestamp: new Date().toISOString(),
-            }),
-          }).catch(() => { /* fire-and-forget */ });
-        },
-      };
-    }
+    // Use lightweight HTTP capture on all platforms (no posthog-js dependency)
+    const anonId = await getOrCreateAnonymousId();
+    posthog = {
+      _key: key,
+      _host: host,
+      _distinctId: anonId,
+      identify(id: string, props?: Properties) {
+        this._distinctId = id;
+        this.capture('$identify', { $set: props });
+      },
+      capture(event: string, props?: Properties) {
+        fetch(`${this._host}/capture/`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            api_key: this._key,
+            event,
+            distinct_id: this._distinctId,
+            properties: { ...props, $lib: 'glucosewars' },
+            timestamp: new Date().toISOString(),
+          }),
+        }).catch(() => { /* fire-and-forget */ });
+      },
+    };
 
     initialized = true;
   })();
