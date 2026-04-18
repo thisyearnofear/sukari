@@ -40,13 +40,16 @@ export const useVRFService = () => {
     console.log('[VRF REAL] Requesting randomness with seed:', seed);
 
     try {
+      const scrollPrivateKey = process.env.EXPO_PUBLIC_SCROLL_PRIVATE_KEY;
+      if (!scrollPrivateKey) {
+        throw new Error('No SCROLL_PRIVATE_KEY configured — using local fallback');
+      }
+
       const ethersModule = await import('ethers');
       const { Contract, JsonRpcProvider, Wallet } = ethersModule;
 
-      // Create provider and signer (in real app, use WalletConnect or similar)
       const provider = new JsonRpcProvider(SCROLL_RPC_URL);
-      const privateKey = process.env.EXPO_PUBLIC_SCROLL_PRIVATE_KEY || '0x' + '0'.repeat(64);
-      const signer = new Wallet(privateKey, provider);
+      const signer = new Wallet(scrollPrivateKey, provider);
 
       // Create Anyrand contract instance
       const anyrandContract = new Contract(ANYRAND_CONTRACT, ANYRAND_VRF_ABI, signer);

@@ -326,13 +326,15 @@ interface IAnyrand {
 
 /**
  * Achievement metadata for NFT minting
- * IPFS/Arweave ready
+ * Set EXPO_PUBLIC_NFT_METADATA_BASE_URI to your IPFS/Arweave gateway.
  */
+const NFT_BASE_URI = process.env.EXPO_PUBLIC_NFT_METADATA_BASE_URI || 'https://glucosewars.app/metadata';
+
 export const ACHIEVEMENT_METADATA = {
   victory_classic: {
     name: 'Harmony Master',
     description: 'Maintained the Kingdom\'s Harmony - proof of tactical glucose mastery',
-    image: 'ipfs://QmXXXX/harmony_master.png',
+    image: `${NFT_BASE_URI}/harmony_master.png`,
     attributes: [
       { trait_type: 'Rarity', value: 'Common' },
       { trait_type: 'Category', value: 'Deed' },
@@ -356,7 +358,7 @@ export const ACHIEVEMENT_METADATA = {
   victory_life: {
     name: 'Realm Guardian',
     description: 'Guarded the Realm through a full cycle - advanced health stewardship',
-    image: 'ipfs://QmXXXX/realm_guardian.png',
+    image: `${NFT_BASE_URI}/realm_guardian.png`,
     attributes: [
       { trait_type: 'Rarity', value: 'Rare' },
       { trait_type: 'Category', value: 'Deed' },
@@ -380,7 +382,7 @@ export const ACHIEVEMENT_METADATA = {
   perfect_stability: {
     name: 'Perfect Harmony',
     description: 'Kept the Kingdom in perfect balance throughout the entire conflict',
-    image: 'ipfs://QmXXXX/perfect_harmony.png',
+    image: `${NFT_BASE_URI}/perfect_harmony.png`,
     attributes: [
       { trait_type: 'Rarity', value: 'Epic' },
       { trait_type: 'Category', value: 'Excellence' },
@@ -404,7 +406,7 @@ export const ACHIEVEMENT_METADATA = {
   high_combo: {
     name: 'Tactical Genius',
     description: 'Achieved 50+ consecutive successful maneuvers',
-    image: 'ipfs://QmXXXX/tactical_genius.png',
+    image: `${NFT_BASE_URI}/tactical_genius.png`,
     attributes: [
       { trait_type: 'Rarity', value: 'Rare' },
       { trait_type: 'Category', value: 'Skill' },
@@ -428,7 +430,7 @@ export const ACHIEVEMENT_METADATA = {
   health_streak: {
     name: 'Eternal Guardian',
     description: 'Defended the Kingdom in 3 consecutive conflicts - demonstrating consistent stewardship',
-    image: 'ipfs://QmXXXX/eternal_guardian.png',
+    image: `${NFT_BASE_URI}/eternal_guardian.png`,
     attributes: [
       { trait_type: 'Rarity', value: 'Legendary' },
       { trait_type: 'Category', value: 'Dedication' },
@@ -452,7 +454,7 @@ export const ACHIEVEMENT_METADATA = {
   explorer: {
     name: 'Realm Scholar',
     description: 'Explored all paths of the Kingdom - comprehensive Realm knowledge',
-    image: 'ipfs://QmXXXX/realm_scholar.png',
+    image: `${NFT_BASE_URI}/realm_scholar.png`,
     attributes: [
       { trait_type: 'Rarity', value: 'Rare' },
       { trait_type: 'Category', value: 'Discovery' },
