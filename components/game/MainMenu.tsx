@@ -150,8 +150,14 @@ export const MainMenu: React.FC<MainMenuProps> = ({ onStartGame, onSelectGame, o
 
   const getStreakStatus = () => {
     if (progress.gamesPlayed === 0) return { streak: 0, emoji: '🔥', message: 'Start your journey' };
-    if (progress.gamesPlayed < 3) return { streak: progress.gamesPlayed, emoji: '🔥', message: 'Gaining momentum' };
-    return { streak: Math.floor(progress.gamesPlayed / 2), emoji: '🔥', message: 'On a roll!' };
+    // Real streak: consecutive days played (approximate via lastPlayedAt)
+    const daysSinceLastPlay = progress.lastPlayedAt
+      ? Math.floor((Date.now() - progress.lastPlayedAt) / 86400000)
+      : 999;
+    if (daysSinceLastPlay <= 1) {
+      return { streak: progress.gamesPlayed, emoji: '🔥', message: 'On fire!' };
+    }
+    return { streak: 1, emoji: '🔥', message: 'Welcome back!' };
   };
 
   const streakStatus = getStreakStatus();
@@ -429,6 +435,7 @@ export const MainMenu: React.FC<MainMenuProps> = ({ onStartGame, onSelectGame, o
           <Animated.View style={{ transform: [{ scale: pulseAnim }] }}>
             <TouchableOpacity
               onPress={() => onStartGame(selectedMode)}
+              activeOpacity={0.7}
               accessibilityLabel="Quick start game"
               accessibilityRole="button"
               style={{
@@ -566,12 +573,17 @@ export const MainMenu: React.FC<MainMenuProps> = ({ onStartGame, onSelectGame, o
         visible={showPrivacySettings}
       />
 
-      {showLibrary && (
+      <Modal
+        visible={showLibrary}
+        animationType="slide"
+        transparent={false}
+        onRequestClose={() => setShowLibrary(false)}
+      >
         <GrandLibrary 
           discoveredLoreIds={progress.discoveredLoreIds}
           onClose={() => setShowLibrary(false)}
         />
-      )}
+      </Modal>
 
       <Modal
         visible={showTreasury}

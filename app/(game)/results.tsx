@@ -5,6 +5,7 @@ import { ResultsScroll } from '@/components/game/ResultsScroll';
 import { useGameSession } from '@/context/GameSessionContext';
 import { usePlayerProgressContext } from '@/context/PlayerProgressContext';
 import { GameTier } from '@/constants/gameTiers';
+import { track } from '@/utils/analytics';
 
 export default function ResultsScreen() {
   const {
@@ -21,33 +22,48 @@ export default function ResultsScreen() {
   const [showTierAdvanceModal, setShowTierAdvanceModal] = useState(false);
   const [pendingTierAdvance, setPendingTierAdvance] = useState<GameTier | null>(null);
 
+  React.useEffect(() => {
+    track('screen_view', { screen: 'results', tier: selectedTier, privacy_mode: progress.privacyMode });
+    track('results_viewed', {
+      tier: selectedTier,
+      result: gameState.gameResult || 'defeat',
+      privacy_mode: progress.privacyMode,
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const handlePlayAgain = useCallback(() => {
     if (selectedTier === 'tier1') {
+      track('tier_advance_modal_shown', { from_tier: 'tier1', to_tier: 'tier2', privacy_mode: progress.privacyMode });
       setPendingTierAdvance('tier2');
       setShowTierAdvanceModal(true);
     } else {
-      router.replace('/');
+      track('play_again_clicked', { tier: selectedTier, privacy_mode: progress.privacyMode });
+      router.replace('/(game)/onboarding');
     }
-  }, [selectedTier]);
+  }, [selectedTier, progress.privacyMode]);
 
   const handleMainMenu = useCallback(() => {
+    track('main_menu_clicked', { from: 'results', tier: selectedTier, privacy_mode: progress.privacyMode });
     router.replace('/');
-  }, []);
+  }, [selectedTier, progress.privacyMode]);
 
   const confirmTierAdvance = useCallback(() => {
     if (pendingTierAdvance) {
+      track('tier_advance_accepted', { from_tier: selectedTier, to_tier: pendingTierAdvance, privacy_mode: progress.privacyMode });
       setSelectedTier(pendingTierAdvance);
       setShowTierAdvanceModal(false);
       setPendingTierAdvance(null);
       router.replace('/(game)/onboarding');
     }
-  }, [pendingTierAdvance, setSelectedTier]);
+  }, [pendingTierAdvance, progress.privacyMode, selectedTier, setSelectedTier]);
 
   const cancelTierAdvance = useCallback(() => {
+    track('tier_advance_declined', { from_tier: selectedTier, to_tier: pendingTierAdvance, privacy_mode: progress.privacyMode });
     setShowTierAdvanceModal(false);
     setPendingTierAdvance(null);
     router.replace('/');
-  }, []);
+  }, [pendingTierAdvance, progress.privacyMode, selectedTier]);
 
   return (
     <>

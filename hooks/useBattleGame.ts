@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import * as Haptics from 'expo-haptics';
+import { playSound } from '@/utils/sounds';
 import {
   GameState,
   FoodUnit,
@@ -307,6 +308,7 @@ export const useBattleGame = (
 
         if (isCorrectSwipe) {
           Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+          playSound('swipe');
 
           const newComboCount = isComboActive ? prev.comboCount + 1 : 1;
           let multiplier = 1;
@@ -318,7 +320,7 @@ export const useBattleGame = (
           const newStability = Math.max(0, Math.min(100, prev.stability + food.glucoseImpact));
 
           const comboTier = COMBO_TIERS.find(t => t.count === newComboCount);
-          if (comboTier) showAnnouncement(comboTier.title, 'success');
+          if (comboTier) { showAnnouncement(comboTier.title, 'success'); playSound('combo'); }
 
           const oldZone = getStabilityZone(prev.stability, balancedRangeRef.current);
           const newZone = getStabilityZone(newStability, balancedRangeRef.current);
@@ -343,6 +345,7 @@ export const useBattleGame = (
           };
         } else {
           Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+          playSound('miss');
           showAnnouncement(getRandomAnnouncement('WRONG_SWIPE'), 'error');
           triggerScreenShake(10);
 
@@ -566,6 +569,7 @@ export const useBattleGame = (
       if (prev.exerciseCharges <= 0) return prev;
 
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
+      playSound('powerup');
       showAnnouncement(getRandomAnnouncement('EXERCISE_USED'), 'success');
 
       let newMetrics = { ...prev.metrics };

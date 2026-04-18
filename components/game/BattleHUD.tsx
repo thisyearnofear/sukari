@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { View, Text, TouchableOpacity, Animated, Easing, Dimensions, StyleSheet } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { StabilityZone } from '@/types/game';
@@ -248,6 +248,18 @@ const BattleHUDComponent: React.FC<BattleHUDProps> = React.memo(({
   
   // Track previous score for flash effect
   const prevScoreRef = useRef(score);
+  // Track combo break
+  const prevComboRef = useRef(comboCount);
+  const [showComboBreak, setShowComboBreak] = useState(false);
+
+  useEffect(() => {
+    if (prevComboRef.current >= 3 && comboCount === 0) {
+      setShowComboBreak(true);
+      const t = setTimeout(() => setShowComboBreak(false), 1000);
+      return () => clearTimeout(t);
+    }
+    prevComboRef.current = comboCount;
+  }, [comboCount]);
   
   // Score flash effect
   useEffect(() => {
@@ -652,6 +664,15 @@ const BattleHUDComponent: React.FC<BattleHUDProps> = React.memo(({
             </Text>
             <Text style={styles.comboIcon}>⚡</Text>
           </Animated.View>
+        </View>
+      )}
+
+      {/* COMBO BREAK FLASH */}
+      {showComboBreak && (
+        <View style={[styles.comboContainer, { opacity: 0.9 }]}>
+          <View style={[styles.comboBanner, { borderColor: '#ef4444', backgroundColor: 'rgba(239,68,68,0.3)' }]}>
+            <Text style={{ color: '#ef4444', fontSize: 14, fontWeight: 'bold' }}>💔 COMBO LOST!</Text>
+          </View>
         </View>
       )}
 

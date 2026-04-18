@@ -248,6 +248,7 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({
    // Tutorial for tier1 - show modal for first 2 foods
    const [tutorialFood, setTutorialFood] = useState<any>(null);
    const [shownContextualTip, setShownContextualTip] = useState(false);
+   const [shownLifeModeTip, setShownLifeModeTip] = useState(false);
    const isTier1Tutorial = tierConfig?.tier === 'tier1' && tierConfig.tutorialMode;
 
    // Show one-time tooltip when first contextual food appears
@@ -258,6 +259,16 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({
        setShownContextualTip(true);
      }
    }, [gameState.foods, shownContextualTip]);
+
+   // Show one-time 4-direction hint for Life Mode (tier2+)
+   useEffect(() => {
+     if (shownLifeModeTip || gameState.gameMode !== 'life') return;
+     if (gameState.foods.length > 0 && gameState.timer > 50) {
+       setShownLifeModeTip(true);
+       const t = setTimeout(() => setShownLifeModeTip(false), 4000);
+       return () => clearTimeout(t);
+     }
+   }, [gameState.foods.length, gameState.gameMode, gameState.timer, shownLifeModeTip]);
    const currentTutorialFoodId = useRef<string | null>(null);
    const tutorialTimeout = useRef<number | null>(null);
 
@@ -371,7 +382,7 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({
          key={`${showTutorial}-${tutorialFood?.id}`}
        />
 
-       {/* Contextual food tooltip — shown once when first contextual food appears */}
+       {/* Contextual food tooltip */}
        {shownContextualTip && gameState.foods.some(f => f.faction === 'contextual') && (
          <View style={{ position: 'absolute', top: 120, left: 20, right: 20, zIndex: 60, alignItems: 'center' }}>
            <View
@@ -385,6 +396,24 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({
            >
              <Text style={{ color: 'white', fontSize: 12, fontWeight: 'bold', textAlign: 'center' }}>
                ☕ This food&apos;s effect depends on the time of day!
+             </Text>
+           </View>
+         </View>
+       )}
+
+       {/* Life Mode 4-direction hint */}
+       {shownLifeModeTip && (
+         <View style={{ position: 'absolute', top: 120, left: 20, right: 20, zIndex: 60, alignItems: 'center' }}>
+           <View
+             style={{
+               backgroundColor: 'rgba(59, 130, 246, 0.95)',
+               paddingHorizontal: 16, paddingVertical: 10,
+               borderRadius: 12, borderWidth: 1, borderColor: '#3b82f6',
+             }}
+             accessible accessibilityRole="alert"
+           >
+             <Text style={{ color: 'white', fontSize: 12, fontWeight: 'bold', textAlign: 'center' }}>
+               👆 Consume · 👇 Reject · 👈 Save · 👉 Share
              </Text>
            </View>
          </View>

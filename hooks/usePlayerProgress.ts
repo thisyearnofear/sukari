@@ -297,9 +297,10 @@ export function usePlayerProgress() {
     return analyzePlayerSessions(sessions);
   };
 
+  const [questCompletionToast, setQuestCompletionToast] = useState<{ title: string; reward: number } | null>(null);
+
   /**
    * Tracks progress for daily quests (ENHANCEMENT FIRST)
-   * This is called by the game engine when relevant actions occur.
    */
   const trackQuestProgress = useCallback((type: DailyQuestType, amount: number = 1) => {
     setProgress(prev => {
@@ -324,6 +325,12 @@ export function usePlayerProgress() {
       const earnedRenown = newlyCompleted.reduce((sum, q) => sum + q.reward, 0);
 
       if (earnedRenown > 0 || JSON.stringify(updatedQuests) !== JSON.stringify(prev.dailyQuests)) {
+        // Show toast for newly completed quests
+        if (newlyCompleted.length > 0) {
+          const q = newlyCompleted[0];
+          setQuestCompletionToast({ title: q.title, reward: q.reward });
+          setTimeout(() => setQuestCompletionToast(null), 3000);
+        }
         return {
           ...prev,
           dailyQuests: updatedQuests,
@@ -376,5 +383,6 @@ export function usePlayerProgress() {
     trackQuestProgress,
     getKingdomTitle,
     discoverLore,
+    questCompletionToast,
   };
 }

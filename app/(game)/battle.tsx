@@ -1,10 +1,12 @@
-import React, { useEffect, useRef, useCallback } from 'react';
-import { View } from 'react-native';
+import React, { useEffect, useRef, useCallback, useState } from 'react';
+import { View, Text, Animated as RNAnimated } from 'react-native';
 import { router } from 'expo-router';
 import { BattleScreen } from '@/components/game/BattleScreen';
+import { VictoryCelebration } from '@/components/game/VictoryCelebration';
 import { useGameSession } from '@/context/GameSessionContext';
 import { usePlayerProgressContext } from '@/context/PlayerProgressContext';
 import { SwipeDirection, SwipeAction } from '@/types/game';
+import { track } from '@/utils/analytics';
 
 export default function BattleScreenRoute() {
   const {
@@ -29,18 +31,55 @@ export default function BattleScreenRoute() {
   } = battleGame;
 
   const {
+    progress,
     incrementGamesPlayed,
     updateBestScore,
     unlockNextTier,
     trackQuestProgress,
+    questCompletionToast,
   } = usePlayerProgressContext();
 
   const hasTransitionedToResults = useRef(false);
+  const hasTrackedBattleStart = useRef(false);
+  const [showCelebration, setShowCelebration] = useState<'victory' | 'defeat' | null>(null);
 
-  // Transition to results when game ends
+  useEffect(() => {
+    track('screen_view', { screen: 'battle', tier: selectedTier, privacy_mode: progress.privacyMode });
+    // We intentionally don’t attach health-related props here.
+  }, [selectedTier, progress.privacyMode]);
+
+  // Track battle start once when gameplay becomes active
+  useEffect(() => {
+    if (gameState.isGameActive && !hasTrackedBattleStart.current) {
+      hasTrackedBattleStart.current = true;
+      track('battle_started', {
+        tier: selectedTier,
+        game_mode: gameState.gameMode,
+        control_mode: controlMode,
+        privacy_mode: progress.privacyMode,
+      });
+    }
+  }, [gameState.isGameActive, selectedTier, gameState.gameMode, controlMode, progress.privacyMode]);
+
+  // Transition to results when game ends — show celebration first
   useEffect(() => {
     if (!gameState.isGameActive && gameState.gameResult && !hasTransitionedToResults.current) {
       hasTransitionedToResults.current = true;
+      track('battle_ended', {
+        tier: selectedTier,
+        game_mode: gameState.gameMode,
+        control_mode: controlMode,
+        result: gameState.gameResult,
+        score: gameState.score,
+        correct_swipes: gameState.correctSwipes,
+        incorrect_swipes: gameState.incorrectSwipes,
+        time_in_balanced: gameState.timeInBalanced,
+        time_in_warning: gameState.timeInWarning,
+        time_in_critical: gameState.timeInCritical,
+        combo_max: gameState.comboCount,
+        plot_twists_triggered: gameState.plotTwistsTriggered,
+        privacy_mode: progress.privacyMode,
+      });
       handleGameResult({
         incrementGamesPlayed,
         updateBestScore,
@@ -48,7 +87,7 @@ export default function BattleScreenRoute() {
         currentTier: selectedTier,
         requiresWin: tierConfig.requiresWin,
       });
-      router.replace('/(game)/results');
+      setShowCelebration(gameState.gameResult);
     }
   }, [
     gameState.isGameActive, 
@@ -65,6 +104,7 @@ export default function BattleScreenRoute() {
   useEffect(() => {
     if (gameState.isGameActive) {
       hasTransitionedToResults.current = false;
+      hasTrackedBattleStart.current = false;
     }
   }, [gameState.isGameActive]);
 
@@ -91,7 +131,7 @@ export default function BattleScreenRoute() {
   }, [controlMode, setControlMode]);
 
   const handleExit = useCallback(() => {
-    router.replace('/welcome');
+    router.replace('/');
   }, []);
 
   return (
@@ -112,6 +152,29 @@ export default function BattleScreenRoute() {
         tierConfig={tierConfig}
         onToggleControlMode={handleToggleControlMode}
       />
+      {showCelebration && (
+        <VictoryCelebration
+          result={showCelebration}
+          onComplete={() => {
+            setShowCelebration(null);
+            router.replace('/(game)/results');
+          }}
+        />
+      )}
+      {questCompletionToast && (
+        <View style={{
+          position: 'absolute', top: 100, left: 20, right: 20, zIndex: 200,
+          backgroundColor: 'rgba(251,191,36,0.95)', padding: 12, borderRadius: 12,
+          alignItems: 'center',
+        }}>
+          <Text style={{ color: '#0a0a12', fontWeight: 'bold', fontSize: 13 }}>
+            🎉 Quest Complete: {questCompletionToast.title}
+          </Text>
+          <Text style={{ color: '#0a0a12', fontSize: 11 }}>
+            +{questCompletionToast.reward} Renown
+          </Text>
+        </View>
+      )}
     </View>
   );
 }
