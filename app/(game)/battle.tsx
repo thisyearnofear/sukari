@@ -37,6 +37,8 @@ export default function BattleScreenRoute() {
     unlockNextTier,
     trackQuestProgress,
     questCompletionToast,
+    promotionToast,
+    loreToast,
   } = usePlayerProgressContext();
 
   const hasTransitionedToResults = useRef(false);
@@ -155,6 +157,7 @@ export default function BattleScreenRoute() {
       {showCelebration && (
         <VictoryCelebration
           result={showCelebration}
+          isPersonalBest={gameState.score > progress.bestScore}
           onComplete={() => {
             setShowCelebration(null);
             router.replace('/(game)/results');
@@ -162,17 +165,20 @@ export default function BattleScreenRoute() {
         />
       )}
       {questCompletionToast && (
-        <View style={{
-          position: 'absolute', top: 100, left: 20, right: 20, zIndex: 200,
-          backgroundColor: 'rgba(251,191,36,0.95)', padding: 12, borderRadius: 12,
-          alignItems: 'center',
-        }}>
-          <Text style={{ color: '#0a0a12', fontWeight: 'bold', fontSize: 13 }}>
-            🎉 Quest Complete: {questCompletionToast.title}
-          </Text>
-          <Text style={{ color: '#0a0a12', fontSize: 11 }}>
-            +{questCompletionToast.reward} Renown
-          </Text>
+        <View style={{ position: 'absolute', top: 100, left: 20, right: 20, zIndex: 200, backgroundColor: 'rgba(251,191,36,0.95)', padding: 12, borderRadius: 12, alignItems: 'center' }}>
+          <Text style={{ color: '#0a0a12', fontWeight: 'bold', fontSize: 13 }}>🎉 Quest Complete: {questCompletionToast.title}</Text>
+          <Text style={{ color: '#0a0a12', fontSize: 11 }}>+{questCompletionToast.reward} Renown</Text>
+        </View>
+      )}
+      {promotionToast && (
+        <View style={{ position: 'absolute', top: 100, left: 20, right: 20, zIndex: 200, backgroundColor: 'rgba(168,85,247,0.95)', padding: 14, borderRadius: 12, alignItems: 'center', borderWidth: 2, borderColor: '#c4b5fd' }}>
+          <Text style={{ color: 'white', fontWeight: 'bold', fontSize: 15 }}>{promotionToast.icon} PROMOTED!</Text>
+          <Text style={{ color: '#e9d5ff', fontSize: 12 }}>You are now a {promotionToast.title}</Text>
+        </View>
+      )}
+      {loreToast && (
+        <View style={{ position: 'absolute', top: 100, left: 20, right: 20, zIndex: 200, backgroundColor: 'rgba(59,130,246,0.95)', padding: 12, borderRadius: 12, alignItems: 'center', borderWidth: 1, borderColor: '#93c5fd' }}>
+          <Text style={{ color: 'white', fontWeight: 'bold', fontSize: 12 }}>📜 Kingdom Lore Discovered! +50 Renown</Text>
         </View>
       )}
     </View>

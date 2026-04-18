@@ -5,6 +5,7 @@ import { StabilityZone } from '@/types/game';
 import { COMBO_TIERS } from '@/constants/gameConfig';
 import { COLORS } from '@/constants/designSystem';
 import { useAccessibility } from '@/hooks/useAccessibility';
+import { AnimatedCounter } from './AnimatedCounter';
 import { getStabilityZone } from '@/utils/gameLogic';
 
 const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
@@ -362,6 +363,7 @@ const BattleHUDComponent: React.FC<BattleHUDProps> = React.memo(({
   }, [isLowTimer, isPaused, timerShakeAnim]);
 
   const currentTier = [...COMBO_TIERS].reverse().find(t => comboCount >= t.count);
+  const comboTierIndex = currentTier ? COMBO_TIERS.indexOf(currentTier) : 0;
 
   const getAnnouncementStyle = () => {
     switch (announcementType) {
@@ -455,7 +457,7 @@ const BattleHUDComponent: React.FC<BattleHUDProps> = React.memo(({
             <View style={styles.scoreSection} accessible accessibilityLabel={getHUDLabel('score', score)} accessibilityRole="text">
               <Text style={styles.crownIcon}>👑</Text>
               <Animated.View style={{ transform: [{ scale: scoreScale }] }}>
-                <Text style={styles.scoreText}>{score.toLocaleString()}</Text>
+                <AnimatedCounter value={score} style={styles.scoreText} />
               </Animated.View>
               <Text style={styles.scoreLabel}>GLORY</Text>
             </View>
@@ -652,11 +654,14 @@ const BattleHUDComponent: React.FC<BattleHUDProps> = React.memo(({
               { 
                 borderColor: currentTier?.color || '#fbbf24',
                 shadowColor: currentTier?.color || '#fbbf24',
+                shadowRadius: 8 + comboTierIndex * 4,
+                shadowOpacity: 0.5 + comboTierIndex * 0.1,
+                transform: [{ scale: 1 + comboTierIndex * 0.05 }],
               }
             ]}
           >
             <Text style={styles.comboIcon}>⚡</Text>
-            <Text style={[styles.comboCount, { color: currentTier?.color || '#fbbf24' }]}>
+            <Text style={[styles.comboCount, { color: currentTier?.color || '#fbbf24', fontSize: 16 + comboTierIndex * 2 }]}>
               {comboCount}x
             </Text>
             <Text style={[styles.comboTitle, { color: currentTier?.color || '#fbbf24' }]}>

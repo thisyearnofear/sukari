@@ -298,6 +298,8 @@ export function usePlayerProgress() {
   };
 
   const [questCompletionToast, setQuestCompletionToast] = useState<{ title: string; reward: number } | null>(null);
+  const [promotionToast, setPromotionToast] = useState<{ title: string; icon: string } | null>(null);
+  const [loreToast, setLoreToast] = useState<string | null>(null);
 
   /**
    * Tracks progress for daily quests (ENHANCEMENT FIRST)
@@ -331,10 +333,18 @@ export function usePlayerProgress() {
           setQuestCompletionToast({ title: q.title, reward: q.reward });
           setTimeout(() => setQuestCompletionToast(null), 3000);
         }
+        // #7: Check for kingdom title promotion
+        const newRenown = prev.kingdomRenown + earnedRenown;
+        const oldTitle = KINGDOM_MILESTONES.reduce((p, c) => prev.kingdomRenown >= c.renown ? c : p, KINGDOM_MILESTONES[0]);
+        const newTitle = KINGDOM_MILESTONES.reduce((p, c) => newRenown >= c.renown ? c : p, KINGDOM_MILESTONES[0]);
+        if (newTitle.renown > oldTitle.renown) {
+          setPromotionToast({ title: newTitle.title, icon: newTitle.icon });
+          setTimeout(() => setPromotionToast(null), 4000);
+        }
         return {
           ...prev,
           dailyQuests: updatedQuests,
-          kingdomRenown: prev.kingdomRenown + earnedRenown,
+          kingdomRenown: newRenown,
         };
       }
       
@@ -356,11 +366,13 @@ export function usePlayerProgress() {
   const discoverLore = useCallback((id: string) => {
     setProgress(prev => {
       if (prev.discoveredLoreIds.includes(id)) return prev;
-      
+      // #13: Show lore discovery toast
+      setLoreToast(id);
+      setTimeout(() => setLoreToast(null), 3000);
       return {
         ...prev,
         discoveredLoreIds: [...prev.discoveredLoreIds, id],
-        kingdomRenown: prev.kingdomRenown + 50, // Reward discovery
+        kingdomRenown: prev.kingdomRenown + 50,
       };
     });
   }, []);
@@ -384,5 +396,7 @@ export function usePlayerProgress() {
     getKingdomTitle,
     discoverLore,
     questCompletionToast,
+    promotionToast,
+    loreToast,
   };
 }

@@ -480,6 +480,9 @@ export const MainMenu: React.FC<MainMenuProps> = ({ onStartGame, onSelectGame, o
           </View>
         </View>
 
+        {/* #14: Weekly challenge countdown */}
+        <WeeklyCountdown />
+
          {progressInfo}
 
          <View style={{ width: maxWidth }} className="mt-4">
@@ -667,6 +670,25 @@ const BeamWalletButton: React.FC<{
           {isLoading ? '...' : 'Play with Social'}
         </Text>
       </TouchableOpacity>
+    </View>
+  );
+};
+
+// #14: Weekly challenge countdown
+const WeeklyCountdown: React.FC = () => {
+  const now = new Date();
+  const nextMonday = new Date(now);
+  nextMonday.setDate(now.getDate() + ((8 - now.getDay()) % 7 || 7));
+  nextMonday.setHours(0, 0, 0, 0);
+  const diff = nextMonday.getTime() - now.getTime();
+  const days = Math.floor(diff / 86400000);
+  const hours = Math.floor((diff % 86400000) / 3600000);
+
+  return (
+    <View style={{ width: 350, marginTop: 8, marginBottom: 4, alignSelf: 'center' }}>
+      <Text style={{ color: '#6b7280', fontSize: 10, textAlign: 'center' }}>
+        🧪 Weekly Challenge resets in {days}d {hours}h
+      </Text>
     </View>
   );
 };

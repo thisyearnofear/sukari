@@ -43,6 +43,8 @@ export function useFoodMovement({ gameState, setGameState, tierConfig, showAnnou
 
           if (newY >= food.targetY) {
             comboBreaker = true;
+            // #9: Near-miss emoji feedback
+            showAnnouncement(food.faction === 'enemy' ? '💀 Enemy got through!' : `😢 Missed ${food.sprite}!`, 'warning');
             if (prev.gameMode === 'life') {
               if (food.faction === 'enemy') {
                 newMetrics.stability = Math.max(0, Math.min(100, newMetrics.stability - penalties.enemyGetThrough));

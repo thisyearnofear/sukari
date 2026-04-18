@@ -541,6 +541,17 @@ export const ResultsScroll: React.FC<ResultsScrollProps> = ({
               </View>
             )}
 
+            {/* #10: Replay highlight — best moment from the game */}
+            {gameState && (
+              <View style={{ backgroundColor: 'rgba(251,191,36,0.1)', padding: 10, borderRadius: 10, borderWidth: 1, borderColor: 'rgba(251,191,36,0.3)', marginBottom: 10 }}>
+                <Text style={{ color: '#fbbf24', fontSize: 11, fontWeight: 'bold', textAlign: 'center' }}>
+                  ⚡ {gameState.comboCount >= 5 ? `Best combo: ${gameState.comboCount}x streak!` :
+                      gameState.timeInBalanced > (gameState.timeInWarning + gameState.timeInCritical) ? `Stayed balanced ${gameState.timeInBalanced}s — impressive!` :
+                      `Survived ${gameState.plotTwistsTriggered || 0} plot twists`}
+                </Text>
+              </View>
+            )}
+
             {/* Post-game blockchain prompt — contextual, shown on first victory */}
             {isFirstVictory && !beamContext?.playerAccount && (
               <TouchableOpacity
@@ -580,7 +591,7 @@ export const ResultsScroll: React.FC<ResultsScrollProps> = ({
                 <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center' }}>
                   <Text style={{ fontSize: 18, marginRight: 6 }}>⚔️</Text>
                   <Text style={{ color: 'white', fontSize: 15, fontWeight: 'bold' }}>
-                    {tier === 'tier1' ? 'NEXT CHALLENGE' : 'PLAY AGAIN'}
+                    {tier === 'tier1' ? 'NEXT CHALLENGE' : !isVictory ? '⚔️ AVENGE YOUR KINGDOM' : 'PLAY AGAIN'}
                   </Text>
                 </View>
               </TouchableOpacity>

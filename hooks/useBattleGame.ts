@@ -307,10 +307,16 @@ export const useBattleGame = (
         }
 
         if (isCorrectSwipe) {
-          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-          playSound('swipe');
-
           const newComboCount = isComboActive ? prev.comboCount + 1 : 1;
+          // #5: Vary haptics by combo intensity
+          const comboIntensity = COMBO_TIERS.findIndex(t => newComboCount >= t.count);
+          Haptics.impactAsync(
+            comboIntensity >= 3 ? Haptics.ImpactFeedbackStyle.Heavy :
+            comboIntensity >= 1 ? Haptics.ImpactFeedbackStyle.Medium :
+            Haptics.ImpactFeedbackStyle.Light
+          );
+          playSound(comboIntensity >= 1 ? 'combo' : 'swipe');
+
           let multiplier = 1;
           for (const tier of COMBO_TIERS) {
             if (newComboCount >= tier.count) multiplier = tier.multiplier;

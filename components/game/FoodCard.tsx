@@ -17,7 +17,7 @@ export const FoodCard: React.FC<FoodCardProps> = ({ food, onSwipe, controlMode, 
   const { width: screenWidth, height: screenHeight } = useWindowDimensions();
   const { getFoodCardLabel } = useAccessibility();
   const pan = useRef(new Animated.ValueXY()).current;
-  const scale = useRef(new Animated.Value(0.5)).current;
+  const scale = useRef(new Animated.Value(0)).current;
   const opacity = useRef(new Animated.Value(0)).current;
   const rotation = useRef(new Animated.Value(0)).current;
   const pulseAnim = useRef(new Animated.Value(1)).current;
@@ -80,8 +80,8 @@ export const FoodCard: React.FC<FoodCardProps> = ({ food, onSwipe, controlMode, 
       Animated.spring(scale, {
         toValue: 1,
         useNativeDriver: true,
-        friction: 6,
-        tension: 100,
+        friction: 4,
+        tension: 120,
       }),
       Animated.timing(opacity, {
         toValue: 1,

@@ -360,6 +360,20 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({
         gameMode={gameState.gameMode}
       />
 
+      {/* #8: Morning condition badge (Life Mode) */}
+      {gameState.gameMode === 'life' && gameState.morningCondition !== 'normal_day' && (
+        <View style={{ position: 'absolute', top: insets.top + 90, right: 8, zIndex: 30, backgroundColor: 'rgba(0,0,0,0.7)', paddingHorizontal: 8, paddingVertical: 4, borderRadius: 8, borderWidth: 1, borderColor: '#fbbf2440' }}>
+          <Text style={{ color: '#fbbf24', fontSize: 10 }}>
+            {gameState.morningCondition === 'well_rested' ? '😊 Well Rested' :
+             gameState.morningCondition === 'poor_sleep' ? '😴 Poor Sleep' :
+             gameState.morningCondition === 'sick_day' ? '🤒 Sick Day' :
+             gameState.morningCondition === 'stressed' ? '😰 Stressed' :
+             gameState.morningCondition === 'marathon_day' ? '🏃 Marathon' :
+             gameState.morningCondition === 'recovery_day' ? '🩹 Recovery' : ''}
+          </Text>
+        </View>
+      )}
+
       {/* Screen flash effect */}
       <ScreenFlash type={flashType} trigger={flashTrigger} />
       
