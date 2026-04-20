@@ -52,7 +52,8 @@ export default function MenuScreen() {
   }
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: ambientBg }}>
+    <View style={{ flex: 1, backgroundColor: ambientBg, alignItems: 'center' }}>
+    <SafeAreaView style={{ flex: 1, width: '100%', maxWidth: 500 }}>
       <MainMenu
         onStartGame={(controlMode: ControlMode) => {
           track('start_game_clicked', { from: 'main_menu', control_mode: controlMode, privacy_mode: progress.privacyMode });
@@ -76,6 +77,7 @@ export default function MenuScreen() {
         userModeSelected={progress.userMode !== null}
       />
     </SafeAreaView>
+    </View>
   );
 }
 
