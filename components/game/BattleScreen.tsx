@@ -156,6 +156,7 @@ interface BattleScreenProps {
   onAdministerInsulin?: (units: number, insulinType?: string) => void;
   tierConfig?: TierConfig;
   onToggleControlMode?: () => void;
+  hasMechanic?: (m: string) => boolean;
 }
 
 
@@ -174,7 +175,9 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({
   onAdministerInsulin,
   tierConfig,
   onToggleControlMode,
+  hasMechanic: hasMechanicProp,
 }) => {
+  const hasMechanic = hasMechanicProp || (() => true); // Default: show everything
   const shakeAnim = useRef(new Animated.Value(0)).current;
 
   const [showInsulinControl, setShowInsulinControl] = useState(false);
@@ -490,9 +493,9 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({
       {/* HUD overlay - conditional based on tier config */}
       {tierConfig?.showMetrics && gameState.gameMode === 'life' ? (
         <>
-          {/* Side Panels - Full height */}
-          <LeftSidePanel metrics={gameState.metrics} />
-          <RightSidePanel metrics={gameState.metrics} />
+          {/* Side Panels - only show if body_metrics unlocked */}
+          {hasMechanic('body_metrics') && <LeftSidePanel metrics={gameState.metrics} />}
+          {hasMechanic('body_metrics') && <RightSidePanel metrics={gameState.metrics} />}
           
           {/* Top Header - Centered between side panels */}
           <View
@@ -559,7 +562,7 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({
           {/* Saved Foods Panel - Life Mode only - REMOVED, now in header */}
           
           {/* Social Meter Display - Life Mode only */}
-          {gameState.socialStats && (
+          {gameState.socialStats && hasMechanic('share_direction') && (
             <SocialMeterDisplay socialStats={gameState.socialStats} />
           )}
           
@@ -613,7 +616,7 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({
           showComboCounter={tierConfig?.showComboCounter ?? true}
           controlMode={controlMode}
           onToggleControlMode={onToggleControlMode}
-          minimal={tierConfig?.tutorialMode}
+          minimal={!hasMechanic('power_ups')}
         />
       )}
       

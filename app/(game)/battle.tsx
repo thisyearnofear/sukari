@@ -7,6 +7,7 @@ import { useGameSession } from '@/context/GameSessionContext';
 import { usePlayerProgressContext } from '@/context/PlayerProgressContext';
 import { SwipeDirection, SwipeAction } from '@/types/game';
 import { track } from '@/utils/analytics';
+import { MECHANIC_DISCOVERY_MESSAGES } from '@/constants/mechanicMessages';
 
 export default function BattleScreenRoute() {
   const {
@@ -39,6 +40,8 @@ export default function BattleScreenRoute() {
     questCompletionToast,
     promotionToast,
     loreToast,
+    hasMechanic,
+    mechanicDiscoveryToast,
   } = usePlayerProgressContext();
 
   const hasTransitionedToResults = useRef(false);
@@ -153,6 +156,7 @@ export default function BattleScreenRoute() {
         onAdministerInsulin={healthProfile.administerInsulin}
         tierConfig={tierConfig}
         onToggleControlMode={handleToggleControlMode}
+        hasMechanic={hasMechanic}
       />
       {showCelebration && (
         <VictoryCelebration
@@ -179,6 +183,12 @@ export default function BattleScreenRoute() {
       {loreToast && (
         <View style={{ position: 'absolute', top: 100, left: 20, right: 20, zIndex: 200, backgroundColor: 'rgba(59,130,246,0.95)', padding: 12, borderRadius: 12, alignItems: 'center', borderWidth: 1, borderColor: '#93c5fd' }}>
           <Text style={{ color: 'white', fontWeight: 'bold', fontSize: 12 }}>📜 Kingdom Lore Discovered! +50 Renown</Text>
+        </View>
+      )}
+      {mechanicDiscoveryToast && (
+        <View style={{ position: 'absolute', top: 100, left: 20, right: 20, zIndex: 200, backgroundColor: 'rgba(34,197,94,0.95)', padding: 14, borderRadius: 12, alignItems: 'center', borderWidth: 2, borderColor: '#86efac' }}>
+          <Text style={{ color: 'white', fontWeight: 'bold', fontSize: 16 }}>{MECHANIC_DISCOVERY_MESSAGES[mechanicDiscoveryToast].emoji} {MECHANIC_DISCOVERY_MESSAGES[mechanicDiscoveryToast].title}</Text>
+          <Text style={{ color: '#dcfce7', fontSize: 11, marginTop: 2 }}>{MECHANIC_DISCOVERY_MESSAGES[mechanicDiscoveryToast].sub}</Text>
         </View>
       )}
     </View>

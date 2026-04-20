@@ -30,6 +30,36 @@ export interface SlowMoModeSession {
   completedAt?: number; // timestamp when session was completed
 }
 
+/**
+ * Game mechanics that unlock progressively as the player gains experience.
+ * Drives UI visibility — only show what the player has unlocked.
+ */
+export type GameMechanic =
+  | 'swipe_basic'       // Up/down swipe (always on)
+  | 'stability_bar'     // Harmony meter visible
+  | 'combo'             // Combo counter visible
+  | 'save_direction'    // Left swipe (save for later)
+  | 'share_direction'   // Right swipe (share with allies)
+  | 'body_metrics'      // Vigor/Purity/Vitality panels
+  | 'plot_twists'       // Random events during gameplay
+  | 'power_ups'         // Exercise/Rations buttons
+  | 'morning_conditions'// Day starts with a condition
+  | 'cgm_comparison';   // Real glucose on results
+
+/** When each mechanic unlocks (gamesPlayed threshold) */
+export const MECHANIC_UNLOCKS: Record<GameMechanic, number> = {
+  swipe_basic: 0,
+  stability_bar: 1,     // After first game
+  combo: 2,             // After 2 games
+  power_ups: 3,         // After 3 games
+  save_direction: 4,    // After 4 games (entering Life Mode)
+  share_direction: 5,   // After 5 games
+  body_metrics: 6,      // After 6 games
+  morning_conditions: 8,// After 8 games
+  plot_twists: 10,      // After 10 games
+  cgm_comparison: 3,    // Available early but only shown on results
+};
+
 export interface PlayerProgressState {
   maxTierUnlocked: GameTier;
   currentTier: GameTier;
@@ -40,13 +70,15 @@ export interface PlayerProgressState {
   userMode: UserMode | null;
   privacyMode: PrivacyMode;
   privacySettings?: PrivacySettings;
-  slowMoSessions?: SlowMoModeSession[]; // Track Slow Mo Mode sessions
-  slowMoSessionsCompleted?: number; // Total sessions completed
-  // Daily Quest System (ENHANCEMENT FIRST & MODULAR)
+  slowMoSessions?: SlowMoModeSession[];
+  slowMoSessionsCompleted?: number;
   dailyQuests: DailyQuest[];
   lastQuestResetAt: number | null;
-  kingdomRenown: number; // XP system
-  discoveredLoreIds: string[]; // Track educational lore unlocked
+  kingdomRenown: number;
+  discoveredLoreIds: string[];
+  // Mechanic unlock tracking
+  mechanicsUnlocked: GameMechanic[];
+  mechanicDiscoveryShown: GameMechanic[]; // "Aha" moments already shown
 }
 
 const STORAGE_KEY = 'glucoseWars.playerProgress';
@@ -127,6 +159,8 @@ export function usePlayerProgress() {
     lastQuestResetAt: null,
     kingdomRenown: 0,
     discoveredLoreIds: [],
+    mechanicsUnlocked: ['swipe_basic'],
+    mechanicDiscoveryShown: [],
   });
 
   // Load from AsyncStorage on component mount
@@ -221,12 +255,41 @@ export function usePlayerProgress() {
   };
 
   const incrementGamesPlayed = () => {
-    setProgress(prev => ({
-      ...prev,
-      gamesPlayed: prev.gamesPlayed + 1,
-      lastPlayedAt: Date.now(),
-    }));
+    setProgress(prev => {
+      const newCount = prev.gamesPlayed + 1;
+      // Unlock mechanics based on games played
+      const newMechanics = [...prev.mechanicsUnlocked];
+      const newDiscoveries: GameMechanic[] = [];
+      for (const [mechanic, threshold] of Object.entries(MECHANIC_UNLOCKS)) {
+        const m = mechanic as GameMechanic;
+        if (newCount >= threshold && !newMechanics.includes(m)) {
+          newMechanics.push(m);
+          if (!prev.mechanicDiscoveryShown.includes(m)) {
+            newDiscoveries.push(m);
+          }
+        }
+      }
+      if (newDiscoveries.length > 0) {
+        // Show discovery toast for the first new mechanic
+        setMechanicDiscoveryToast(newDiscoveries[0]);
+        setTimeout(() => setMechanicDiscoveryToast(null), 4000);
+      }
+      return {
+        ...prev,
+        gamesPlayed: newCount,
+        lastPlayedAt: Date.now(),
+        mechanicsUnlocked: newMechanics,
+        mechanicDiscoveryShown: [...prev.mechanicDiscoveryShown, ...newDiscoveries],
+      };
+    });
   };
+
+  /**
+   * Check if a mechanic is unlocked for the current player.
+   */
+  const hasMechanic = useCallback((mechanic: GameMechanic): boolean => {
+    return progress.mechanicsUnlocked.includes(mechanic);
+  }, [progress.mechanicsUnlocked]);
 
   const setSkipOnboarding = (skip: boolean) => {
     setProgress(prev => ({
@@ -300,6 +363,7 @@ export function usePlayerProgress() {
   const [questCompletionToast, setQuestCompletionToast] = useState<{ title: string; reward: number } | null>(null);
   const [promotionToast, setPromotionToast] = useState<{ title: string; icon: string } | null>(null);
   const [loreToast, setLoreToast] = useState<string | null>(null);
+  const [mechanicDiscoveryToast, setMechanicDiscoveryToast] = useState<GameMechanic | null>(null);
 
   /**
    * Tracks progress for daily quests (ENHANCEMENT FIRST)
@@ -398,5 +462,7 @@ export function usePlayerProgress() {
     questCompletionToast,
     promotionToast,
     loreToast,
+    hasMechanic,
+    mechanicDiscoveryToast,
   };
 }
