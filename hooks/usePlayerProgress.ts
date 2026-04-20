@@ -268,13 +268,13 @@ export function usePlayerProgress() {
     setProgress(prev => {
       const newCount = prev.gamesPlayed + 1;
       // Unlock mechanics based on games played
-      const newMechanics = [...prev.mechanicsUnlocked];
+      const newMechanics = [...(prev.mechanicsUnlocked || ['swipe_basic'])];
       const newDiscoveries: GameMechanic[] = [];
       for (const [mechanic, threshold] of Object.entries(MECHANIC_UNLOCKS)) {
         const m = mechanic as GameMechanic;
         if (newCount >= threshold && !newMechanics.includes(m)) {
           newMechanics.push(m);
-          if (!prev.mechanicDiscoveryShown.includes(m)) {
+          if (!(prev.mechanicDiscoveryShown || []).includes(m)) {
             newDiscoveries.push(m);
           }
         }
@@ -289,7 +289,7 @@ export function usePlayerProgress() {
         gamesPlayed: newCount,
         lastPlayedAt: Date.now(),
         mechanicsUnlocked: newMechanics,
-        mechanicDiscoveryShown: [...prev.mechanicDiscoveryShown, ...newDiscoveries],
+        mechanicDiscoveryShown: [...(prev.mechanicDiscoveryShown || []), ...newDiscoveries],
       };
     });
   };
@@ -298,7 +298,7 @@ export function usePlayerProgress() {
    * Check if a mechanic is unlocked for the current player.
    */
   const hasMechanic = useCallback((mechanic: GameMechanic): boolean => {
-    return progress.mechanicsUnlocked.includes(mechanic);
+    return progress.mechanicsUnlocked?.includes(mechanic) ?? false;
   }, [progress.mechanicsUnlocked]);
 
   const setSkipOnboarding = (skip: boolean) => {
