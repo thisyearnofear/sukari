@@ -13,6 +13,7 @@ import { COMBO_TIERS } from '@/constants/gameConfig';
 import { getGlucoseZone } from '@/constants/healthScenarios';
 import { TierConfig } from '@/constants/gameTiers';
 import { getStabilityZone } from '@/utils/gameLogic';
+import { GatesOpen, KingdomTrembles, StormApproaches, KingdomRallies, KingdomFalls, NewPowerGlow } from './DramaticMoments';
 
 // Screen-wide combo burst effect
 const ComboBurst: React.FC<{
@@ -244,6 +245,43 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({
    const prevComboRef = useRef(gameState.comboCount);
    const [comboBurstTrigger, setComboBurstTrigger] = useState(0);
    
+   // Dramatic moments state
+   const [showGatesOpen, setShowGatesOpen] = useState(true); // #1: show on mount
+   const [showComboRally, setShowComboRally] = useState<string | null>(null); // #2: color
+   const [showStorm, setShowStorm] = useState<{ name: string; icon: string } | null>(null); // #4
+   const [showDefeatCrack, setShowDefeatCrack] = useState(false); // #6
+   const [showNewPower, setShowNewPower] = useState(false); // #7
+   const prevPlotTwistRef = useRef(gameState.activePlotTwist);
+   const prevGameResultRef = useRef(gameState.gameResult);
+   const isCritical = zone === 'critical-low' || zone === 'critical-high';
+
+   // #2: Combo rally pulse when reaching a new combo tier
+   useEffect(() => {
+     const prev = prevComboRef.current;
+     const curr = gameState.comboCount;
+     if (curr >= 3 && curr > prev && [3, 5, 8, 12, 18, 25].includes(curr)) {
+       setShowComboRally('#fbbf24');
+       setTimeout(() => setShowComboRally(null), 700);
+     }
+     prevComboRef.current = curr;
+   }, [gameState.comboCount]);
+
+   // #4: Storm when plot twist arrives
+   useEffect(() => {
+     if (gameState.activePlotTwist && !prevPlotTwistRef.current) {
+       setShowStorm({ name: gameState.activePlotTwist.name, icon: gameState.activePlotTwist.icon });
+     }
+     prevPlotTwistRef.current = gameState.activePlotTwist;
+   }, [gameState.activePlotTwist]);
+
+   // #6: Defeat crack effect
+   useEffect(() => {
+     if (gameState.gameResult === 'defeat' && prevGameResultRef.current !== 'defeat') {
+       setShowDefeatCrack(true);
+     }
+     prevGameResultRef.current = gameState.gameResult;
+   }, [gameState.gameResult]);
+   
    // Track swipe feedback
    const [flashType, setFlashType] = useState<'success' | 'error' | null>(null);
    const [flashTrigger, setFlashTrigger] = useState(0);
@@ -376,6 +414,14 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({
           </Text>
         </View>
       )}
+
+      {/* ═══ DRAMATIC MOMENTS ═══ */}
+      {showGatesOpen && <GatesOpen onComplete={() => setShowGatesOpen(false)} />}
+      {isCritical && <KingdomTrembles zone={zone as 'critical-low' | 'critical-high'} />}
+      {showComboRally && <KingdomRallies color={showComboRally} />}
+      {showStorm && <StormApproaches name={showStorm.name} icon={showStorm.icon} onComplete={() => setShowStorm(null)} />}
+      {showDefeatCrack && <KingdomFalls />}
+      {showNewPower && <NewPowerGlow />}
 
       {/* Screen flash effect */}
       <ScreenFlash type={flashType} trigger={flashTrigger} />

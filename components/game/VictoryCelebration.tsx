@@ -51,6 +51,12 @@ export const VictoryCelebration: React.FC<Props> = ({ result, onComplete, isPers
 
   return (
     <Animated.View style={[styles.overlay, { opacity: fadeAnim }]}>
+      {/* #5: Golden sunrise glow for victory, dark vignette for defeat */}
+      <Animated.View style={{
+        position: 'absolute', width: 300, height: 300, borderRadius: 150,
+        backgroundColor: isVictory ? 'rgba(251,191,36,0.3)' : 'rgba(239,68,68,0.2)',
+        transform: [{ scale: scaleAnim.interpolate({ inputRange: [0, 1], outputRange: [0.5, 3] }) }],
+      }} />
       {isVictory && Array.from({ length: 16 }).map((_, i) => (
         <ConfettiPiece
           key={i}

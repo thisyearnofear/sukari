@@ -3,6 +3,7 @@ import { View, Text, Animated as RNAnimated } from 'react-native';
 import { router } from 'expo-router';
 import { BattleScreen } from '@/components/game/BattleScreen';
 import { VictoryCelebration } from '@/components/game/VictoryCelebration';
+import { NewPowerGlow } from '@/components/game/DramaticMoments';
 import { useGameSession } from '@/context/GameSessionContext';
 import { usePlayerProgressContext } from '@/context/PlayerProgressContext';
 import { SwipeDirection, SwipeAction } from '@/types/game';
@@ -186,10 +187,13 @@ export default function BattleScreenRoute() {
         </View>
       )}
       {mechanicDiscoveryToast && (
+        <>
+        <NewPowerGlow />
         <View style={{ position: 'absolute', top: 100, left: 20, right: 20, zIndex: 200, backgroundColor: 'rgba(34,197,94,0.95)', padding: 14, borderRadius: 12, alignItems: 'center', borderWidth: 2, borderColor: '#86efac' }}>
           <Text style={{ color: 'white', fontWeight: 'bold', fontSize: 16 }}>{MECHANIC_DISCOVERY_MESSAGES[mechanicDiscoveryToast].emoji} {MECHANIC_DISCOVERY_MESSAGES[mechanicDiscoveryToast].title}</Text>
           <Text style={{ color: '#dcfce7', fontSize: 11, marginTop: 2 }}>{MECHANIC_DISCOVERY_MESSAGES[mechanicDiscoveryToast].sub}</Text>
         </View>
+        </>
       )}
     </View>
   );
