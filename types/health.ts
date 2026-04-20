@@ -140,5 +140,17 @@ export interface HealthScenarioConfig {
   insulinRegimen: InsulinType;
   dailyInsulinUnits: number;
   targetRange: { min: number; max: number };
-  emotionalContext: string; // Story beat
+  emotionalContext: string;
+}
+
+/**
+ * CGM Connection — tracks real device integration state.
+ */
+export type CGMProvider = 'dexcom' | 'libre' | 'manual';
+
+export interface CGMConnection {
+  provider: CGMProvider;
+  isConnected: boolean;
+  lastSyncAt: number | null;
+  consentGivenAt: number | null;
 }

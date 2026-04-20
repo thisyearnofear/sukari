@@ -17,6 +17,8 @@ import { DailyQuests } from '@/components/game/DailyQuests';
 import { GrandLibrary } from '@/components/game/GrandLibrary';
 import { BeamAssets } from '@/components/game/BeamAssets';
 import { track } from '@/utils/analytics';
+import { useCGMConnection } from '@/hooks/useCGMConnection';
+import { MedicalDisclaimer } from '@/components/MedicalDisclaimer';
 
 const maxWidth = 400;
 
@@ -97,6 +99,8 @@ export const MainMenu: React.FC<MainMenuProps> = ({ onStartGame, onSelectGame, o
   const [showLibrary, setShowLibrary] = useState(false);
   const [showTreasury, setShowTreasury] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
+  const [showCGMDisclaimer, setShowCGMDisclaimer] = useState(false);
+  const cgm = useCGMConnection();
   const { isConnected, address, connectWallet, disconnectWallet } = useWeb3();
   const beamContext = useBeam();
   const playerAccount = beamContext?.playerAccount;
@@ -550,6 +554,33 @@ export const MainMenu: React.FC<MainMenuProps> = ({ onStartGame, onSelectGame, o
             </TouchableOpacity>
           </View>
         </View>
+
+        {/* CGM Connection */}
+        <View style={{ width: maxWidth }} className="bg-black/60 p-3 rounded-xl border border-blue-700 mb-3">
+          <Text style={{ color: '#60a5fa', fontSize: 11, fontWeight: 'bold', marginBottom: 6 }}>📡 CGM DEVICE</Text>
+          {cgm.connection.isConnected ? (
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+              <View>
+                <Text style={{ color: '#22c55e', fontSize: 12, fontWeight: 'bold' }}>✓ Dexcom Connected</Text>
+                {cgm.latestReading && (
+                  <Text style={{ color: '#9ca3af', fontSize: 10 }}>Latest: {cgm.latestReading.value} mg/dL {cgm.latestReading.trendArrow}</Text>
+                )}
+              </View>
+              <TouchableOpacity onPress={cgm.disconnect} accessibilityLabel="Disconnect CGM" accessibilityRole="button">
+                <Text style={{ color: '#ef4444', fontSize: 11 }}>Disconnect</Text>
+              </TouchableOpacity>
+            </View>
+          ) : (
+            <TouchableOpacity
+              onPress={() => setShowCGMDisclaimer(true)}
+              style={{ backgroundColor: 'rgba(59,130,246,0.2)', padding: 8, borderRadius: 8, borderWidth: 1, borderColor: '#3b82f6' }}
+              accessibilityLabel="Connect Dexcom CGM" accessibilityRole="button"
+            >
+              <Text style={{ color: '#93c5fd', fontSize: 11, fontWeight: 'bold', textAlign: 'center' }}>Connect Dexcom CGM</Text>
+              <Text style={{ color: '#6b7280', fontSize: 9, textAlign: 'center', marginTop: 2 }}>See real glucose on results screen</Text>
+            </TouchableOpacity>
+          )}
+        </View>
           </>
         )}
 
@@ -557,6 +588,16 @@ export const MainMenu: React.FC<MainMenuProps> = ({ onStartGame, onSelectGame, o
           <Text style={{ color: '#6b7280', fontSize: 11, textAlign: 'center' }}>💡 Chain correct actions for COMBO bonuses!</Text>
         </View>
       </ScrollView>
+
+      {/* CGM Disclaimer Modal */}
+      <Modal visible={showCGMDisclaimer} transparent animationType="fade" onRequestClose={() => setShowCGMDisclaimer(false)}>
+        <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.85)', justifyContent: 'center', alignItems: 'center', padding: 20 }}>
+          <MedicalDisclaimer
+            onAccept={() => { setShowCGMDisclaimer(false); cgm.connect(); }}
+            onDecline={() => setShowCGMDisclaimer(false)}
+          />
+        </View>
+      </Modal>
 
       <PrivacySettingsModal
         settings={progress.privacySettings || {

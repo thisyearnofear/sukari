@@ -11,6 +11,7 @@ import { GameTier } from '@/constants/gameTiers';
 import { getUserModeConfig } from '@/constants/userModes';
 import { WeeklyLeaderboard } from './WeeklyLeaderboard';
 import { getWeeklySeed } from '@/utils/random';
+import { useCGMConnection } from '@/hooks/useCGMConnection';
 import { useBeam } from '@/context/BeamContext';
 import { usePlayerProgressContext } from '@/context/PlayerProgressContext';
 
@@ -97,6 +98,7 @@ export const ResultsScroll: React.FC<ResultsScrollProps> = ({
   const { evaluateAchievements } = useScrollIntegration();
   const { getSlowMoAnalytics, progress } = usePlayerProgressContext();
   const beamContext = useBeam();
+  const cgm = useCGMConnection();
   const playerAnalytics = getSlowMoAnalytics();
   const isFirstVictory = isVictory && progress.gamesPlayed <= 1;
 
@@ -108,7 +110,11 @@ export const ResultsScroll: React.FC<ResultsScrollProps> = ({
         setShowScrollPanel(true);
       }
     }
-  }, [gameState, isVictory, evaluateAchievements]);
+    // Sync CGM data if connected
+    if (cgm.connection.isConnected) {
+      cgm.syncReadings(10); // Last 10 minutes (covers game duration)
+    }
+  }, [gameState, isVictory, evaluateAchievements, cgm]);
 
   useEffect(() => {
     // Scroll unfurl animation
@@ -513,15 +519,37 @@ export const ResultsScroll: React.FC<ResultsScrollProps> = ({
                 <Text style={{ fontSize: 14, fontWeight: 'bold', color: '#fff', marginBottom: 8, textAlign: 'center' }}>
                   💡 Your Glucose Reality Check
                 </Text>
-                <Text style={{ fontSize: 12, color: '#cbd5e1', textAlign: 'center', marginBottom: 8 }}>
-                  In this game, you just managed {Math.round(healthProfile?.currentGlucose || 120)} mg/dL. In real life, your glucose changes based on:
-                </Text>
-                <Text style={{ fontSize: 11, color: '#cbd5e1', textAlign: 'center', marginBottom: 8 }}>
-                  🍽️ When you eat • ⏰ Time of day • 🏃 Exercise • 😴 Sleep • 😰 Stress
-                </Text>
-                <Text style={{ fontSize: 11, color: '#94a3b8', textAlign: 'center', fontStyle: 'italic' }}>
-                  Real CGM data coming soon. For now: track meals, test regularly, consult your doctor.
-                </Text>
+                {cgm.latestReading ? (
+                  <>
+                    <View style={{ flexDirection: 'row', justifyContent: 'space-around', marginBottom: 10 }}>
+                      <View style={{ alignItems: 'center' }}>
+                        <Text style={{ color: '#a78bfa', fontSize: 10, fontWeight: 'bold' }}>GAME HARMONY</Text>
+                        <Text style={{ color: '#fff', fontSize: 24, fontWeight: 'bold' }}>{Math.round(healthProfile?.currentGlucose || 120)}</Text>
+                        <Text style={{ color: '#9ca3af', fontSize: 10 }}>mg/dL (simulated)</Text>
+                      </View>
+                      <View style={{ alignItems: 'center' }}>
+                        <Text style={{ color: '#22c55e', fontSize: 10, fontWeight: 'bold' }}>YOUR REAL CGM</Text>
+                        <Text style={{ color: '#fff', fontSize: 24, fontWeight: 'bold' }}>{cgm.latestReading.value} {cgm.latestReading.trendArrow}</Text>
+                        <Text style={{ color: '#9ca3af', fontSize: 10 }}>mg/dL (Dexcom)</Text>
+                      </View>
+                    </View>
+                    <Text style={{ fontSize: 10, color: '#6b7280', textAlign: 'center', fontStyle: 'italic' }}>
+                      ⚕️ For educational comparison only — not medical advice
+                    </Text>
+                  </>
+                ) : (
+                  <>
+                    <Text style={{ fontSize: 12, color: '#cbd5e1', textAlign: 'center', marginBottom: 8 }}>
+                      In this game, you managed {Math.round(healthProfile?.currentGlucose || 120)} mg/dL. In real life, your glucose changes based on:
+                    </Text>
+                    <Text style={{ fontSize: 11, color: '#cbd5e1', textAlign: 'center', marginBottom: 8 }}>
+                      🍽️ When you eat • ⏰ Time of day • 🏃 Exercise • 😴 Sleep • 😰 Stress
+                    </Text>
+                    <Text style={{ fontSize: 11, color: '#94a3b8', textAlign: 'center', fontStyle: 'italic' }}>
+                      Connect your Dexcom CGM to see your real glucose alongside the game.
+                    </Text>
+                  </>
+                )}
               </View>
             )}
 
