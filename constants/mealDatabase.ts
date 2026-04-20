@@ -422,10 +422,44 @@ export const DINNER_MEALS: Meal[] = [
 ];
 
 // Export combined database
+export const SNACK_MEALS: Meal[] = [
+  {
+    id: 'snack_apple_peanut_butter', name: 'Apple with Peanut Butter', mealType: 'snack', type: 'healthy',
+    glucoseImpact: 25, carbs: 20, protein: 7, fat: 16, fiber: 4, calories: 250, glycemicIndex: 38, glycemicLoad: 8,
+    description: 'Sliced apple with 2 tbsp natural peanut butter',
+    tips: ['Fat and protein slow the glucose rise from the apple', 'Great pre-exercise snack'],
+  },
+  {
+    id: 'snack_greek_yogurt_berries', name: 'Greek Yogurt & Berries', mealType: 'snack', type: 'healthy',
+    glucoseImpact: 15, carbs: 18, protein: 15, fat: 3, fiber: 2, calories: 160, glycemicIndex: 30, glycemicLoad: 5,
+    description: 'Plain Greek yogurt with mixed berries',
+    tips: ['High protein keeps you full', 'Berries have the lowest glycemic impact of all fruits'],
+  },
+  {
+    id: 'snack_trail_mix', name: 'Trail Mix', mealType: 'snack', type: 'moderate',
+    glucoseImpact: 30, carbs: 25, protein: 6, fat: 18, fiber: 3, calories: 280, glycemicIndex: 45, glycemicLoad: 11,
+    description: 'Nuts, seeds, and dried fruit mix (1/4 cup)',
+    tips: ['Watch portion size — dried fruit concentrates sugar', 'Nuts provide healthy fats that slow absorption'],
+  },
+  {
+    id: 'snack_candy_bar', name: 'Candy Bar', mealType: 'snack', type: 'unhealthy',
+    glucoseImpact: 55, carbs: 35, protein: 3, fat: 14, fiber: 1, calories: 270, glycemicIndex: 70, glycemicLoad: 25,
+    description: 'Chocolate candy bar',
+    tips: ['Rapid glucose spike followed by crash', 'If craving chocolate, dark chocolate (70%+) has lower impact'],
+  },
+  {
+    id: 'snack_veggie_hummus', name: 'Veggies & Hummus', mealType: 'snack', type: 'healthy',
+    glucoseImpact: 10, carbs: 12, protein: 5, fat: 6, fiber: 4, calories: 120, glycemicIndex: 25, glycemicLoad: 3,
+    description: 'Carrot sticks, cucumber, and bell pepper with hummus',
+    tips: ['Fiber-rich vegetables barely raise glucose', 'Hummus adds protein and healthy fats'],
+  },
+];
+
 export const ALL_MEALS: Meal[] = [
   ...BREAKFAST_MEALS,
   ...LUNCH_MEALS,
   ...DINNER_MEALS,
+  ...SNACK_MEALS,
 ];
 
 // Helper functions

@@ -33,7 +33,8 @@ export default function ResultsScreen() {
   }, []);
 
   const handlePlayAgain = useCallback(() => {
-    if (selectedTier === 'tier1') {
+    if (selectedTier === 'tier1' && progress.mechanicsUnlocked?.includes('save_direction')) {
+      // Player has enough mechanics for Life Mode — offer advance
       track('tier_advance_modal_shown', { from_tier: 'tier1', to_tier: 'tier2', privacy_mode: progress.privacyMode });
       setPendingTierAdvance('tier2');
       setShowTierAdvanceModal(true);

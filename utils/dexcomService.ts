@@ -19,7 +19,7 @@ const IS_SANDBOX = process.env.EXPO_PUBLIC_DEXCOM_SANDBOX !== 'false';
 const BASE_URL = IS_SANDBOX ? 'https://sandbox-api.dexcom.com' : 'https://api.dexcom.com';
 const AUTH_URL = IS_SANDBOX ? 'https://sandbox-login.dexcom.com' : 'https://login.dexcom.com';
 const CLIENT_ID = process.env.EXPO_PUBLIC_DEXCOM_CLIENT_ID || '';
-const REDIRECT_URI = process.env.EXPO_PUBLIC_DEXCOM_REDIRECT_URI || '';
+const REDIRECT_URI = process.env.EXPO_PUBLIC_DEXCOM_REDIRECT_URI || 'glucosewars://auth/dexcom';
 
 interface DexcomTokens {
   access_token: string;
