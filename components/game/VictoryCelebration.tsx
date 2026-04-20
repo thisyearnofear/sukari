@@ -32,7 +32,8 @@ const ConfettiPiece: React.FC<{ emoji: string; x: number; delay: number; screenH
 interface Props { result: 'victory' | 'defeat'; onComplete: () => void; isPersonalBest?: boolean }
 
 export const VictoryCelebration: React.FC<Props> = ({ result, onComplete, isPersonalBest }) => {
-  const { width, height } = useWindowDimensions();
+  const { width: viewportWidth, height } = useWindowDimensions();
+  const width = Math.min(viewportWidth, 500);
   const scaleAnim = useRef(new Animated.Value(0)).current;
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const isVictory = result === 'victory';

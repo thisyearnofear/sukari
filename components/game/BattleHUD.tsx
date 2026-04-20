@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { View, Text, TouchableOpacity, Animated, Easing, Dimensions, StyleSheet } from 'react-native';
+import { View, Text, TouchableOpacity, Animated, Easing, StyleSheet } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { StabilityZone } from '@/types/game';
 import { COMBO_TIERS } from '@/constants/gameConfig';
@@ -7,8 +7,6 @@ import { COLORS } from '@/constants/designSystem';
 import { useAccessibility } from '@/hooks/useAccessibility';
 import { AnimatedCounter } from './AnimatedCounter';
 import { getStabilityZone } from '@/utils/gameLogic';
-
-const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
 
 interface BattleHUDProps {
   score: number;

@@ -17,7 +17,6 @@ const LifeModePauseOverlay: React.FC<{
   controlMode?: 'swipe' | 'tap';
   onToggleControlMode?: () => void;
 }> = ({ isPaused, onResume, onRestart, onExit, controlMode = 'swipe', onToggleControlMode }) => {
-  const { width: screenWidth, height: screenHeight } = useWindowDimensions();
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const scaleAnim = useRef(new Animated.Value(0.8)).current;
 
@@ -35,8 +34,7 @@ const LifeModePauseOverlay: React.FC<{
   return (
     <Animated.View
       style={{
-        position: 'absolute', top: -100, left: 0,
-        width: screenWidth, height: screenHeight + 200,
+        position: 'absolute', top: -100, left: 0, right: 0, bottom: -100,
         backgroundColor: 'rgba(0,0,0,0.9)', zIndex: 1000,
         justifyContent: 'center', alignItems: 'center', opacity: fadeAnim,
       }}
@@ -105,9 +103,10 @@ const SavedFoodsPanel: React.FC<{
   onConsumeSaved: (index: number) => void;
 }> = ({ savedFoods, onConsumeSaved }) => {
   const { width: screenWidth } = useWindowDimensions();
+  const gameWidth = Math.min(screenWidth, 500);
   return (
     <View style={{
-      position: 'absolute', bottom: 80, left: (screenWidth - 200) / 2,
+      position: 'absolute', bottom: 80, left: (gameWidth - 200) / 2,
       flexDirection: 'row', gap: 8, zIndex: 50,
     }}>
       {savedFoods.map((slot, i) => (
