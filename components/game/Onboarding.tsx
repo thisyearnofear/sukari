@@ -77,60 +77,14 @@ const CLASSIC_STEPS: OnboardingStep[] = [
 ];
 
 // Life mode steps (4 directions)
+// Life mode steps — kept brief since mechanics unlock gradually via micro-tiers
 const LIFE_MODE_STEPS: OnboardingStep[] = [
   {
     title: 'A DAY IN THE KINGDOM',
-    subtitle: 'Survive from dawn to dusk...',
-    content: 'Manage your realm through morning, noon, afternoon, and evening. Balance is key.',
+    subtitle: 'Survive from dawn to dusk',
+    content: '👆 Consume allies · 👇 Reject enemies\n👈 Save for later · 👉 Share with allies\n💚 Balance your Harmony through the day!',
     emoji: '🏰',
-  },
-  {
-    title: 'RESTORE VIGOR',
-    subtitle: 'Swipe UP to consume',
-    content: 'Consume Ally foods to boost Vigor, Purity, and Vitality',
-    emoji: '🍽️',
-    foods: ['🥦', '🥕', '🐟'],
-    allyFoods: true,
-    direction: 'up',
-    directionColor: '#22c55e',
-    directionLabel: '👆 SWIPE UP',
-  },
-  {
-    title: 'REJECT THE HORDE',
-    subtitle: 'Swipe DOWN to refuse',
-    content: 'Reject the Sugar Horde to maintain your inner Harmony',
-    emoji: '🚫',
-    foods: ['🍩', '🍬', '🍔'],
-    allyFoods: false,
-    direction: 'down',
-    directionColor: '#ef4444',
-    directionLabel: '👇 SWIPE DOWN',
-  },
-  {
-    title: 'SAVE FOR LATER',
-    subtitle: 'Swipe LEFT to store',
-    content: 'Save up to 3 foods in your Royal Pantry for strategic use',
-    emoji: '🏺',
-    foods: ['🍎', '🥜', '🥤'],
-    direction: 'left',
-    directionColor: '#3b82f6',
-    directionLabel: '👈 SWIPE LEFT',
-  },
-  {
-    title: 'SHARE WITH ALLIES',
-    subtitle: 'Swipe RIGHT to gift',
-    content: 'Share foods to build your social meter and earn bonuses',
-    emoji: '🤝',
-    foods: ['🍇', '🥗', '🍊'],
-    direction: 'right',
-    directionColor: '#f59e0b',
-    directionLabel: '👉 SWIPE RIGHT',
-  },
-  {
-    title: 'ROYAL ACTIONS',
-    subtitle: 'Use your influence wisely',
-    content: 'Train Knights (Exercise) to lower Harmony levels. Host Royal Feasts (Rations) to raise them.',
-    emoji: '⚔️',
+    foods: ['🥦', '🍩', '🐟'],
   },
   {
     title: 'CHOOSE CONTROLS',

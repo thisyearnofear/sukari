@@ -518,7 +518,8 @@ const BattleHUDComponent: React.FC<BattleHUDProps> = React.memo(({
             </View>
           </View>
 
-          {/* Stability meter - Epic styled */}
+          {/* Stability meter - hidden until stability_bar mechanic unlocked (minimal=true means not yet) */}
+          {!minimal && (
           <View style={styles.stabilitySection} accessible accessibilityLabel={getHUDLabel('harmony', Math.round(stability))} accessibilityRole="progressbar">
             <View style={styles.stabilityLabelContainer}>
               <Text style={[styles.stabilityLabel, { color: stabilityColor }]}>
@@ -575,6 +576,7 @@ const BattleHUDComponent: React.FC<BattleHUDProps> = React.memo(({
               {Math.round(stability)}%
             </Text>
           </View>
+          )}
         </Animated.View>
       </View>
 

@@ -120,6 +120,7 @@ export const useBattleGame = (
   tierConfig?: any,
   userMode?: UserMode,
   challenge?: { id: string; seed: string; modifiers: ChallengeModifier[] },
+  mechanicsUnlocked?: string[],
 ) => {
   const beamContext = useBeam();
   const playerAccount = beamContext?.playerAccount;
@@ -290,6 +291,10 @@ export const useBattleGame = (
     setGameState(prev => {
       const food = prev.foods.find(f => f.id === foodId);
       if (!food) return prev;
+
+      // Guard: ignore directions for mechanics not yet unlocked
+      if (direction === 'left' && mechanicsUnlocked && !mechanicsUnlocked.includes('save_direction')) return prev;
+      if (direction === 'right' && mechanicsUnlocked && !mechanicsUnlocked.includes('share_direction')) return prev;
 
       const now = Date.now();
       const isComboActive = now - prev.lastSwipeTime < comboWindowMsRef.current;
