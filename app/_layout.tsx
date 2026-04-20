@@ -53,6 +53,7 @@ export default function RootLayout() {
                 <Stack.Screen name="(game)" />
                 <Stack.Screen name="challenge" />
                 <Stack.Screen name="slowmo" />
+                <Stack.Screen name="auth" />
               </Stack>
               <StatusBar style="auto" />
             </ThemeProvider>

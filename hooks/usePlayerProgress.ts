@@ -3,6 +3,7 @@ import { GameTier } from '@/constants/gameTiers';
 import { UserMode, SwipeAction } from '@/types/game';
 import { PrivacySettings, PrivacyMode } from '@/types/health';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { track } from '@/utils/analytics';
 import { analyzePlayerSessions, PlayerAnalytics } from '@/utils/slowMoAnalytics';
 import { useBeam } from '@/context/BeamContext';
 
@@ -280,9 +281,10 @@ export function usePlayerProgress() {
         }
       }
       if (newDiscoveries.length > 0) {
-        // Show discovery toast for the first new mechanic
         setMechanicDiscoveryToast(newDiscoveries[0]);
         setTimeout(() => setMechanicDiscoveryToast(null), 4000);
+        // Track each unlock for funnel analysis
+        newDiscoveries.forEach(m => track('mechanic_unlocked', { mechanic: m, games_played: newCount }));
       }
       return {
         ...prev,

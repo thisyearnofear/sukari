@@ -13,6 +13,7 @@ import { WeeklyLeaderboard } from './WeeklyLeaderboard';
 import { getWeeklySeed } from '@/utils/random';
 import { useCGMConnection } from '@/hooks/useCGMConnection';
 import { useBeam } from '@/context/BeamContext';
+import { ShareCard } from './ShareCard';
 import { usePlayerProgressContext } from '@/context/PlayerProgressContext';
 
 // Kingdom Lore and Wisdom
@@ -94,6 +95,7 @@ export const ResultsScroll: React.FC<ResultsScrollProps> = ({
   const scaleAnim = useRef(new Animated.Value(0.8)).current;
   const [showTipsCard, setShowTipsCard] = useState(false);
   const [showScrollPanel, setShowScrollPanel] = useState(false);
+  const [showShareCard, setShowShareCard] = useState(false);
   const [randomLore] = useState(() => KINGDOM_LORE[Math.floor(Math.random() * KINGDOM_LORE.length)]);
   const { evaluateAchievements } = useScrollIntegration();
   const { getSlowMoAnalytics, progress } = usePlayerProgressContext();
@@ -214,6 +216,7 @@ export const ResultsScroll: React.FC<ResultsScrollProps> = ({
     const url = process.env.EXPO_PUBLIC_APP_URL || 'https://glucosewars.app';
 
     try {
+      setShowShareCard(true);
       await Share.share({
         message: `${message}\n\n🎮 Play: ${url}`,
         title: 'Glucose Wars',
@@ -281,6 +284,16 @@ export const ResultsScroll: React.FC<ResultsScrollProps> = ({
         </View>
       </TouchableOpacity>
       
+      {showShareCard && (
+        <View style={{ alignItems: 'center', marginTop: 12, padding: 8, backgroundColor: 'rgba(0,0,0,0.5)', borderRadius: 12 }}>
+          <ShareCard score={score} grade={gradeInfo.grade} accuracy={accuracy} result={result} tier={tier} comboMax={gameState?.comboCount} />
+          <Text style={{ color: '#6b7280', fontSize: 9, marginTop: 6 }}>📸 Screenshot this card to share!</Text>
+          <TouchableOpacity onPress={() => setShowShareCard(false)} style={{ marginTop: 4 }}>
+            <Text style={{ color: '#6b7280', fontSize: 10 }}>Close</Text>
+          </TouchableOpacity>
+        </View>
+      )}
+
       <Text style={{ color: '#6b7280', fontSize: 10, textAlign: 'center', marginTop: 8 }}>
         Challenge friends to beat {score} pts! 🎮
       </Text>
