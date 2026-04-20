@@ -11,6 +11,7 @@ interface AnimatedBackgroundProps {
   timer: number;
   timePhase?: TimePhase;
   gameMode?: 'classic' | 'life' | 'slowmo';
+  tier?: string;
 }
 
 // Get time of day colors and atmosphere
@@ -69,6 +70,7 @@ export const AnimatedBackground: React.FC<AnimatedBackgroundProps> = ({
   timer,
   timePhase = 'morning',
   gameMode = 'classic',
+  tier = 'tier1',
 }) => {
   const { width: viewportWidth, height } = useWindowDimensions();
   const width = Math.min(viewportWidth, 500);
@@ -81,8 +83,8 @@ export const AnimatedBackground: React.FC<AnimatedBackgroundProps> = ({
 
   // Skip non-essential animations when user prefers reduced motion
   if (reducedMotion) {
-    const bgColor = zone === 'balanced' ? '#0a1a0a' : zone.includes('critical') ? '#1a0a0a' : '#0a0a12';
-    return <View style={[StyleSheet.absoluteFill, { backgroundColor: bgColor }]} />;
+    const tierBg = tier === 'tier1' ? '#0a140a' : tier === 'tier2' ? '#140a0a' : '#0a0a1a';
+    return <View style={[StyleSheet.absoluteFill, { backgroundColor: tierBg }]} />;
   }
 
   // Continuous background animation
@@ -144,37 +146,29 @@ export const AnimatedBackground: React.FC<AnimatedBackgroundProps> = ({
     }
   }, [timer, scaleAnim]);
 
+  // Tier-specific atmosphere tints
+  const tierTint = tier === 'tier1' ? { r: 0, g: 20, b: 0 }   // Garden green
+                 : tier === 'tier2' ? { r: 20, g: 10, b: 0 }   // Feast amber
+                 :                    { r: 10, g: 0, b: 30 };   // Storm purple
+
   const getZoneColors = () => {
+    const tint = (base: string) => {
+      // Blend tier tint into background
+      const r = parseInt(base.slice(1, 3), 16) + tierTint.r;
+      const g = parseInt(base.slice(3, 5), 16) + tierTint.g;
+      const b = parseInt(base.slice(5, 7), 16) + tierTint.b;
+      return `#${Math.min(r, 255).toString(16).padStart(2, '0')}${Math.min(g, 255).toString(16).padStart(2, '0')}${Math.min(b, 255).toString(16).padStart(2, '0')}`;
+    };
     switch (zone) {
       case 'balanced':
-        return {
-          primary: '#10b981',
-          secondary: '#059669',
-          bg: '#0f2027',
-          accent: '#34d399',
-        };
+        return { primary: '#10b981', secondary: '#059669', bg: tint('#0f2027'), accent: '#34d399' };
       case 'warning-low':
       case 'warning-high':
-        return {
-          primary: '#f59e0b',
-          secondary: '#d97706',
-          bg: '#1a1a0f',
-          accent: '#fbbf24',
-        };
+        return { primary: '#f59e0b', secondary: '#d97706', bg: tint('#1a1a0f'), accent: '#fbbf24' };
       case 'critical-low':
-        return {
-          primary: '#06b6d4',
-          secondary: '#0891b2',
-          bg: '#0f1a2a',
-          accent: '#22d3ee',
-        };
+        return { primary: '#06b6d4', secondary: '#0891b2', bg: tint('#0f1a2a'), accent: '#22d3ee' };
       case 'critical-high':
-        return {
-          primary: '#ef4444',
-          secondary: '#dc2626',
-          bg: '#2a0f0f',
-          accent: '#f87171',
-        };
+        return { primary: '#ef4444', secondary: '#dc2626', bg: tint('#2a0f0f'), accent: '#f87171' };
     }
   };
 

@@ -7,10 +7,14 @@ import { View, Text, Animated, StyleSheet } from 'react-native';
 
 // ─── #1: Game Start — "The Gates Open" ───────────────────────
 
-export const GatesOpen: React.FC<{ onComplete?: () => void }> = ({ onComplete }) => {
+export const GatesOpen: React.FC<{ onComplete?: () => void; tier?: string }> = ({ onComplete, tier }) => {
   const fade = useRef(new Animated.Value(1)).current;
   const scale = useRef(new Animated.Value(0.8)).current;
   const textFade = useRef(new Animated.Value(0)).current;
+
+  const tierTheme = tier === 'tier3' ? { emoji: '⚡', text: 'SURVIVE THE STORM!', color: '#a78bfa' }
+                  : tier === 'tier2' ? { emoji: '🏛️', text: 'ENTER THE FEAST!', color: '#fbbf24' }
+                  :                    { emoji: '🌿', text: 'DEFEND THE GARDEN!', color: '#34d399' };
 
   useEffect(() => {
     Animated.sequence([
@@ -26,8 +30,8 @@ export const GatesOpen: React.FC<{ onComplete?: () => void }> = ({ onComplete })
   return (
     <Animated.View style={[styles.fullOverlay, { opacity: fade, backgroundColor: 'rgba(0,0,0,0.8)' }]}>
       <Animated.View style={{ transform: [{ scale }], alignItems: 'center' }}>
-        <Animated.Text style={[styles.gatesEmoji, { opacity: textFade }]}>⚔️</Animated.Text>
-        <Animated.Text style={[styles.gatesText, { opacity: textFade }]}>DEFEND!</Animated.Text>
+        <Animated.Text style={[styles.gatesEmoji, { opacity: textFade }]}>{tierTheme.emoji}</Animated.Text>
+        <Animated.Text style={[styles.gatesText, { opacity: textFade, color: tierTheme.color }]}>{tierTheme.text}</Animated.Text>
       </Animated.View>
     </Animated.View>
   );

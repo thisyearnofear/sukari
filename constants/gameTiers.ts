@@ -30,8 +30,8 @@ export interface TierConfig {
 export const GAME_TIERS: Record<GameTier, TierConfig> = {
   tier1: {
     tier: 'tier1',
-    name: 'Warm-up Round',
-    description: 'Warm-up Round: Learn the basics',
+    name: 'The Garden',
+    description: 'Defend your garden from the Sugar Horde',
     duration: 30,
     foodSpawnRate: 1500,
     maxConcurrentFoods: 3,
@@ -52,8 +52,8 @@ export const GAME_TIERS: Record<GameTier, TierConfig> = {
   },
   tier2: {
     tier: 'tier2',
-    name: 'Challenge 1',
-    description: 'Manage your health',
+    name: 'The Feast Hall',
+    description: 'Manage a full day of meals and choices',
     duration: 60,
     foodSpawnRate: 1200,
     maxConcurrentFoods: 5,
@@ -74,8 +74,8 @@ export const GAME_TIERS: Record<GameTier, TierConfig> = {
   },
   tier3: {
     tier: 'tier3',
-    name: 'Challenge 2',
-    description: 'Master advanced play',
+    name: 'The Storm',
+    description: 'Survive chaos with plot twists and insulin',
     duration: 90,
     foodSpawnRate: 1000,
     maxConcurrentFoods: 7,

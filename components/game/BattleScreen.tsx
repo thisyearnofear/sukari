@@ -399,6 +399,7 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({
         timer={gameState.timer}
         timePhase={gameState.timePhase}
         gameMode={gameState.gameMode}
+        tier={tierConfig?.tier}
       />
 
       {/* #8: Morning condition badge (Life Mode) */}
@@ -416,7 +417,7 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({
       )}
 
       {/* ═══ DRAMATIC MOMENTS ═══ */}
-      {showGatesOpen && <GatesOpen onComplete={() => setShowGatesOpen(false)} />}
+      {showGatesOpen && <GatesOpen onComplete={() => setShowGatesOpen(false)} tier={tierConfig?.tier} />}
       {isCritical && <KingdomTrembles zone={zone as 'critical-low' | 'critical-high'} />}
       {showComboRally && <KingdomRallies color={showComboRally} />}
       {showStorm && <StormApproaches name={showStorm.name} icon={showStorm.icon} onComplete={() => setShowStorm(null)} />}
@@ -524,16 +525,19 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({
         </View>
       )}
 
-      {/* Castle gate line — visible "end zone" where missed food counts */}
+      {/* Castle gate line — tier-themed end zone */}
       <View style={{
         position: 'absolute', bottom: 200, left: 0, right: 0, zIndex: 5,
         alignItems: 'center',
       }}>
         <View style={{
-          width: '90%', height: 2, backgroundColor: 'rgba(251,191,36,0.3)',
+          width: '90%', height: 2,
+          backgroundColor: tierConfig?.tier === 'tier3' ? 'rgba(168,85,247,0.4)' : tierConfig?.tier === 'tier2' ? 'rgba(251,191,36,0.4)' : 'rgba(34,197,94,0.3)',
           borderRadius: 1,
         }} />
-        <Text style={{ color: 'rgba(251,191,36,0.3)', fontSize: 9, marginTop: 2 }}>🏰 CASTLE GATE 🏰</Text>
+        <Text style={{ color: tierConfig?.tier === 'tier3' ? 'rgba(168,85,247,0.4)' : tierConfig?.tier === 'tier2' ? 'rgba(251,191,36,0.4)' : 'rgba(34,197,94,0.3)', fontSize: 9, marginTop: 2 }}>
+          {tierConfig?.tier === 'tier3' ? '⚡ STORM WALL ⚡' : tierConfig?.tier === 'tier2' ? '🏛️ FEAST HALL 🏛️' : '🌿 GARDEN GATE 🌿'}
+        </Text>
       </View>
 
       {/* Low stability hint — sugar isn't always bad */}
