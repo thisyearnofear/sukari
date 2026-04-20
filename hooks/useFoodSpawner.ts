@@ -13,8 +13,10 @@ import {
 } from '@/constants/gameConfig';
 import { SeededRandom } from '@/utils/random';
 
-const { width, height } = Dimensions.get('window');
+const { width: screenWidth, height } = Dimensions.get('window');
 const SIDE_PANEL_WIDTH = 80;
+const GAME_MAX_WIDTH = 500; // Must match BattleScreen maxWidth
+const width = Math.min(screenWidth, GAME_MAX_WIDTH);
 
 const DEFAULT_EFFECTS = { energy: 0, hydration: 0, nutrition: 0, stability: 0 };
 
