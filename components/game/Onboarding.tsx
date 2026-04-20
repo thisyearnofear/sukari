@@ -58,51 +58,14 @@ function getModeIntroStep(userMode: UserMode | undefined): OnboardingStep {
   };
 }
 
-// Classic mode steps (2 directions)
+// Classic mode steps (2 directions) — minimal, get to gameplay fast
 const CLASSIC_STEPS: OnboardingStep[] = [
   {
-    title: 'WARM-UP ROUND',
-    subtitle: 'Practice your swipes...',
-    content: 'This is a 30-second tutorial to get comfortable with the controls.\nFood armies march toward your castle. Rally allies. Banish invaders.',
+    title: 'DEFEND YOUR KINGDOM',
+    subtitle: 'Rally allies. Banish invaders.',
+    content: '👆 Swipe UP on healthy foods\n👇 Swipe DOWN on junk food\n💚 Keep the green bar balanced!',
     emoji: '🏰',
-  },
-  {
-    title: 'UNDERSTANDING THE GAME',
-    subtitle: 'Here\'s what it all means...',
-    content: '⚔️ KINGDOM = Your Body\n🍎 ALLIES = Healthy Foods\n🍬 ENEMIES = Junk Foods\n💚 HARMONY = Keep the green bar balanced!',
-    emoji: '🔑',
-  },
-  {
-    title: 'RALLY ALLIES',
-    subtitle: 'Swipe UP on healthy foods',
-    content: 'Garden harvests and vital proteins strengthen your inner Realm',
-    emoji: '💚',
-    foods: ['🥦', '🥕', '🐟'],
-    allyFoods: true,
-    direction: 'up',
-    directionColor: '#22c55e',
-    directionLabel: '👆 SWIPE UP',
-  },
-  {
-    title: 'BANISH ENEMIES',
-    subtitle: 'Swipe DOWN on junk food',
-    content: 'The Sugar Horde and processed spoils destabilize your Harmony',
-    emoji: '💔',
-    foods: ['🍩', '🍬', '🍔'],
-    allyFoods: false,
-    direction: 'down',
-    directionColor: '#ef4444',
-    directionLabel: '👇 SWIPE DOWN',
-  },
-  {
-    title: 'OFFENCE > DEFENCE',
-    subtitle: 'Protect your Harmony',
-    content: '💎 HARMONY = Your vital balance\n🎯 Keep the bar green and centered\n🏃 High? Train Knights to lower it!\n😴 Low? Feast Rations to raise it.',
-    emoji: '💡',
-    foods: ['🥦', '🍎', '🐟'],  // Healthy food examples
-    direction: 'up',
-    directionColor: '#22c55e',
-    directionLabel: '👆 HEALTHY',
+    foods: ['🥦', '🍩', '🐟'],
   },
   {
     title: 'CHOOSE CONTROLS',

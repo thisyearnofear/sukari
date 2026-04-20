@@ -347,7 +347,7 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({
   return (
     <Animated.View 
       style={[
-        { flex: 1, backgroundColor: '#0a0a12' },
+        { flex: 1, backgroundColor: '#0a0a12', alignSelf: 'center', width: '100%', maxWidth: 500 },
         { transform: [{ translateX: shakeAnim }] }
       ]}
     >
@@ -433,8 +433,8 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({
          </View>
        )}
 
-       {/* Health Profile Glucose Display - only show if tier config enables it */}
-      {tierConfig?.showGlucose && healthProfile && (
+       {/* Health Profile Glucose Display - only show if tier config enables it and not tier1 */}
+      {tierConfig?.showGlucose && healthProfile && !tierConfig?.tutorialMode && (
         <View style={{ position: 'absolute', top: 40, right: 20, zIndex: 100 }}>
           <TouchableOpacity
             onPress={() => setShowInsulinControl(true)}
@@ -613,6 +613,7 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({
           showComboCounter={tierConfig?.showComboCounter ?? true}
           controlMode={controlMode}
           onToggleControlMode={onToggleControlMode}
+          minimal={tierConfig?.tutorialMode}
         />
       )}
       

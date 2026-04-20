@@ -28,6 +28,7 @@ interface BattleHUDProps {
   showComboCounter?: boolean;
   controlMode?: 'swipe' | 'tap';
   onToggleControlMode?: () => void;
+  minimal?: boolean; // Tier1: hide decorative elements, show only essentials
 }
 
 const getStabilityColor = (zone: StabilityZone): string => {
@@ -232,6 +233,7 @@ const BattleHUDComponent: React.FC<BattleHUDProps> = React.memo(({
   showComboCounter = true,
   controlMode = 'swipe',
   onToggleControlMode,
+  minimal = false,
 }) => {
   const { getButtonLabel, getHUDLabel } = useAccessibility();
   const zone = getStabilityZone(stability);
@@ -430,26 +432,28 @@ const BattleHUDComponent: React.FC<BattleHUDProps> = React.memo(({
           ]}
         >
           {/* Animated border glow */}
-          <AnimatedBorderGlow 
+          {!minimal && <AnimatedBorderGlow 
             color={stabilityColor} 
             intensity={isCritical ? 'high' : zone === 'balanced' ? 'low' : 'medium'} 
-          />
+          />}
           
           {/* Electric arcs for critical zones */}
-          <ElectricArc color={stabilityColor} active={isCritical} />
+          {!minimal && <ElectricArc color={stabilityColor} active={isCritical} />}
           
           {/* Particle effects */}
-          <View style={styles.particleContainer}>
+          {!minimal && <View style={styles.particleContainer}>
             {renderParticles()}
-          </View>
+          </View>}
 
           {/* Corner ornaments */}
+          {!minimal && <>
           <View style={[styles.cornerOrnament, styles.topLeft]}>
             <Text style={{ color: stabilityColor, fontSize: 16 }}>⚜️</Text>
           </View>
           <View style={[styles.cornerOrnament, styles.topRight]}>
             <Text style={{ color: stabilityColor, fontSize: 16 }}>⚜️</Text>
           </View>
+          </>}
 
           {/* Main content */}
           <View style={styles.topHudContent}>
@@ -702,8 +706,9 @@ const BattleHUDComponent: React.FC<BattleHUDProps> = React.memo(({
       )}
 
       {/* ═══════════════════════════════════════════════════════════════════════════
-          BOTTOM HUD - MEDIEVAL POWER-UP BAR
+          BOTTOM HUD - MEDIEVAL POWER-UP BAR (hidden in minimal/tier1)
           ═══════════════════════════════════════════════════════════════════════════ */}
+      {!minimal && (
       <View 
         style={[
           styles.bottomHudWrapper,
@@ -850,6 +855,7 @@ const BattleHUDComponent: React.FC<BattleHUDProps> = React.memo(({
           </View>
         </View>
       </View>
+      )}
     </>
   );
 });
