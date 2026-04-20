@@ -6,9 +6,10 @@
  * CLEAN: Separates CGM concerns from game simulation.
  */
 import { useState, useCallback, useEffect } from 'react';
-import { Linking } from 'react-native';
+import { Linking, Platform } from 'react-native';
 import { GlucoseReading, CGMConnection, CGMProvider } from '@/types/health';
 import * as Dexcom from '@/utils/dexcomService';
+import * as HealthKit from '@/utils/healthKitService';
 import { track } from '@/utils/analytics';
 
 export function useCGMConnection() {
@@ -22,14 +23,14 @@ export function useCGMConnection() {
   const [latestReading, setLatestReading] = useState<GlucoseReading | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [healthKitAvailable, setHealthKitAvailable] = useState(false);
 
-  // Check existing connection on mount
+  // Check existing connections on mount
   useEffect(() => {
     Dexcom.isConnected().then(connected => {
-      if (connected) {
-        setConnection(prev => ({ ...prev, isConnected: true }));
-      }
+      if (connected) setConnection(prev => ({ ...prev, provider: 'dexcom', isConnected: true }));
     });
+    HealthKit.isAvailable().then(setHealthKitAvailable);
   }, []);
 
   /**
@@ -37,20 +38,40 @@ export function useCGMConnection() {
    * User must explicitly consent before any data is accessed.
    */
   const connect = useCallback(async (provider: CGMProvider = 'dexcom') => {
-    if (provider !== 'dexcom') {
-      setError(`${provider} integration coming soon`);
+    if (provider === 'libre') {
+      // Apple HealthKit path
+      if (!healthKitAvailable) {
+        setError('Apple Health not available on this device');
+        return;
+      }
+      setIsLoading(true);
+      setError(null);
+      track('cgm_connect_started', { provider: 'libre' });
+      try {
+        const granted = await HealthKit.requestPermission();
+        if (granted) {
+          setConnection({ provider: 'libre', isConnected: true, lastSyncAt: Date.now(), consentGivenAt: Date.now() });
+          track('cgm_connected', { provider: 'libre' });
+        } else {
+          setError('Health permission not granted');
+        }
+      } catch (err: any) {
+        setError(err?.message || 'HealthKit connection failed');
+      } finally {
+        setIsLoading(false);
+      }
       return;
     }
 
+    // Dexcom OAuth path
     if (!process.env.EXPO_PUBLIC_DEXCOM_CLIENT_ID) {
       setError('Dexcom integration not configured');
       return;
     }
-
-    track('cgm_connect_started', { provider });
+    track('cgm_connect_started', { provider: 'dexcom' });
     const url = Dexcom.getDexcomAuthUrl();
     await Linking.openURL(url);
-  }, []);
+  }, [healthKitAvailable]);
 
   /**
    * Complete OAuth — called after redirect with auth code.
@@ -84,7 +105,9 @@ export function useCGMConnection() {
     setIsLoading(true);
     setError(null);
     try {
-      const data = await Dexcom.fetchRecentReadings(minutes);
+      const data = connection.provider === 'libre'
+        ? await HealthKit.fetchRecentReadings(minutes)
+        : await Dexcom.fetchRecentReadings(minutes);
       setReadings(data);
       if (data.length > 0) {
         setLatestReading(data[data.length - 1]);
@@ -104,12 +127,13 @@ export function useCGMConnection() {
    * Disconnect and clear all stored tokens/data.
    */
   const disconnect = useCallback(async () => {
-    await Dexcom.disconnect();
+    if (connection.provider === 'dexcom') await Dexcom.disconnect();
+    else await HealthKit.disconnect();
     setConnection({ provider: 'dexcom', isConnected: false, lastSyncAt: null, consentGivenAt: null });
     setReadings([]);
     setLatestReading(null);
-    track('cgm_disconnected', { provider: 'dexcom' });
-  }, []);
+    track('cgm_disconnected', { provider: connection.provider });
+  }, [connection.provider]);
 
   return {
     connection,
@@ -121,5 +145,6 @@ export function useCGMConnection() {
     handleAuthCode,
     syncReadings,
     disconnect,
+    healthKitAvailable,
   };
 }

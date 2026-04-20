@@ -171,6 +171,16 @@ export function usePlayerProgress() {
         if (stored) {
           const parsed = JSON.parse(stored);
           
+          // Migration: compute mechanicsUnlocked for existing users
+          if (!parsed.mechanicsUnlocked) {
+            const unlocked: GameMechanic[] = [];
+            for (const [mechanic, threshold] of Object.entries(MECHANIC_UNLOCKS)) {
+              if ((parsed.gamesPlayed || 0) >= threshold) unlocked.push(mechanic as GameMechanic);
+            }
+            parsed.mechanicsUnlocked = unlocked.length > 0 ? unlocked : ['swipe_basic'];
+            parsed.mechanicDiscoveryShown = parsed.mechanicsUnlocked; // Don't re-show for existing users
+          }
+
           // Check for daily quest reset (PERFORMANT & ORGANIZED)
           const now = new Date();
           const lastReset = parsed.lastQuestResetAt ? new Date(parsed.lastQuestResetAt) : null;

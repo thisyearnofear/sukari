@@ -538,7 +538,9 @@ export const MainMenu: React.FC<MainMenuProps> = ({ onStartGame, onSelectGame, o
           {cgm.connection.isConnected ? (
             <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
               <View>
-                <Text style={{ color: '#22c55e', fontSize: 12, fontWeight: 'bold' }}>✓ Dexcom Connected</Text>
+                <Text style={{ color: '#22c55e', fontSize: 12, fontWeight: 'bold' }}>
+                  ✓ {cgm.connection.provider === 'libre' ? 'Apple Health' : 'Dexcom'} Connected
+                </Text>
                 {cgm.latestReading && (
                   <Text style={{ color: '#9ca3af', fontSize: 10 }}>Latest: {cgm.latestReading.value} mg/dL {cgm.latestReading.trendArrow}</Text>
                 )}
@@ -548,14 +550,25 @@ export const MainMenu: React.FC<MainMenuProps> = ({ onStartGame, onSelectGame, o
               </TouchableOpacity>
             </View>
           ) : (
-            <TouchableOpacity
-              onPress={() => setShowCGMDisclaimer(true)}
-              style={{ backgroundColor: 'rgba(59,130,246,0.2)', padding: 8, borderRadius: 8, borderWidth: 1, borderColor: '#3b82f6' }}
-              accessibilityLabel="Connect Dexcom CGM" accessibilityRole="button"
-            >
-              <Text style={{ color: '#93c5fd', fontSize: 11, fontWeight: 'bold', textAlign: 'center' }}>Connect Dexcom CGM</Text>
-              <Text style={{ color: '#6b7280', fontSize: 9, textAlign: 'center', marginTop: 2 }}>See real glucose on results screen</Text>
-            </TouchableOpacity>
+            <View style={{ gap: 6 }}>
+              <TouchableOpacity
+                onPress={() => setShowCGMDisclaimer(true)}
+                style={{ backgroundColor: 'rgba(59,130,246,0.2)', padding: 8, borderRadius: 8, borderWidth: 1, borderColor: '#3b82f6' }}
+                accessibilityLabel="Connect Dexcom CGM" accessibilityRole="button"
+              >
+                <Text style={{ color: '#93c5fd', fontSize: 11, fontWeight: 'bold', textAlign: 'center' }}>Connect Dexcom</Text>
+              </TouchableOpacity>
+              {cgm.healthKitAvailable && (
+                <TouchableOpacity
+                  onPress={() => cgm.connect('libre')}
+                  style={{ backgroundColor: 'rgba(239,68,68,0.15)', padding: 8, borderRadius: 8, borderWidth: 1, borderColor: '#f87171' }}
+                  accessibilityLabel="Connect via Apple Health" accessibilityRole="button"
+                >
+                  <Text style={{ color: '#fca5a5', fontSize: 11, fontWeight: 'bold', textAlign: 'center' }}>Connect via Apple Health</Text>
+                </TouchableOpacity>
+              )}
+              <Text style={{ color: '#6b7280', fontSize: 9, textAlign: 'center' }}>See real glucose on results screen</Text>
+            </View>
           )}
         </View>
           </>
