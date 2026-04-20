@@ -639,7 +639,7 @@ export const ResultsScroll: React.FC<ResultsScrollProps> = ({
                 <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center' }}>
                   <Text style={{ fontSize: 18, marginRight: 6 }}>⚔️</Text>
                   <Text style={{ color: 'white', fontSize: 15, fontWeight: 'bold' }}>
-                    {tier === 'tier1' ? 'NEXT CHALLENGE' : !isVictory ? '⚔️ AVENGE YOUR KINGDOM' : 'PLAY AGAIN'}
+                    {!isVictory ? '⚔️ AVENGE YOUR KINGDOM' : tier === 'tier3' ? 'PLAY AGAIN' : '⚡ NEXT CHALLENGE'}
                   </Text>
                 </View>
               </TouchableOpacity>
