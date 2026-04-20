@@ -41,11 +41,11 @@ const getStabilityColor = (zone: StabilityZone): string => {
 
 const getZoneLabel = (zone: StabilityZone): string => {
   switch (zone) {
-    case 'balanced': return '⚖️ BALANCED';
-    case 'warning-low': return '❄️ LOW';
-    case 'warning-high': return '🔥 HIGH';
-    case 'critical-low': return '💀 CRITICAL';
-    case 'critical-high': return '💀 CRITICAL';
+    case 'balanced': return '💚 THRIVING';
+    case 'warning-low': return '🧊 ENERGY LOW';
+    case 'warning-high': return '🔥 SUGAR RUSH';
+    case 'critical-low': return '💀 CRASHING';
+    case 'critical-high': return '💀 OVERLOAD';
   }
 };
 

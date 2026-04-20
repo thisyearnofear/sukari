@@ -238,8 +238,8 @@ export const ResultsScroll: React.FC<ResultsScrollProps> = ({
       {/* Header */}
       <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
         <Text style={{ fontSize: 18, fontWeight: 'bold', color: '#60a5fa' }}>💡 DID YOU KNOW?</Text>
-        <TouchableOpacity onPress={() => setShowTipsCard(false)}>
-          <Text style={{ color: '#6b7280', fontSize: 20 }}>✕</Text>
+        <TouchableOpacity onPress={() => setShowTipsCard(false)} style={{ padding: 8, backgroundColor: 'rgba(107,114,128,0.3)', borderRadius: 8 }}>
+          <Text style={{ color: '#d1d5db', fontSize: 14, fontWeight: 'bold' }}>✕ Close</Text>
         </TouchableOpacity>
       </View>
 

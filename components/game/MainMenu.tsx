@@ -198,20 +198,12 @@ export const MainMenu: React.FC<MainMenuProps> = ({ onStartGame, onSelectGame, o
         >
           <View className="items-center mb-6">
             <Text className="text-6xl mb-3">👑</Text>
-            <Text className="text-amber-400 text-4xl font-bold text-center">
-              YOUR QUEST
-            </Text>
-            <Text className="text-white text-xl text-center mt-1">
-              Choose Your Path to Mastery
+            <Text className="text-amber-400 text-3xl font-bold text-center">
+              HOW DO YOU PLAY?
             </Text>
           </View>
 
-          <ScrollView 
-            horizontal 
-            showsHorizontalScrollIndicator={false} 
-            contentContainerStyle={{ gap: 16, paddingHorizontal: 8, flexGrow: 1, justifyContent: 'center' }} 
-            className="mb-6 h-80"
-          >
+          <View style={{ gap: 12, paddingHorizontal: 16, maxWidth: 400, alignSelf: 'center', width: '100%' }}>
             {(Object.keys(USER_MODE_CONFIGS) as UserMode[]).map((mode) => {
               const config = USER_MODE_CONFIGS[mode];
               const roleData = {
@@ -247,24 +239,25 @@ export const MainMenu: React.FC<MainMenuProps> = ({ onStartGame, onSelectGame, o
                   }}
                   accessibilityLabel={`${config.name} role. ${config.description}`}
                   accessibilityRole="button"
-                  accessibilityHint="Double tap to choose this path"
-                  className={`w-56 h-56 rounded-2xl border-2 p-4 justify-center ${roleData.color} ${roleData.bg}`}
+                  style={{
+                    flexDirection: 'row', alignItems: 'center', padding: 16,
+                    borderRadius: 16, borderWidth: 2,
+                    borderColor: mode === 'personal' ? '#f59e0b' : mode === 'caregiver' ? '#22d3ee' : '#34d399',
+                    backgroundColor: mode === 'personal' ? 'rgba(245,158,11,0.1)' : mode === 'caregiver' ? 'rgba(34,211,238,0.1)' : 'rgba(52,211,153,0.1)',
+                  }}
                 >
-                  <View className="items-center mb-3">
-                    <Text className="text-5xl">{roleData.emblem}</Text>
+                  <Text style={{ fontSize: 36, marginRight: 14 }}>{roleData.emblem}</Text>
+                  <View style={{ flex: 1 }}>
+                    <Text style={{ fontSize: 18, fontWeight: 'bold', color: mode === 'personal' ? '#fcd34d' : mode === 'caregiver' ? '#67e8f9' : '#6ee7b7' }}>
+                      {config.name}
+                    </Text>
+                    <Text style={{ color: '#9ca3af', fontSize: 12, marginTop: 2 }}>{config.subtitle}</Text>
                   </View>
-
-                  <Text className={`text-xl font-bold text-center mb-1 ${mode === 'personal' ? 'text-amber-300' : mode === 'caregiver' ? 'text-cyan-300' : 'text-emerald-300'}`}>
-                    {config.name}
-                  </Text>
-
-                  <Text className="text-white text-xs text-center opacity-80">
-                    {config.description}
-                  </Text>
+                  <Text style={{ color: '#6b7280', fontSize: 18 }}>→</Text>
                 </TouchableOpacity>
               );
             })}
-          </ScrollView>
+          </View>
 
           <View className="items-center">
             <Text style={{ width: maxWidth }} className="text-gray-500 text-xs text-center mb-4">

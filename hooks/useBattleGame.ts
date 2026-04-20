@@ -302,9 +302,14 @@ export const useBattleGame = (
       // In Classic mode, only up/down are valid
       if (prev.gameMode === 'classic') {
         // Determine correct swipe based on faction
+        // NUANCE: when stability is low (<30), consuming sugar (enemy UP) is correct
+        // This teaches that glucose management is about balance, not elimination
         let isCorrectSwipe: boolean;
+        const needsSugar = prev.stability < 30;
         if (food.faction === 'contextual') {
           isCorrectSwipe = food.isContextuallyGood ? direction === 'up' : direction === 'down';
+        } else if (needsSugar && food.faction === 'enemy' && direction === 'up') {
+          isCorrectSwipe = true; // Strategic sugar consumption when low
         } else {
           isCorrectSwipe =
             (food.faction === 'ally' && direction === 'up') ||

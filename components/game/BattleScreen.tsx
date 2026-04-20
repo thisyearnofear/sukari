@@ -524,6 +524,29 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({
         </View>
       )}
 
+      {/* Castle gate line — visible "end zone" where missed food counts */}
+      <View style={{
+        position: 'absolute', bottom: 200, left: 0, right: 0, zIndex: 5,
+        alignItems: 'center',
+      }}>
+        <View style={{
+          width: '90%', height: 2, backgroundColor: 'rgba(251,191,36,0.3)',
+          borderRadius: 1,
+        }} />
+        <Text style={{ color: 'rgba(251,191,36,0.3)', fontSize: 9, marginTop: 2 }}>🏰 CASTLE GATE 🏰</Text>
+      </View>
+
+      {/* Low stability hint — sugar isn't always bad */}
+      {gameState.stability < 30 && gameState.gameMode === 'classic' && (
+        <View style={{ position: 'absolute', bottom: 220, left: 20, right: 20, zIndex: 10, alignItems: 'center' }}>
+          <View style={{ backgroundColor: 'rgba(6,182,212,0.9)', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 8 }}>
+            <Text style={{ color: 'white', fontSize: 10, fontWeight: 'bold', textAlign: 'center' }}>
+              ❄️ Harmony LOW — swipe UP on sugar to raise it!
+            </Text>
+          </View>
+        </View>
+      )}
+
       {/* Food cards */}
       {gameState.foods.map((food) => (
         <FoodCard
