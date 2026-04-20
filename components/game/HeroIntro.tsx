@@ -10,7 +10,8 @@ const SCENES = [
   { emoji: '🏰', title: 'YOUR BODY IS YOUR KINGDOM', sub: '', duration: 1800 },
   { emoji: '🥦⚔️🍩', title: 'ALLIES vs THE SUGAR HORDE', sub: 'Rally the good. Banish the bad.', duration: 2000 },
   { emoji: '👆👇', title: 'SWIPE TO DEFEND', sub: 'Fast reflexes. Smart choices.', duration: 1600 },
-  { emoji: '👑', title: 'MASTER YOUR HARMONY', sub: '', duration: 1400 },
+  { emoji: '📡', title: 'BUILT FOR REAL HEALTH', sub: 'Connect your CGM to see your real glucose.', duration: 2000 },
+  { emoji: '👑', title: 'MASTER YOUR HARMONY', sub: 'Learn glucose management through play.', duration: 1600 },
 ];
 
 interface HeroIntroProps {

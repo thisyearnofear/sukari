@@ -164,6 +164,8 @@ export const MainMenu: React.FC<MainMenuProps> = ({ onStartGame, onSelectGame, o
     return { streak: 1, emoji: '🔥', message: 'Welcome back!' };
   };
 
+  const isNewUser = progress.gamesPlayed === 0;
+
   const streakStatus = getStreakStatus();
 
   const progressInfo = (
@@ -243,62 +245,31 @@ export const MainMenu: React.FC<MainMenuProps> = ({ onStartGame, onSelectGame, o
                     track('user_mode_selected', { user_mode: mode, privacy_mode: progress.privacyMode });
                     onUserModeSelected?.(mode);
                   }}
-                  accessibilityLabel={`${config.name} role. ${config.description}. ${roleData.learningFocus}`}
+                  accessibilityLabel={`${config.name} role. ${config.description}`}
                   accessibilityRole="button"
                   accessibilityHint="Double tap to choose this path"
-                  className={`w-64 h-72 rounded-2xl border-2 p-4 ${roleData.color} ${roleData.bg}`}
+                  className={`w-56 h-56 rounded-2xl border-2 p-4 justify-center ${roleData.color} ${roleData.bg}`}
                 >
                   <View className="items-center mb-3">
-                    <Text className="text-5xl mb-2">{roleData.emblem}</Text>
-                    <Text className="text-2xl">{config.icon}</Text>
+                    <Text className="text-5xl">{roleData.emblem}</Text>
                   </View>
 
-                  <Text className={`text-xl font-bold text-center mb-2 ${mode === 'personal' ? 'text-amber-300' : mode === 'caregiver' ? 'text-cyan-300' : 'text-emerald-300'}`}>
+                  <Text className={`text-xl font-bold text-center mb-1 ${mode === 'personal' ? 'text-amber-300' : mode === 'caregiver' ? 'text-cyan-300' : 'text-emerald-300'}`}>
                     {config.name}
                   </Text>
 
-                  <Text className="text-white text-sm text-center mb-3">
+                  <Text className="text-white text-xs text-center opacity-80">
                     {config.description}
                   </Text>
-
-                  <View className="bg-black/40 p-2 rounded-lg border border-white/20 mt-2">
-                    <Text className="text-green-300 text-xs font-bold">LEARNING FOCUS:</Text>
-                    <Text className="text-white text-xs mt-1">{roleData.learningFocus}</Text>
-                  </View>
-
-                  <View className="mt-3 items-center">
-                    <Text className="text-amber-300 text-sm font-bold">→ Choose This Path</Text>
-                  </View>
                 </TouchableOpacity>
               );
             })}
           </ScrollView>
 
           <View className="items-center">
-            <View style={{ width: maxWidth }} className="bg-black/60 p-4 rounded-xl border border-amber-700 mb-4">
-              <Text className="text-amber-400 text-xs font-bold mb-2">💡 WHY CHOOSE A ROLE?</Text>
-              <Text className="text-white text-xs mb-1">• Personalizes your journey through the Realm</Text>
-              <Text className="text-white text-xs mb-1">• Tailors your quest objectives and rewards</Text>
-              <Text className="text-white text-xs">• Aligns your Harmony with your chosen path</Text>
-            </View>
-
             <Text style={{ width: maxWidth }} className="text-gray-500 text-xs text-center mb-4">
-              🔧 You can explore other roles anytime in settings
+              🔧 You can change your role anytime
             </Text>
-
-            {isConnected && (
-              <View style={{ width: maxWidth }} className="bg-black/60 p-4 rounded-xl border border-amber-700">
-                <Text className="text-amber-400 text-xs font-bold mb-2">🏅 OPTIONAL BADGE</Text>
-                <TouchableOpacity
-                  onPress={() => setShowMintModal(true)}
-                  className="px-4 py-2 rounded-lg border border-amber-400 bg-amber-600/20"
-                >
-                  <Text className="text-amber-300 text-xs text-center">
-                    {selectedRole ? 'Mint Selected Role' : 'Learn About Badges'}
-                  </Text>
-                </TouchableOpacity>
-              </View>
-            )}
           </View>
         </ScrollView>
 
@@ -414,7 +385,7 @@ export const MainMenu: React.FC<MainMenuProps> = ({ onStartGame, onSelectGame, o
            <Text className="text-purple-300 text-base text-center italic mt-1">Defend Your Kingdom</Text>
          </View>
 
-         {progress.gamesPlayed > 0 && (
+         {!isNewUser && progress.gamesPlayed > 0 && (
            <View style={{ width: maxWidth }} className="bg-gradient-to-r from-orange-600/30 to-red-600/20 p-4 rounded-xl border-2 border-orange-500 mb-6 items-center">
              <View className="flex-row items-center justify-center gap-2 mb-2">
                <Text className="text-3xl animate-bounce">{streakStatus.emoji}</Text>
@@ -425,14 +396,16 @@ export const MainMenu: React.FC<MainMenuProps> = ({ onStartGame, onSelectGame, o
            </View>
          )}
 
-         <View className="mb-4">
-           <BeamWalletButton 
-             isConnected={isConnected}
-             address={address}
-             connectWallet={connectWallet}
-             disconnectWallet={disconnectWallet}
-           />
-         </View>
+         {!isNewUser && (
+           <View className="mb-4">
+             <BeamWalletButton 
+               isConnected={isConnected}
+               address={address}
+               connectWallet={connectWallet}
+               disconnectWallet={disconnectWallet}
+             />
+           </View>
+         )}
 
         {/* ═══ ACTION BUTTONS — front and center ═══ */}
         <View style={{ width: maxWidth }} className="space-y-3 mb-6">
@@ -456,6 +429,7 @@ export const MainMenu: React.FC<MainMenuProps> = ({ onStartGame, onSelectGame, o
             </TouchableOpacity>
           </Animated.View>
 
+          {!isNewUser && (
           <View style={{ flexDirection: 'row', gap: 8, marginTop: 8 }}>
             <TouchableOpacity
               onPress={() => onSelectGame?.()}
@@ -482,21 +456,24 @@ export const MainMenu: React.FC<MainMenuProps> = ({ onStartGame, onSelectGame, o
               <Text style={{ color: '#93c5fd', fontSize: 10, fontWeight: 'bold', marginTop: 2 }}>LIBRARY</Text>
             </TouchableOpacity>
           </View>
+          )}
         </View>
 
-        {/* #14: Weekly challenge countdown */}
-        <WeeklyCountdown />
-
-         {progressInfo}
-
-         <View style={{ width: maxWidth }} className="mt-4">
-           <DailyQuests 
-             quests={progress.dailyQuests} 
-             renown={progress.kingdomRenown} 
+        {!isNewUser && (
+          <>
+            <WeeklyCountdown />
+            {progressInfo}
+            <View style={{ width: maxWidth }} className="mt-4">
+              <DailyQuests 
+                quests={progress.dailyQuests} 
+                renown={progress.kingdomRenown} 
            />
          </View>
+          </>
+        )}
 
         {/* ═══ COLLAPSIBLE SETTINGS ═══ */}
+        {!isNewUser && (<>
         <TouchableOpacity
           onPress={() => setShowSettings(!showSettings)}
           style={{ width: maxWidth, marginTop: 12, marginBottom: 4 }}
@@ -583,9 +560,12 @@ export const MainMenu: React.FC<MainMenuProps> = ({ onStartGame, onSelectGame, o
         </View>
           </>
         )}
+        </>)}
 
         <View style={{ marginTop: 12 }}>
-          <Text style={{ color: '#6b7280', fontSize: 11, textAlign: 'center' }}>💡 Chain correct actions for COMBO bonuses!</Text>
+          <Text style={{ color: '#6b7280', fontSize: 11, textAlign: 'center' }}>
+            {isNewUser ? '🏰 Swipe to rally allies and banish the Sugar Horde!' : '💡 Chain correct actions for COMBO bonuses!'}
+          </Text>
         </View>
       </ScrollView>
 

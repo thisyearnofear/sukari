@@ -69,7 +69,7 @@ const CLASSIC_STEPS: OnboardingStep[] = [
   {
     title: 'UNDERSTANDING THE GAME',
     subtitle: 'Here\'s what it all means...',
-    content: '⚔️ KINGDOM = Your Body\n🍎 ALLIES = Healthy Foods\n🍬 ENEMIES = Junk Foods\n🩸 HARMONY = Blood Harmony Level (70-140 is healthy)',
+    content: '⚔️ KINGDOM = Your Body\n🍎 ALLIES = Healthy Foods\n🍬 ENEMIES = Junk Foods\n💚 HARMONY = Keep the green bar balanced!',
     emoji: '🔑',
   },
   {
@@ -97,7 +97,7 @@ const CLASSIC_STEPS: OnboardingStep[] = [
   {
     title: 'OFFENCE > DEFENCE',
     subtitle: 'Protect your Harmony',
-    content: '💎 mg/dL = Vital Balance Metric\n🎯 Target: 70-140 [Harmony Range]\n🏃High sugar? Knights (Exercise) lower it!\n😴 Low energy? Feast Rations raise it steadily.',
+    content: '💎 HARMONY = Your vital balance\n🎯 Keep the bar green and centered\n🏃 High? Train Knights to lower it!\n😴 Low? Feast Rations to raise it.',
     emoji: '💡',
     foods: ['🥦', '🍎', '🐟'],  // Healthy food examples
     direction: 'up',

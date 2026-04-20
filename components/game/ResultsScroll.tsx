@@ -548,6 +548,13 @@ export const ResultsScroll: React.FC<ResultsScrollProps> = ({
                     <Text style={{ fontSize: 11, color: '#94a3b8', textAlign: 'center', fontStyle: 'italic' }}>
                       Connect your Dexcom CGM to see your real glucose alongside the game.
                     </Text>
+                    <TouchableOpacity
+                      onPress={() => cgm.connect()}
+                      style={{ backgroundColor: 'rgba(59,130,246,0.3)', paddingVertical: 8, paddingHorizontal: 16, borderRadius: 8, borderWidth: 1, borderColor: '#3b82f6', marginTop: 8, alignSelf: 'center' }}
+                      accessibilityLabel="Connect Dexcom CGM" accessibilityRole="button"
+                    >
+                      <Text style={{ color: '#93c5fd', fontSize: 11, fontWeight: 'bold' }}>📡 Connect Dexcom</Text>
+                    </TouchableOpacity>
                   </>
                 )}
               </View>
