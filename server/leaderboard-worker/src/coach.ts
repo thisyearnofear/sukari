@@ -1,5 +1,5 @@
 /**
- * Coach endpoints — LLM mission copy + constrained chat.
+ * Coach endpoints — Runware primary, OpenAI fallback, rules last resort.
  * Behaviour targets always come from known template ids (never invented dosing).
  */
 
@@ -21,12 +21,15 @@ If the user describes an emergency, set escalate true.
 Stay under 80 words for chat. For mission selection, pick ONE templateId from the allowed list and rewrite copy lightly.`;
 
 export interface CoachEnv {
+  RUNWARE_API_KEY?: string;
+  RUNWARE_MODEL?: string;
   OPENAI_API_KEY?: string;
   OPENAI_MODEL?: string;
 }
 
-interface OpenAIResult {
+interface LLMResult {
   content: string | null;
+  provider?: 'runware' | 'openai';
   error?: string;
   status?: number;
 }
@@ -35,11 +38,94 @@ function isAllowedTemplate(id: unknown): id is TemplateId {
   return typeof id === 'string' && (ALLOWED_TEMPLATES as readonly string[]).includes(id);
 }
 
+function extractSystemAndMessages(
+  messages: { role: string; content: string }[],
+): { systemPrompt: string; chatMessages: { role: string; content: string }[] } {
+  const systemParts = messages.filter((m) => m.role === 'system').map((m) => m.content);
+  const chatMessages = messages.filter((m) => m.role !== 'system');
+  // Runware requires final message to be user role
+  if (!chatMessages.length || chatMessages[chatMessages.length - 1].role !== 'user') {
+    chatMessages.push({ role: 'user', content: 'Continue.' });
+  }
+  return {
+    systemPrompt: systemParts.join('\n\n') || SYSTEM,
+    chatMessages,
+  };
+}
+
+async function callRunware(
+  env: CoachEnv,
+  messages: { role: string; content: string }[],
+  json = false,
+): Promise<LLMResult> {
+  if (!env.RUNWARE_API_KEY) {
+    return { content: null, error: 'RUNWARE_API_KEY missing on worker' };
+  }
+  const model = env.RUNWARE_MODEL || 'deepseek:v4@flash';
+  const { systemPrompt, chatMessages } = extractSystemAndMessages(messages);
+  const userContent = chatMessages.map((m) => `${m.role}: ${m.content}`).join('\n');
+  const prompt = json
+    ? `${userContent}\n\nRespond with valid JSON only (no markdown).`
+    : chatMessages[chatMessages.length - 1]?.content || userContent;
+
+  const taskUUID = crypto.randomUUID();
+  const task = {
+    taskType: 'textInference',
+    taskUUID,
+    model,
+    settings: {
+      systemPrompt: json
+        ? `${systemPrompt}\n\nYou must respond with a single valid JSON object only.`
+        : systemPrompt,
+      maxTokens: json ? 600 : 220,
+      temperature: 0.4,
+    },
+    messages: [{ role: 'user', content: prompt }],
+    includeCost: true,
+  };
+
+  try {
+    const res = await fetch('https://api.runware.ai/v1', {
+      method: 'POST',
+      headers: {
+        authorization: `Bearer ${env.RUNWARE_API_KEY}`,
+        'content-type': 'application/json',
+      },
+      body: JSON.stringify([task]),
+    });
+    const raw = await res.text();
+    if (!res.ok) {
+      let detail = raw.slice(0, 240);
+      try {
+        const parsed = JSON.parse(raw);
+        detail = parsed?.errors?.[0]?.message || parsed?.error?.message || detail;
+      } catch {
+        /* keep */
+      }
+      return { content: null, provider: 'runware', status: res.status, error: detail };
+    }
+    const data = JSON.parse(raw) as any;
+    const item = Array.isArray(data?.data) ? data.data[0] : Array.isArray(data) ? data[0] : data;
+    const text = item?.text ?? null;
+    if (!text) {
+      return {
+        content: null,
+        provider: 'runware',
+        status: res.status,
+        error: item?.error || 'Empty Runware text response',
+      };
+    }
+    return { content: text, provider: 'runware', status: res.status };
+  } catch (e: any) {
+    return { content: null, provider: 'runware', error: e?.message || 'Runware fetch failed' };
+  }
+}
+
 async function callOpenAI(
   env: CoachEnv,
   messages: { role: string; content: string }[],
   json = false,
-): Promise<OpenAIResult> {
+): Promise<LLMResult> {
   if (!env.OPENAI_API_KEY) {
     return { content: null, error: 'OPENAI_API_KEY missing on worker' };
   }
@@ -65,15 +151,53 @@ async function callOpenAI(
         const parsed = JSON.parse(raw);
         detail = parsed?.error?.message || detail;
       } catch {
-        /* keep slice */
+        /* keep */
       }
-      return { content: null, status: res.status, error: detail };
+      return { content: null, provider: 'openai', status: res.status, error: detail };
     }
     const data = JSON.parse(raw) as any;
-    return { content: data?.choices?.[0]?.message?.content ?? null, status: res.status };
+    return {
+      content: data?.choices?.[0]?.message?.content ?? null,
+      provider: 'openai',
+      status: res.status,
+    };
   } catch (e: any) {
-    return { content: null, error: e?.message || 'OpenAI fetch failed' };
+    return { content: null, provider: 'openai', error: e?.message || 'OpenAI fetch failed' };
   }
+}
+
+/** Primary: Runware → fallback: OpenAI */
+async function callLLM(
+  env: CoachEnv,
+  messages: { role: string; content: string }[],
+  json = false,
+): Promise<LLMResult> {
+  const primary = await callRunware(env, messages, json);
+  if (primary.content) return primary;
+
+  const fallback = await callOpenAI(env, messages, json);
+  if (fallback.content) {
+    return {
+      ...fallback,
+      error: primary.error
+        ? `runware_failed: ${primary.error}; used openai`
+        : fallback.error,
+    };
+  }
+
+  return {
+    content: null,
+    error: [primary.error && `runware: ${primary.error}`, fallback.error && `openai: ${fallback.error}`]
+      .filter(Boolean)
+      .join(' | '),
+    status: fallback.status ?? primary.status,
+  };
+}
+
+function stripJsonFences(text: string): string {
+  const trimmed = text.trim();
+  const fenced = trimmed.match(/^```(?:json)?\s*([\s\S]*?)\s*```$/i);
+  return fenced ? fenced[1].trim() : trimmed;
 }
 
 export async function handleCoachMission(req: Request, env: CoachEnv): Promise<Response> {
@@ -94,7 +218,7 @@ Prefer a different template than lastTemplate when possible.
 Caregiver mode should prefer caregiver_support.
 Return JSON: { "templateId": "...", "realmCopy": "...", "realWorldAction": "...", "transferHint": "...", "caregiverSupportAction": "...", "insights": ["..."] }`;
 
-  const ai = await callOpenAI(
+  const ai = await callLLM(
     env,
     [
       { role: 'system', content: SYSTEM },
@@ -109,19 +233,20 @@ Return JSON: { "templateId": "...", "realmCopy": "...", "realWorldAction": "..."
       source: 'rules',
       templateId: body.userMode === 'caregiver' ? 'caregiver_support' : 'protein_first',
       insights: ['Cloud Alchemist offline — using programme defaults.'],
-      openai_status: ai.status ?? null,
-      openai_error: ai.error ?? null,
+      provider_status: ai.status ?? null,
+      provider_error: ai.error ?? null,
     });
   }
 
   try {
-    const parsed = JSON.parse(ai.content);
+    const parsed = JSON.parse(stripJsonFences(ai.content));
     const templateId = isAllowedTemplate(parsed.templateId)
       ? parsed.templateId
       : 'protein_first';
     return Response.json({
       ok: true,
       source: 'llm',
+      provider: ai.provider,
       templateId,
       realmCopy: parsed.realmCopy,
       realWorldAction: parsed.realWorldAction,
@@ -135,6 +260,7 @@ Return JSON: { "templateId": "...", "realmCopy": "...", "realWorldAction": "..."
       source: 'rules',
       templateId: 'ally_rally',
       insights: ['Could not parse coach response — default mission applied.'],
+      provider: ai.provider,
     });
   }
 }
@@ -178,7 +304,7 @@ export async function handleCoachChat(req: Request, env: CoachEnv): Promise<Resp
   const mission = body.mission
     ? `Active mission: ${body.mission.realWorldAction || body.mission.realmCopy}`
     : 'No active mission';
-  const ai = await callOpenAI(env, [
+  const ai = await callLLM(env, [
     { role: 'system', content: SYSTEM },
     {
       role: 'user',
@@ -192,10 +318,16 @@ export async function handleCoachChat(req: Request, env: CoachEnv): Promise<Resp
       reply: body.mission?.realWorldAction
         ? `Start with today’s ask: ${body.mission.realWorldAction}`
         : 'Practice one short battle, then do one real-world habit tonight.',
-      openai_status: ai.status ?? null,
-      openai_error: ai.error ?? null,
+      provider_status: ai.status ?? null,
+      provider_error: ai.error ?? null,
     });
   }
 
-  return Response.json({ ok: true, reply: ai.content, refused: false, escalate: false });
+  return Response.json({
+    ok: true,
+    reply: ai.content,
+    refused: false,
+    escalate: false,
+    provider: ai.provider,
+  });
 }

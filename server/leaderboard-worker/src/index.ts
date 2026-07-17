@@ -6,6 +6,8 @@ export interface Env {
   DIGEST?: KVNamespace;
   ALLOWED_ORIGINS?: string;
   API_SECRET?: string;
+  RUNWARE_API_KEY?: string;
+  RUNWARE_MODEL?: string;
   OPENAI_API_KEY?: string;
   OPENAI_MODEL?: string;
 }

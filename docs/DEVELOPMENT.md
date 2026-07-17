@@ -71,9 +71,21 @@ npx wrangler deploy
 ```
 
 Live worker: `https://glucosewars-leaderboard.papaandthejimjams.workers.dev`  
-Bindings: Durable Object `LEADERBOARD`, KV `DIGEST`, secret `OPENAI_API_KEY`, var `OPENAI_MODEL=gpt-4o-mini`.
+Bindings: Durable Object `LEADERBOARD`, KV `DIGEST`.
 
-If `/coach/*` returns `source: "rules"` with `openai_status: 429`, the key is valid but the OpenAI project has no completion quota — add billing at https://platform.openai.com/account/billing.
+**LLM chain (coach):**
+1. **Runware** `textInference` (primary) — secret `RUNWARE_API_KEY`, model var `RUNWARE_MODEL` (default `deepseek:v4@flash`)
+2. **OpenAI** chat completions (fallback) — secret `OPENAI_API_KEY`, model var `OPENAI_MODEL`
+3. **Rules** — local programme templates if both providers fail
+
+```bash
+cd server/leaderboard-worker
+npx wrangler secret put RUNWARE_API_KEY
+npx wrangler secret put OPENAI_API_KEY   # optional fallback
+npx wrangler deploy
+```
+
+Successful LLM responses include `"source":"llm"` and `"provider":"runware"|"openai"`.
 
 Without a worker URL, the app still runs fully offline using local `selectMission` + local digests.
 

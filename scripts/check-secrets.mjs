@@ -17,6 +17,7 @@ const ALLOWLIST = new Set([
 
 const PATTERNS = [
   { name: 'OpenAI key', re: /\bsk-[A-Za-z0-9_-]{20,}\b/ },
+  { name: 'Runware key assignment', re: /RUNWARE_API_KEY\s*=\s*['"]?[A-Za-z0-9_-]{16,}/ },
   { name: 'GitHub token', re: /\b(ghp|gho|ghu|ghs|ghr)_[A-Za-z0-9]{20,}\b/ },
   { name: 'AWS access key', re: /\bAKIA[0-9A-Z]{16}\b/ },
   { name: 'Private key block', re: /-----BEGIN (RSA |EC |OPENSSH )?PRIVATE KEY-----/ },

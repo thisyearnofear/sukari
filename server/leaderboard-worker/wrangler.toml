@@ -19,6 +19,9 @@ id = "272db1c3055a45998b183df6cb2b0077"
 [vars]
 # Comma-separated list of allowed origins for CORS (set to your deployed web origin).
 ALLOWED_ORIGINS = "*"
+RUNWARE_MODEL = "deepseek:v4@flash"
 OPENAI_MODEL = "gpt-4o-mini"
-# OPENAI_API_KEY via: npx wrangler secret put OPENAI_API_KEY
+# Secrets:
+#   npx wrangler secret put RUNWARE_API_KEY   # primary LLM
+#   npx wrangler secret put OPENAI_API_KEY    # fallback LLM
 
