@@ -1,15 +1,24 @@
 {
-  "name": "test-tempo",
+  "name": "glucosewars",
   "main": "expo-router/entry",
   "version": "1.0.0",
   "scripts": {
     "start": "expo start",
-    "reset-project": "node ./scripts/reset-project.js",
     "android": "expo start --android",
     "ios": "expo start --ios",
     "web": "expo start --web",
-    "test": "jest --watchAll",
-    "lint": "expo lint"
+    "test": "jest --watchAll=false",
+    "test:watch": "jest --watchAll",
+    "lint": "expo lint",
+    "lint:fix": "expo lint --fix",
+    "secrets:check": "node scripts/check-secrets.mjs",
+    "typecheck": "tsc --noEmit",
+    "prepare": "husky"
+  },
+  "lint-staged": {
+    "*.{ts,tsx,js,jsx}": [
+      "eslint --fix --no-warn-ignored"
+    ]
   },
   "jest": {
     "preset": "jest-expo"
@@ -75,8 +84,10 @@
     "@types/react-test-renderer": "^18.3.0",
     "eslint": "^9.0.0",
     "eslint-config-expo": "~10.0.0",
+    "husky": "^9.1.7",
     "jest": "^29.2.1",
     "jest-expo": "~54.0.16",
+    "lint-staged": "^15.5.2",
     "react-test-renderer": "18.3.1",
     "typescript": "~5.9.2"
   },

@@ -2,49 +2,79 @@
 
 # dependencies
 node_modules/
+**/node_modules/
 
-# Expo
+# Expo / Metro
 .expo/
 dist/
 web-build/
 expo-env.d.ts
+.metro-health-check*
 
-# Native
+# Native / signing
 *.orig.*
 *.jks
 *.p8
 *.p12
 *.key
 *.mobileprovision
+*.pem
 
-# Metro
-.metro-health-check*
+# Secrets & local env (never commit)
+.env
+.env.*
+!.env.example
+*.env
+!.env.example
+.wrangler/
+.dev.vars
+**/secrets/**
+*.secret
+credentials.json
+service-account*.json
+
+# Cloudflare / worker local
+server/**/.wrangler/
+server/**/.dev.vars
 
 # Tools & IDE
 .junie/
 .orchids/
 .zenflow/
 .vscode/
+.idea/
+.cursor/hooks/local/
+*.swp
+*.swo
 
-# debug
+# debug / logs
 npm-debug.*
 yarn-debug.*
 yarn-error.*
+*.log
+logs/
 
-# macOS
+# OS
 .DS_Store
-*.pem
+Thumbs.db
 
-# local env files
-.env*.local
-
-# typescript
+# typescript / coverage / caches
 *.tsbuildinfo
+coverage/
+.turbo/
+.cache/
+.eslintcache
 
+# Test / temp
 app-example
-
 **/tempobook/dynamic/
 **/tempobook/storyboards/
-
 .zencoder
 .zenflow.env.local
+tmp/
+temp/
+
+# Local analytics / dumps
+*.sqlite
+*.sqlite3
+dump.rdb

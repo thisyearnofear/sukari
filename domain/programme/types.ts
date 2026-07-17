@@ -48,9 +48,9 @@ export interface MissionTemplate {
   transferHint: string;
   caregiverSupportAction: string;
   /** Preferred user modes (empty = all) */
-  modes?: Array<'personal' | 'caregiver' | 'curious'>;
+  modes?: ('personal' | 'caregiver' | 'curious')[];
   /** Prefer when CGM connected and trend matches */
-  signalHints?: Array<'rising' | 'falling' | 'stable' | 'high' | 'low' | 'disconnected'>;
+  signalHints?: ('rising' | 'falling' | 'stable' | 'high' | 'low' | 'disconnected')[];
   /** Battle spawn bias keys consumed by practice personalization */
   practiceBias?: {
     allyWeightBonus?: number;

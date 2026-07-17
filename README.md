@@ -35,9 +35,12 @@ Your progress as a Hero is secured by the **Beam**.
 ## 🚀 Quick Start
 
 ```bash
-npm install
+cp .env.example .env   # never commit .env
+npm install            # also installs husky pre-commit (secrets + lint)
 npx expo start
 ```
+
+Pre-commit runs a secret scan (`scripts/check-secrets.mjs`) then ESLint on staged files via lint-staged.
 
 ## 📈 Analytics (PostHog, optional)
 

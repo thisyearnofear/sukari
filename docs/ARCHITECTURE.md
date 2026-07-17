@@ -275,12 +275,16 @@ Glucose Wars is an **AI adherence operating system** for at-home metabolic progr
 
 ```
 domain/
+├── index.ts     # Public barrel export
+├── config/      # Worker + app URL helpers (single source of truth)
 ├── programme/   # ProgrammeMission, templates, selectMission, transfer, practiceBias
 ├── signals/     # SignalSnapshot from CGM or simulated profile
 ├── coach/       # Worker client + clinical scope (never dosing)
 ├── digest/      # Weekly care-team proclamation payload + client
 └── invite/      # Caregiver Support Card (distribution loop #1)
 ```
+
+Import preference: `@/domain` or `@/domain/<subdomain>`. Do not import RN/Expo UI into `domain/`.
 
 **Banned patterns**
 - No second progress store — extend `usePlayerProgress` / `PlayerProgressProvider` only

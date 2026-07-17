@@ -22,6 +22,22 @@ Create a `.env` file at the project root (copy from `.env.example`):
 cp .env.example .env
 ```
 
+**Never commit `.env` / `.env.local`.** They are gitignored. Only `.env.example` is tracked.
+
+### Git hooks (secrets + lint)
+
+On `npm install`, Husky installs a `pre-commit` hook that:
+1. Runs `scripts/check-secrets.mjs` on staged files
+2. Runs `lint-staged` (ESLint `--fix` on staged `*.{ts,tsx,js,jsx}`)
+
+```bash
+npm install                 # sets up husky via "prepare"
+npm run secrets:check       # scan staged files manually
+npm run lint                # full project lint
+```
+
+If you already committed secrets historically, rotate those keys — untracking `.env` does not remove them from git history.
+
 ### Required (WalletConnect)
 - `EXPO_PUBLIC_WALLET_CONNECT_PROJECT_ID=...`
 
@@ -85,20 +101,17 @@ Recommended Day-1 dashboards:
 
 ```
 📁 glucosewars/
-├── app/
-│   ├── _layout.tsx                 # Root layout (Providers: WebProviders, PlayerProgressProvider)
-│   ├── index.tsx                   # Main Menu screen
-│   ├── game-selection.tsx          # Tier/mode selection
-│   ├── welcome.tsx                 # Returning player flow
-│   ├── (game)/                     # Game flow route group
-│   │   ├── _layout.tsx            # GameSessionProvider (scoped to game flow)
-│   │   ├── onboarding.tsx         # Tier-specific tutorial screen
-│   │   ├── battle.tsx             # Active gameplay screen
-│   │   └── results.tsx            # End-of-game results screen
-│   └── slowmo/                     # Educational flow route group
-│       ├── index.tsx              # Slow-mo educational mode screen
-│       ├── results.tsx            # Session results screen
-│       └── stats.tsx              # Analytics dashboard screen
+├── app/                            # Expo Router screens only
+│   ├── index.tsx                   # Realm Home
+│   ├── invite/ support digest/     # Distribution surfaces
+│   ├── (game)/ challenge/ slowmo/  # Practice + UGC flows
+├── domain/                         # Adherence OS (pure TS, no UI)
+├── hooks/                          # React hooks (progress, coach, battle, CGM)
+├── components/                     # Presentational UI
+├── constants/ types/ utils/        # Config, types, helpers
+├── scripts/                        # check-secrets.mjs, tooling
+├── server/leaderboard-worker/      # Coach + digest + leaderboard API
+├── docs/                           # Architecture, KPI, UGC, launch
 ├── context/
 │   ├── PlayerProgressContext.tsx   # Global progress state (Single source of truth)
 │   ├── GameSessionContext.tsx      # Scoped battle/health state
@@ -106,7 +119,7 @@ Recommended Day-1 dashboards:
 │   └── Web3Context.tsx            # Web3 wallet integration
 ├── components/
 │   ├── game/                      # Pure UI components
-│   │   ├── MainMenu.tsx           # Uses: Beam SDK, animations, progress context
+│   │   ├── MainMenu.tsx           # Realm Home (mission-first)
 │   │   ├── BattleScreen.tsx       # Uses: COLORS, keyboard listeners, responsive layout
 │   │   ├── ResultsScroll.tsx      # Uses: COLORS, useAccessibility
 │   │   ├── Onboarding.tsx         # Tutorial UI with mode-specific steps

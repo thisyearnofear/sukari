@@ -1,0 +1,8 @@
+#!/usr/bin/env sh
+set -e
+
+# 1) Block secrets in staged files
+node scripts/check-secrets.mjs
+
+# 2) Lint / format staged source
+npx lint-staged
