@@ -140,6 +140,14 @@ export const MainMenu: React.FC<MainMenuProps> = ({ onStartGame, onSelectGame, o
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [showUserModeSelector, cgm.connection.isConnected, progress.userMode]);
 
+  // Keep signals fresh for mission selection (non-blocking)
+  useEffect(() => {
+    if (cgm.connection.isConnected) {
+      cgm.syncReadings(180).catch(() => undefined);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [cgm.connection.isConnected]);
+
   useEffect(() => {
     if (showUserModeSelector) {
       track('user_mode_selector_shown', { privacy_mode: progress.privacyMode });

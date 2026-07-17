@@ -1,4 +1,5 @@
 import { Platform } from 'react-native';
+import { getWorkerBaseUrl } from '@/domain/config/workerUrl';
 import { ChallengeScoreEntry } from '@/types/challenge';
 
 export interface SubmitChallengeScoreInput {
@@ -18,7 +19,7 @@ export interface LeaderboardEntry {
   createdAt?: number;
 }
 
-const API_URL = process.env.EXPO_PUBLIC_LEADERBOARD_API_URL;
+const API_URL = getWorkerBaseUrl();
 
 export function isGlobalLeaderboardEnabled() {
   return !!API_URL && Platform.OS === 'web';

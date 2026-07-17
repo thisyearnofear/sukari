@@ -1,3 +1,4 @@
+import { getAppBaseUrl } from '@/domain/config/workerUrl';
 import type { ProgrammeMission } from '@/domain/programme/types';
 
 export interface SupportInvitePayload {
@@ -30,8 +31,7 @@ export function supportInviteParams(payload: SupportInvitePayload): Record<strin
 }
 
 export function supportShareMessage(payload: SupportInvitePayload, baseUrl?: string): string {
-  const link = baseUrl
-    ? `${baseUrl.replace(/\/$/, '')}/invite/support?templateId=${encodeURIComponent(payload.templateId)}&invite=${encodeURIComponent(payload.inviteCode)}`
-    : `glucosewars://invite/support?templateId=${encodeURIComponent(payload.templateId)}`;
+  const origin = (baseUrl || getAppBaseUrl()).replace(/\/$/, '');
+  const link = `${origin}/invite/support?templateId=${encodeURIComponent(payload.templateId)}&invite=${encodeURIComponent(payload.inviteCode)}`;
   return `Tonight’s support ask from my Glucose Wars Realm:\n${payload.supportAction}\n\nJoin as Guardian: ${link}`;
 }

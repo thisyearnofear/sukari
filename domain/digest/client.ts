@@ -1,10 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { getWorkerBaseUrl } from '@/domain/config/workerUrl';
 import type { DigestCreateResponse, DigestGetResponse, WeeklyDigestPayload } from './types';
-
-const WORKER_URL =
-  process.env.EXPO_PUBLIC_LEADERBOARD_WORKER_URL ||
-  process.env.EXPO_PUBLIC_WORKER_URL ||
-  '';
 
 const LOCAL_DIGEST_KEY = 'glucoseWars.lastDigest';
 
@@ -19,7 +15,8 @@ async function persistLocal(token: string, digest: WeeklyDigestPayload) {
 export async function publishWeeklyDigest(
   digest: WeeklyDigestPayload,
 ): Promise<DigestCreateResponse | null> {
-  if (!WORKER_URL) {
+  const base = getWorkerBaseUrl();
+  if (!base) {
     const token = `local-${digest.weekKey}-${digest.createdAt}`;
     await persistLocal(token, digest);
     return {
@@ -30,7 +27,7 @@ export async function publishWeeklyDigest(
     };
   }
   try {
-    const res = await fetch(`${WORKER_URL.replace(/\/$/, '')}/digest/weekly`, {
+    const res = await fetch(`${base}/digest/weekly`, {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
       body: JSON.stringify({ digest }),
@@ -47,11 +44,10 @@ export async function publishWeeklyDigest(
 }
 
 export async function fetchWeeklyDigest(token: string): Promise<DigestGetResponse | null> {
-  if (!WORKER_URL) return null;
+  const base = getWorkerBaseUrl();
+  if (!base) return null;
   try {
-    const res = await fetch(
-      `${WORKER_URL.replace(/\/$/, '')}/digest/${encodeURIComponent(token)}`,
-    );
+    const res = await fetch(`${base}/digest/${encodeURIComponent(token)}`);
     if (!res.ok) return null;
     return (await res.json()) as DigestGetResponse;
   } catch {

@@ -1,11 +1,7 @@
 import type { AdherenceWeek, ProgrammeMission } from '@/domain/programme/types';
 import type { SignalSnapshot } from '@/domain/signals/snapshot';
+import { getWorkerBaseUrl } from '@/domain/config/workerUrl';
 import { UserMode } from '@/types/game';
-
-const WORKER_URL =
-  process.env.EXPO_PUBLIC_LEADERBOARD_WORKER_URL ||
-  process.env.EXPO_PUBLIC_WORKER_URL ||
-  '';
 
 export interface CoachMissionRequest {
   userMode: UserMode | null;
@@ -42,11 +38,12 @@ export interface CoachChatResponse {
 }
 
 async function postJson<T>(path: string, body: unknown, timeoutMs = 4000): Promise<T | null> {
-  if (!WORKER_URL) return null;
+  const base = getWorkerBaseUrl();
+  if (!base) return null;
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeoutMs);
   try {
-    const res = await fetch(`${WORKER_URL.replace(/\/$/, '')}${path}`, {
+    const res = await fetch(`${base}${path}`, {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
       body: JSON.stringify(body),

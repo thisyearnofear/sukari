@@ -1,6 +1,8 @@
 # GlucoseWars: Defend the Realm
 
-GlucoseWars is a ubiquitous, immersive kingdom-defense game that turns health management into an epic quest. Designed for all ages, it uses high-speed "Fruit Ninja" style mechanics to teach the laws of metabolic Harmony through play.
+GlucoseWars is an **Adherence OS** for at-home metabolic programmes — one daily mission, embodied practice (swipe battles / Slow Mo), caregiver invites, and a weekly care-team digest. The kingdom story makes long programmes stick; AI coaches habits (never dosing).
+
+It remains a ubiquitous, immersive kingdom-defense game that turns health management into an epic quest, using high-speed "Fruit Ninja" style mechanics to teach the laws of metabolic Harmony through play.
 
 ## 🏰 The Premise
 

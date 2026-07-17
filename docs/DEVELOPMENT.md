@@ -34,6 +34,35 @@ This repo includes a lightweight analytics wrapper at `utils/analytics.ts`.
 - `EXPO_PUBLIC_POSTHOG_KEY=...` (PostHog project API key)
 - `EXPO_PUBLIC_POSTHOG_HOST=https://app.posthog.com` (optional; defaults to PostHog Cloud)
 
+### Adherence OS worker (coach + digest + leaderboard)
+The Cloudflare worker under `server/leaderboard-worker` serves:
+- `POST /score` + `GET /leaderboard` (UGC challenges)
+- `POST /coach/mission` + `POST /coach/chat` (LLM with rules fallback)
+- `POST /digest/weekly` + `GET /digest/:token` (care-team proclamation)
+
+Client env (any one works; resolved by `domain/config/workerUrl.ts`):
+- `EXPO_PUBLIC_LEADERBOARD_WORKER_URL=https://glucosewars-leaderboard.<account>.workers.dev`
+- or `EXPO_PUBLIC_LEADERBOARD_API_URL=...` (legacy alias)
+- `EXPO_PUBLIC_APP_URL=https://your-deployed-web-origin` (caregiver invite links)
+
+Deploy:
+```bash
+cd server/leaderboard-worker
+npm install
+npx wrangler login
+npx wrangler secret put OPENAI_API_KEY
+npx wrangler deploy
+```
+
+Without a worker URL, the app still runs fully offline using local `selectMission` + local digests.
+
+### Day-1 Adherence loop verification
+1. Pick a role → see **Today’s Mission** on Realm Home  
+2. **Practice Mission** → results **Transfer** beat → **I Did It**  
+3. **Share with caregiver** → open `/invite/support` as Guardian  
+4. Settings → **Weekly care-team proclamation** → `/digest/[token]`  
+5. (Optional) Alchemist chat with worker URL + OpenAI secret set
+
 ### Day-1 Analytics Verification (recommended)
 After setting `EXPO_PUBLIC_POSTHOG_KEY`, run the web app and click through:
 main menu → onboarding → battle → results.
