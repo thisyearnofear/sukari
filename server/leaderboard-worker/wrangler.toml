@@ -1,0 +1,24 @@
+name = "glucosewars-leaderboard"
+main = "src/index.ts"
+compatibility_date = "2026-04-18"
+
+# Durable Object for per-challenge leaderboards
+durable_objects.bindings = [
+  { name = "LEADERBOARD", class_name = "LeaderboardDO" }
+]
+
+migrations = [
+  { tag = "v1", new_classes = ["LeaderboardDO"] }
+]
+
+[vars]
+# Comma-separated list of allowed origins for CORS (set to your deployed web origin).
+# Example: "https://glucosewars.example,https://preview.glucosewars.example"
+ALLOWED_ORIGINS = "*"
+# OPENAI_MODEL = "gpt-4o-mini"
+# Set OPENAI_API_KEY via `wrangler secret put OPENAI_API_KEY`
+# Optional KV for digests (falls back to in-memory if unbound):
+# [[kv_namespaces]]
+# binding = "DIGEST"
+# id = "<create with wrangler kv namespace create DIGEST>"
+

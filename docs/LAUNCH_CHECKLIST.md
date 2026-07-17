@@ -5,6 +5,7 @@
 - [x] **Core Principles Audit**: Verify all components follow ENHANCEMENT FIRST, CONSOLIDATION, and DRY.
 - [x] **Performance Check**: Verify 60 FPS on both Mobile (iOS/Android) and Web environments.
 - [x] **Asset Optimization**: Ensure all SVGs and images are optimized for fast loading.
+- [ ] **Analytics (Web)**: Set `EXPO_PUBLIC_POSTHOG_KEY` and verify the core funnel events are flowing (see `docs/DEVELOPMENT.md`).
 
 #### 🎮 Gameplay & Narrative
 - [x] **Kingdom Lore Alignment**: Verify all clinical terms (Stability, Energy, etc.) are replaced with Kingdom Lore (Harmony, Vigor) for immersion.

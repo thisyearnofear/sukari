@@ -53,6 +53,12 @@ function redactForPrivacy(props: Properties, privacyMode?: string): Properties {
     'recentReadings',
     'recent_readings',
     'metrics_raw',
+    'latestMgDl',
+    'latest_mg_dl',
+    'readings',
+    'signal_raw',
+    'timeInRangeProxy',
+    'time_in_range',
   ]);
 
   const filtered: Properties = {};

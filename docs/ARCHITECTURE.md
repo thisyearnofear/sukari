@@ -269,37 +269,65 @@ if (tierConfig.showGlucose) { /* ... */ }
 2. Fast (no network latency)
 3. Progressive enhancement to Scroll
 
+## Adherence OS Domain Map
+
+Glucose Wars is an **AI adherence operating system** for at-home metabolic programmes. The game is the practice surface; programme missions are the product spine.
+
+```
+domain/
+├── programme/   # ProgrammeMission, templates, selectMission, transfer, practiceBias
+├── signals/     # SignalSnapshot from CGM or simulated profile
+├── coach/       # Worker client + clinical scope (never dosing)
+├── digest/      # Weekly care-team proclamation payload + client
+└── invite/      # Caregiver Support Card (distribution loop #1)
+```
+
+**Banned patterns**
+- No second progress store — extend `usePlayerProgress` / `PlayerProgressProvider` only
+- Never block battle start on network/LLM — local `selectMission` is always the fallback
+- Beam / Web3 / Treasury are optional persistence — never primary home CTAs
+- Battle + Slow Mo are the only practice surfaces; do not add modes before day/programme loops work
+
+**Delete / demote list (Phase 0 audit)**
+- Demote: Beam Treasury hero button, wallet/social login above the fold → Settings only
+- Demote: multi-quest “Royal Decrees” → one `ProgrammeMission` / day
+- Keep code, bury UX: VRF / Scroll contract utils until unused paths are grepped clean
+- Fold Slow Mo insight builders toward `domain/coach` over time (do not rewrite Slow Mo in Phase 0)
+
 ## 🛠️ File Structure
 
 ```
 📁 Project Structure
 ├── app/
 │   ├── _layout.tsx              # Root layout (WebProviders, PlayerProgressProvider)
-│   ├── index.tsx                # Main Menu screen
-│   ├── game-selection.tsx       # Tier/mode selection
+│   ├── index.tsx                # Realm Home (Main Menu)
+│   ├── game-selection.tsx       # Tier/mode selection (secondary)
 │   ├── welcome.tsx              # Returning player flow
+│   ├── invite/support.tsx       # Caregiver invite landing
+│   ├── digest/[token].tsx       # Weekly care-team digest view
 │   ├── (game)/                  # Game flow route group
 │   │   ├── _layout.tsx          # Scoped GameSessionProvider
 │   │   ├── onboarding.tsx       # Tier-specific tutorial screen
 │   │   ├── battle.tsx           # Active gameplay screen
-│   │   └── results.tsx          # End-of-game results screen
-│   └── slowmo/                  # Educational flow route group
-│       ├── index.tsx            # Slow-mo mode screen
-│       ├── results.tsx          # Session results screen
-│       └── stats.tsx            # Analytics dashboard screen
+│   │   └── results.tsx          # End-of-game + transfer beat
+│   ├── challenge/               # UGC growth (after adherence core)
+│   └── slowmo/                  # Educational practice flow
+├── domain/                      # Pure TS adherence OS logic (no React)
 ├── context/
 │   ├── PlayerProgressContext.tsx # Global progress (Single source of truth)
 │   ├── GameSessionContext.tsx    # Scoped game session state
-│   ├── BeamContext.tsx           # Beam SDK integration
-│   └── Web3Context.tsx          # Web3 wallet integration
+│   ├── BeamContext.tsx           # Optional Beam persistence
+│   └── Web3Context.tsx          # Optional Web3 wallet
 ├── hooks/
-│   ├── usePlayerProgress.ts      # Hydration & persistence logic
+│   ├── usePlayerProgress.ts      # Hydration & persistence + missions
+│   ├── useCoach.ts               # Coach API with local fallback
 │   ├── useBattleGame.ts          # Core game engine
 │   ├── useHealthProfile.ts       # Glucose simulation logic
 │   └── [other hooks]
-├── components/game/              # Pure UI components
+├── components/game/              # Pure UI components (Realm Home, transfer, etc.)
 ├── constants/                    # Configurations & design tokens
 ├── types/                        # TypeScript definitions
+├── server/leaderboard-worker/    # Leaderboard + /coach/* + /digest/*
 └── utils/                        # Utilities & helpers
 ```
 

@@ -37,13 +37,15 @@ export default function BattleScreenRoute() {
     incrementGamesPlayed,
     updateBestScore,
     unlockNextTier,
-    trackQuestProgress,
+    missionToast,
     questCompletionToast,
     promotionToast,
     loreToast,
     hasMechanic,
     mechanicDiscoveryToast,
   } = usePlayerProgressContext();
+
+  const toast = missionToast || questCompletionToast;
 
   const hasTransitionedToResults = useRef(false);
   const hasTrackedBattleStart = useRef(false);
@@ -117,19 +119,8 @@ export default function BattleScreenRoute() {
   const handleSwipe = useCallback(
     (foodId: string, direction: SwipeDirection, action: SwipeAction) => {
       baseHandleSwipe(foodId, direction, action);
-
-      const food = gameState.foods.find(f => f.id === foodId);
-      if (!food) return;
-
-      if (action === 'save' && (food.faction === 'ally' || food.isContextuallyGood)) {
-        trackQuestProgress('save_healthy');
-      } else if (action === 'reject' && (food.faction === 'enemy' || !food.isContextuallyGood)) {
-        trackQuestProgress('reject_enemy');
-      } else if (action === 'share' && (food.faction === 'ally' || food.isContextuallyGood)) {
-        trackQuestProgress('share_ally');
-      }
     },
-    [baseHandleSwipe, gameState.foods, trackQuestProgress],
+    [baseHandleSwipe],
   );
 
   const handleToggleControlMode = useCallback(() => {
@@ -169,10 +160,10 @@ export default function BattleScreenRoute() {
           }}
         />
       )}
-      {questCompletionToast && (
+      {toast && (
         <View style={{ position: 'absolute', top: 100, left: 20, right: 20, zIndex: 200, backgroundColor: 'rgba(251,191,36,0.95)', padding: 12, borderRadius: 12, alignItems: 'center' }}>
-          <Text style={{ color: '#0a0a12', fontWeight: 'bold', fontSize: 13 }}>🎉 Quest Complete: {questCompletionToast.title}</Text>
-          <Text style={{ color: '#0a0a12', fontSize: 11 }}>+{questCompletionToast.reward} Renown</Text>
+          <Text style={{ color: '#0a0a12', fontWeight: 'bold', fontSize: 13 }}>Mission: {toast.title}</Text>
+          <Text style={{ color: '#0a0a12', fontSize: 11 }}>+{toast.reward} Renown</Text>
         </View>
       )}
       {promotionToast && (

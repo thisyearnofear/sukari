@@ -37,6 +37,17 @@ npm install
 npx expo start
 ```
 
+## 📈 Analytics (PostHog, optional)
+
+This project includes a lightweight analytics wrapper (web-only for now).
+
+1. Copy `.env.example` → `.env`
+2. Set:
+   - `EXPO_PUBLIC_POSTHOG_KEY=...`
+   - (optional) `EXPO_PUBLIC_POSTHOG_HOST=https://app.posthog.com`
+
+Core funnel events are tracked across main menu → onboarding → battle → results.
+
 ## 🎯 Core Innovation: Tiered Progression
 
 ### Before (Modal Choice Architecture)

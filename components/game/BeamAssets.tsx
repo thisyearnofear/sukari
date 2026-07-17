@@ -3,6 +3,7 @@ import { View, Text, TouchableOpacity, ScrollView, ActivityIndicator } from 'rea
 import { useBeam } from '@/context/BeamContext';
 import { usePlayerProgressContext } from '@/context/PlayerProgressContext';
 import { Ionicons } from '@expo/vector-icons';
+import { track } from '@/utils/analytics';
 
 interface BeamAchievement {
   id: string;
@@ -83,6 +84,11 @@ export const BeamAssets: React.FC<{ onClose: () => void }> = ({ onClose }) => {
   const [achievements, setAchievements] = useState<BeamAchievement[]>(BEAM_ACHIEVEMENTS);
 
   useEffect(() => {
+    track('treasury_opened', { privacy_mode: progress.privacyMode });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  useEffect(() => {
     // Sync with player progress and Beam assets
     const syncAssets = async () => {
       if (!fetchAchievements) return;
@@ -123,11 +129,19 @@ export const BeamAssets: React.FC<{ onClose: () => void }> = ({ onClose }) => {
   }, [fetchAchievements, progress.discoveredLoreIds.length, progress.gamesPlayed, progress.kingdomRenown]);
 
   const handleMint = async (id: string) => {
-    const txHash = await mintAchievement(id);
-    if (txHash) {
-      setAchievements(prev => prev.map(ach => 
-        ach.id === id ? { ...ach, isMinted: true, txHash } : ach
-      ));
+    try {
+      track('mint_clicked', { achievement_id: id, privacy_mode: progress.privacyMode });
+      const txHash = await mintAchievement(id);
+      if (txHash) {
+        track('mint_success', { achievement_id: id, privacy_mode: progress.privacyMode });
+        setAchievements(prev =>
+          prev.map(ach => (ach.id === id ? { ...ach, isMinted: true, txHash } : ach)),
+        );
+      } else {
+        track('mint_error', { achievement_id: id, privacy_mode: progress.privacyMode });
+      }
+    } catch {
+      track('mint_error', { achievement_id: id, privacy_mode: progress.privacyMode });
     }
   };
 

@@ -1,7 +1,13 @@
+import { handleCoachChat, handleCoachMission } from './coach';
+import { handleDigestCreate, handleDigestGet } from './digest';
+
 export interface Env {
   LEADERBOARD: DurableObjectNamespace;
+  DIGEST?: KVNamespace;
   ALLOWED_ORIGINS?: string;
   API_SECRET?: string;
+  OPENAI_API_KEY?: string;
+  OPENAI_MODEL?: string;
 }
 
 type ScoreResult = 'victory' | 'defeat';
@@ -191,6 +197,25 @@ export default {
       const id = env.LEADERBOARD.idFromName(challengeId!);
       const stub = env.LEADERBOARD.get(id);
       const res = await stub.fetch(`https://do/leaderboard?limit=${encodeURIComponent(limit)}`, { method: "GET" });
+      return withCors(req, env, res);
+    }
+
+    // Adherence OS: coach + weekly digest
+    if (req.method === "POST" && url.pathname === "/coach/mission") {
+      const res = await handleCoachMission(req, env);
+      return withCors(req, env, res);
+    }
+    if (req.method === "POST" && url.pathname === "/coach/chat") {
+      const res = await handleCoachChat(req, env);
+      return withCors(req, env, res);
+    }
+    if (req.method === "POST" && url.pathname === "/digest/weekly") {
+      const res = await handleDigestCreate(req, env);
+      return withCors(req, env, res);
+    }
+    if (req.method === "GET" && url.pathname.startsWith("/digest/")) {
+      const token = url.pathname.replace("/digest/", "");
+      const res = await handleDigestGet(token, env);
       return withCors(req, env, res);
     }
 

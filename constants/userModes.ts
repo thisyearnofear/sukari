@@ -137,11 +137,17 @@ export function getUserModeConfig(mode: UserMode | null): UserModeConfig | null 
 
 export function getReflectionMessage(
   userMode: UserMode | null,
-  trigger: ReflectionMessage['trigger']
+  trigger: ReflectionMessage['trigger'],
+  missionHint?: string | null,
 ): ReflectionMessage | null {
   if (!userMode) return null;
   const messages = MODE_REFLECTIONS[userMode];
   const matching = messages.filter(m => m.trigger === trigger);
   if (matching.length === 0) return null;
-  return matching[Math.floor(Math.random() * matching.length)];
+  const base = matching[Math.floor(Math.random() * matching.length)];
+  if (!missionHint) return base;
+  return {
+    ...base,
+    text: `${base.text} Today’s mission: ${missionHint}`,
+  };
 }

@@ -125,7 +125,7 @@ export const useBattleGame = (
   const beamContext = useBeam();
   const playerAccount = beamContext?.playerAccount;
   const reportGameResult = beamContext?.reportGameResult;
-  const { discoverLore } = usePlayerProgressContext();
+  const { discoverLore, progress } = usePlayerProgressContext();
   const [gameState, setGameState] = useState<GameState>(initialGameState);
 
   const timerRef = useRef<number | null>(null);
@@ -427,7 +427,11 @@ export const useBattleGame = (
 
             // Show reflection message for good food consumed (50% chance, not every time)
             if (userMode && Math.random() < 0.5) {
-              const reflection = getReflectionMessage(userMode, 'ally_consumed');
+              const reflection = getReflectionMessage(
+                userMode,
+                'ally_consumed',
+                progress.activeMission?.realWorldAction,
+              );
               if (reflection) {
                 showAnnouncement(reflection.text, 'reflection', reflection.science);
               }
@@ -471,7 +475,11 @@ export const useBattleGame = (
 
             // Show reflection message for enemy rejected (50% chance)
             if (userMode && Math.random() < 0.5) {
-              const reflection = getReflectionMessage(userMode, 'enemy_rejected');
+              const reflection = getReflectionMessage(
+                userMode,
+                'enemy_rejected',
+                progress.activeMission?.realWorldAction,
+              );
               if (reflection) {
                 showAnnouncement(reflection.text, 'reflection', reflection.science);
               }
@@ -543,7 +551,11 @@ export const useBattleGame = (
 
       // Show optimal swipe reflection (rare: 20% chance to avoid spam)
       if (isOptimalSwipe && userMode && Math.random() < 0.2) {
-        const reflection = getReflectionMessage(userMode, 'optimal_swipe');
+        const reflection = getReflectionMessage(
+          userMode,
+          'optimal_swipe',
+          progress.activeMission?.realWorldAction,
+        );
         if (reflection) {
           showAnnouncement(reflection.text, 'reflection', reflection.science);
         }

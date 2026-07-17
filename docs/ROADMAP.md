@@ -198,6 +198,15 @@ async function generateFairPlotTwist(): PlotTwist {
 | Feature | Complexity | User Value | Dev Time | Priority |
 |---------|------------|------------|----------|----------|
 | Privacy Toggle | Low | Medium | 1-2w | ✅ High |
+
+---
+
+## 🧩 UGC‑Lite (Seeded Challenges) — Proposal
+
+To drive engagement + virality on web before a full marketplace/editor, implement **UGC‑lite challenges**:
+Create challenge → share link → friend plays instantly → leaderboard → remix.
+
+Spec: `docs/UGC_LITE_SPEC.md`
 | VRF Plot Twists | Low | High | 1-2w | ✅ High |
 | Selective Disclosure | Medium | High | 3-4w | ✅ High |
 | Fairness Dashboard | Medium | Medium | 3-4w | Medium |

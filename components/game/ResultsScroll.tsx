@@ -15,6 +15,9 @@ import { useCGMConnection } from '@/hooks/useCGMConnection';
 import { useBeam } from '@/context/BeamContext';
 import { ShareCard } from './ShareCard';
 import { usePlayerProgressContext } from '@/context/PlayerProgressContext';
+import { buildTransfer } from '@/domain/programme';
+import { buildSupportInvite, supportShareMessage } from '@/domain/invite';
+import { track } from '@/utils/analytics';
 
 // Kingdom Lore and Wisdom
 // MOVED TO constants/gameConfig.ts
@@ -98,13 +101,27 @@ export const ResultsScroll: React.FC<ResultsScrollProps> = ({
   const [showShareCard, setShowShareCard] = useState(false);
   const [randomLore] = useState(() => KINGDOM_LORE[Math.floor(Math.random() * KINGDOM_LORE.length)]);
   const { evaluateAchievements } = useScrollIntegration();
-  const { getSlowMoAnalytics, progress } = usePlayerProgressContext();
+  const {
+    getSlowMoAnalytics,
+    progress,
+    markMissionPracticed,
+    completeActiveMission,
+  } = usePlayerProgressContext();
   const beamContext = useBeam();
   const cgm = useCGMConnection();
   const playerAnalytics = getSlowMoAnalytics();
   const isFirstVictory = isVictory && progress.gamesPlayed <= 1;
+  const transfer = buildTransfer(progress.activeMission, {
+    result,
+    correctSwipes,
+    incorrectSwipes,
+    score,
+  });
+  const [missionMarked, setMissionMarked] = useState(
+    progress.activeMission?.status === 'completed',
+  );
 
-  // Evaluate achievements when game ends
+  // Evaluate achievements when game ends + mark mission practiced (transfer beat)
   useEffect(() => {
     if (gameState && isVictory) {
       const unlockedIds = evaluateAchievements(gameState);
@@ -112,11 +129,19 @@ export const ResultsScroll: React.FC<ResultsScrollProps> = ({
         setShowScrollPanel(true);
       }
     }
-    // Sync CGM data if connected
     if (cgm.connection.isConnected) {
-      cgm.syncReadings(10); // Last 10 minutes (covers game duration)
+      cgm.syncReadings(10);
     }
-  }, [gameState, isVictory, evaluateAchievements, cgm]);
+    if (transfer?.practiced && progress.activeMission?.status === 'assigned') {
+      markMissionPracticed(transfer.mission);
+      track('mission_transfer_shown', {
+        template_id: transfer.mission.templateId,
+        result,
+        privacy_mode: progress.privacyMode,
+      });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   useEffect(() => {
     // Scroll unfurl animation
@@ -286,7 +311,16 @@ export const ResultsScroll: React.FC<ResultsScrollProps> = ({
       
       {showShareCard && (
         <View style={{ alignItems: 'center', marginTop: 12, padding: 8, backgroundColor: 'rgba(0,0,0,0.5)', borderRadius: 12 }}>
-          <ShareCard score={score} grade={gradeInfo.grade} accuracy={accuracy} result={result} tier={tier} comboMax={gameState?.comboCount} />
+          <ShareCard
+            score={score}
+            grade={gradeInfo.grade}
+            accuracy={accuracy}
+            result={result}
+            tier={tier}
+            comboMax={gameState?.comboCount}
+            missionLabel={progress.activeMission?.realmCopy}
+            supportAction={progress.activeMission?.caregiverSupportAction}
+          />
           <Text style={{ color: '#6b7280', fontSize: 9, marginTop: 6 }}>📸 Screenshot this card to share!</Text>
           <TouchableOpacity onPress={() => setShowShareCard(false)} style={{ marginTop: 4 }}>
             <Text style={{ color: '#6b7280', fontSize: 10 }}>Close</Text>
@@ -372,7 +406,80 @@ export const ResultsScroll: React.FC<ResultsScrollProps> = ({
               <Text style={{ fontSize: 14, fontWeight: 'bold', color: gradeInfo.color }}>{gradeInfo.title}</Text>
             </View>
 
-            {/* Alchemist Observation - NEW */}
+            {/* Transfer beat — practice → real-world mission */}
+            {transfer && (
+              <View style={{
+                backgroundColor: 'rgba(34, 197, 94, 0.12)',
+                padding: 12,
+                borderRadius: 12,
+                borderWidth: 1,
+                borderColor: 'rgba(34, 197, 94, 0.45)',
+                marginBottom: 10,
+              }}>
+                <Text style={{ color: '#86efac', fontSize: 10, fontWeight: 'bold', letterSpacing: 1, marginBottom: 4 }}>
+                  {transfer.headline.toUpperCase()}
+                </Text>
+                <Text style={{ color: '#e5e7eb', fontSize: 12, lineHeight: 17, marginBottom: 8 }}>
+                  {transfer.body}
+                </Text>
+                <Text style={{ color: '#fde68a', fontSize: 12, fontWeight: '600', marginBottom: 8 }}>
+                  → {transfer.realWorldAction}
+                </Text>
+                <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+                  {!missionMarked && progress.activeMission?.status !== 'completed' && (
+                    <TouchableOpacity
+                      onPress={() => {
+                        completeActiveMission();
+                        setMissionMarked(true);
+                        track('mission_marked_done', {
+                          from: 'results',
+                          template_id: transfer.mission.templateId,
+                          privacy_mode: progress.privacyMode,
+                        });
+                      }}
+                      style={{
+                        backgroundColor: '#16a34a',
+                        paddingHorizontal: 12,
+                        paddingVertical: 8,
+                        borderRadius: 10,
+                      }}
+                      accessibilityRole="button"
+                      accessibilityLabel="Mark real-world mission done"
+                    >
+                      <Text style={{ color: '#fff', fontWeight: 'bold', fontSize: 11 }}>I DID IT</Text>
+                    </TouchableOpacity>
+                  )}
+                  <TouchableOpacity
+                    onPress={async () => {
+                      const invite = buildSupportInvite(transfer.mission);
+                      const msg = supportShareMessage(invite);
+                      track('caregiver_invite_shared', {
+                        template_id: invite.templateId,
+                        privacy_mode: progress.privacyMode,
+                      });
+                      await Share.share({ message: msg });
+                    }}
+                    style={{
+                      backgroundColor: 'rgba(59, 130, 246, 0.25)',
+                      borderWidth: 1,
+                      borderColor: '#3b82f6',
+                      paddingHorizontal: 12,
+                      paddingVertical: 8,
+                      borderRadius: 10,
+                    }}
+                    accessibilityRole="button"
+                    accessibilityLabel="Share support ask with caregiver"
+                  >
+                    <Text style={{ color: '#93c5fd', fontWeight: 'bold', fontSize: 11 }}>SHARE WITH CAREGIVER</Text>
+                  </TouchableOpacity>
+                </View>
+                {missionMarked || progress.activeMission?.status === 'completed' ? (
+                  <Text style={{ color: '#86efac', fontSize: 11, marginTop: 8 }}>Mission marked complete. Realm steadied.</Text>
+                ) : null}
+              </View>
+            )}
+
+            {/* Alchemist Observation */}
             {observation && (
               <View style={{ 
                 backgroundColor: 'rgba(59, 130, 246, 0.1)', 

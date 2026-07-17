@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { View, Text, TouchableOpacity, Animated, Platform, ScrollView, Modal, useWindowDimensions } from 'react-native';
+import { View, Text, TouchableOpacity, Animated, Platform, ScrollView, Modal, useWindowDimensions, TextInput, Share } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { ControlMode, UserMode } from '@/types/game';
@@ -19,6 +19,10 @@ import { BeamAssets } from '@/components/game/BeamAssets';
 import { track } from '@/utils/analytics';
 import { useCGMConnection } from '@/hooks/useCGMConnection';
 import { MedicalDisclaimer } from '@/components/MedicalDisclaimer';
+import { useCoach } from '@/hooks/useCoach';
+import { buildSignalSnapshot } from '@/domain/signals';
+import { buildLocalDigest, publishWeeklyDigest } from '@/domain/digest';
+import { buildSupportInvite, supportShareMessage } from '@/domain/invite';
 
 const maxWidth = 400;
 
@@ -90,7 +94,17 @@ export const MainMenu: React.FC<MainMenuProps> = ({ onStartGame, onSelectGame, o
   const [showTutorialSettings, setShowTutorialSettings] = useState(false);
   const pulseAnim = useRef(new Animated.Value(1)).current;
   const glowAnim = useRef(new Animated.Value(0)).current;
-  const { progress, setUserMode, setPrivacyMode, updatePrivacySettings, setSkipOnboarding, getKingdomTitle, discoverLore } = usePlayerProgressContext();
+  const {
+    progress,
+    setUserMode,
+    setPrivacyMode,
+    updatePrivacySettings,
+    setSkipOnboarding,
+    getKingdomTitle,
+    completeActiveMission,
+    setDigestMeta,
+    ensureTodayMission,
+  } = usePlayerProgressContext();
   /* eslint-enable @typescript-eslint/no-unused-vars */
   const kingdomTitle = getKingdomTitle();
   const [showUserModeSelector, setShowUserModeSelector] = useState(userModeSelected === false);
@@ -100,13 +114,31 @@ export const MainMenu: React.FC<MainMenuProps> = ({ onStartGame, onSelectGame, o
   const [showTreasury, setShowTreasury] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [showCGMDisclaimer, setShowCGMDisclaimer] = useState(false);
+  const [showCoach, setShowCoach] = useState(false);
+  const [coachInput, setCoachInput] = useState('');
   const cgm = useCGMConnection();
+  const coach = useCoach();
   const { isConnected, address, connectWallet, disconnectWallet } = useWeb3();
   const beamContext = useBeam();
   const playerAccount = beamContext?.playerAccount;
   const showSyncFeedback = beamContext?.showSyncFeedback;
   const [showWelcome, setShowWelcome] = useState(false);
   const welcomeAnim = useRef(new Animated.Value(-100)).current;
+
+  const signalSnapshot = buildSignalSnapshot({
+    connected: cgm.connection.isConnected,
+    provider: cgm.connection.provider,
+    readings: cgm.readings,
+    latestReading: cgm.latestReading,
+    privacyMode: progress.privacyMode,
+  });
+
+  useEffect(() => {
+    if (!showUserModeSelector) {
+      ensureTodayMission(signalSnapshot);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [showUserModeSelector, cgm.connection.isConnected, progress.userMode]);
 
   useEffect(() => {
     if (showUserModeSelector) {
@@ -347,12 +379,12 @@ export const MainMenu: React.FC<MainMenuProps> = ({ onStartGame, onSelectGame, o
           </View>
         </View>
         <TouchableOpacity 
-          onPress={() => setShowTreasury(true)}
-          accessibilityLabel="Open Royal Treasury"
+          onPress={() => setShowSettings(true)}
+          accessibilityLabel="Open settings"
           accessibilityRole="button"
-          style={{ backgroundColor: 'rgba(88, 28, 135, 0.4)', padding: 10, borderRadius: 12, borderWidth: 1, borderColor: 'rgba(167, 139, 250, 0.3)' }}
+          style={{ backgroundColor: 'rgba(55, 65, 81, 0.5)', padding: 10, borderRadius: 12, borderWidth: 1, borderColor: 'rgba(107, 114, 128, 0.4)' }}
         >
-          <Ionicons name="trophy-outline" size={20} color="#a78bfa" />
+          <Ionicons name="settings-outline" size={20} color="#9ca3af" />
         </TouchableOpacity>
       </View>
 
@@ -371,42 +403,44 @@ export const MainMenu: React.FC<MainMenuProps> = ({ onStartGame, onSelectGame, o
         className="flex-1 z-10 w-full" 
         contentContainerStyle={{ alignItems: 'center', paddingVertical: 48 }}
       >
-         <View className="items-center mb-6">
-           <Text className="text-6xl mb-2">🏰</Text>
-           <Text className="text-amber-400 text-4xl font-bold text-center tracking-wider">GLUCOSE</Text>
-           <Text className="text-white text-4xl font-bold text-center tracking-wider">WARS</Text>
-           <Text className="text-purple-300 text-base text-center italic mt-1">Defend Your Kingdom</Text>
+         <View className="items-center mb-4">
+           <Text className="text-5xl mb-1">🏰</Text>
+           <Text className="text-amber-400 text-3xl font-bold text-center tracking-wider">GLUCOSE WARS</Text>
+           <Text className="text-purple-300 text-sm text-center italic mt-1">Your programme Realm</Text>
          </View>
 
-         {!isNewUser && progress.gamesPlayed > 0 && (
-           <View style={{ width: maxWidth }} className="bg-gradient-to-r from-orange-600/30 to-red-600/20 p-4 rounded-xl border-2 border-orange-500 mb-6 items-center">
-             <View className="flex-row items-center justify-center gap-2 mb-2">
-               <Text className="text-3xl animate-bounce">{streakStatus.emoji}</Text>
-               <Text className="text-white text-2xl font-bold">{streakStatus.streak}</Text>
-               <Text className="text-orange-300 text-sm font-bold">GAME STREAK</Text>
-             </View>
-             <Text className="text-orange-200 text-xs">{streakStatus.message} 🎯</Text>
-           </View>
-         )}
+         {/* Signal strip */}
+         <View style={{ width: maxWidth, marginBottom: 10, padding: 10, borderRadius: 12, backgroundColor: 'rgba(0,0,0,0.45)', borderWidth: 1, borderColor: 'rgba(96,165,250,0.35)' }}>
+           <Text style={{ color: '#60a5fa', fontSize: 10, fontWeight: 'bold', marginBottom: 4 }}>SIGNALS</Text>
+           <Text style={{ color: '#d1d5db', fontSize: 12 }}>
+             {signalSnapshot.connected
+               ? `CGM connected · ${signalSnapshot.minimized.band.replace('_', ' ')}${signalSnapshot.trend ? ` · ${signalSnapshot.trend}` : ''}`
+               : 'No CGM — missions use programme defaults (connect in Settings)'}
+           </Text>
+         </View>
 
-         {!isNewUser && (
-           <View className="mb-4">
-             <BeamWalletButton 
-               isConnected={isConnected}
-               address={address}
-               connectWallet={connectWallet}
-               disconnectWallet={disconnectWallet}
-             />
-           </View>
-         )}
+         {/* Today’s mission first */}
+         <View style={{ width: maxWidth }} className="mb-4">
+           <DailyQuests
+             mission={progress.activeMission}
+             adherenceWeek={progress.adherenceWeek}
+             renown={progress.kingdomRenown}
+             onPractice={() => onStartGame(selectedMode)}
+             onMarkDone={() => completeActiveMission()}
+             onAskCoach={() => {
+               setShowCoach(true);
+               coach.refreshMission(signalSnapshot);
+             }}
+           />
+         </View>
 
-        {/* ═══ ACTION BUTTONS — front and center ═══ */}
-        <View style={{ width: maxWidth }} className="space-y-3 mb-6">
+        {/* Primary practice CTA */}
+        <View style={{ width: maxWidth }} className="space-y-3 mb-4">
           <Animated.View style={{ transform: [{ scale: pulseAnim }] }}>
             <TouchableOpacity
               onPress={() => onStartGame(selectedMode)}
               activeOpacity={0.7}
-              accessibilityLabel="Quick start game"
+              accessibilityLabel="Practice today’s mission"
               accessibilityRole="button"
               style={{
                 backgroundColor: '#16a34a', borderWidth: 3, borderColor: '#22c55e',
@@ -417,28 +451,27 @@ export const MainMenu: React.FC<MainMenuProps> = ({ onStartGame, onSelectGame, o
             >
               <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center' }}>
                 <Text style={{ fontSize: 22, marginRight: 8 }}>⚡</Text>
-                <Text style={{ color: 'white', fontSize: 18, fontWeight: 'bold' }}>DEFEND THE REALM</Text>
+                <Text style={{ color: 'white', fontSize: 18, fontWeight: 'bold' }}>PRACTICE MISSION</Text>
               </View>
             </TouchableOpacity>
           </Animated.View>
 
-          {!isNewUser && (
           <View style={{ flexDirection: 'row', gap: 8, marginTop: 8 }}>
             <TouchableOpacity
-              onPress={() => onSelectGame?.()}
-              accessibilityLabel="Customize battle" accessibilityRole="button"
-              style={{ flex: 1, backgroundColor: 'rgba(217,119,6,0.3)', borderWidth: 2, borderColor: '#f59e0b', paddingVertical: 12, borderRadius: 12, alignItems: 'center' }}
+              onPress={() => router.push('/slowmo' as any)}
+              accessibilityLabel="Open Slow Mo lab" accessibilityRole="button"
+              style={{ flex: 1, backgroundColor: 'rgba(6,182,212,0.2)', borderWidth: 2, borderColor: '#22d3ee', paddingVertical: 12, borderRadius: 12, alignItems: 'center' }}
             >
-              <Text style={{ fontSize: 16 }}>🎮</Text>
-              <Text style={{ color: '#fde68a', fontSize: 10, fontWeight: 'bold', marginTop: 2 }}>CUSTOMIZE</Text>
+              <Text style={{ fontSize: 16 }}>🧪</Text>
+              <Text style={{ color: '#a5f3fc', fontSize: 10, fontWeight: 'bold', marginTop: 2 }}>SLOW MO</Text>
             </TouchableOpacity>
             <TouchableOpacity
-              onPress={() => { track('challenge_hub_viewed', { source: 'main_menu' }); router.push('/challenge' as any); }}
-              accessibilityLabel="Open challenges" accessibilityRole="button"
+              onPress={() => setShowCoach(true)}
+              accessibilityLabel="Ask the Alchemist" accessibilityRole="button"
               style={{ flex: 1, backgroundColor: 'rgba(139,92,246,0.2)', borderWidth: 2, borderColor: '#a78bfa', paddingVertical: 12, borderRadius: 12, alignItems: 'center' }}
             >
-              <Text style={{ fontSize: 16 }}>🧩</Text>
-              <Text style={{ color: '#c4b5fd', fontSize: 10, fontWeight: 'bold', marginTop: 2 }}>CHALLENGES</Text>
+              <Text style={{ fontSize: 16 }}>🧙</Text>
+              <Text style={{ color: '#c4b5fd', fontSize: 10, fontWeight: 'bold', marginTop: 2 }}>ALCHEMIST</Text>
             </TouchableOpacity>
             <TouchableOpacity
               onPress={() => setShowLibrary(true)}
@@ -449,24 +482,23 @@ export const MainMenu: React.FC<MainMenuProps> = ({ onStartGame, onSelectGame, o
               <Text style={{ color: '#93c5fd', fontSize: 10, fontWeight: 'bold', marginTop: 2 }}>LIBRARY</Text>
             </TouchableOpacity>
           </View>
-          )}
         </View>
 
         {!isNewUser && (
           <>
-            <WeeklyCountdown />
+            {progress.gamesPlayed > 0 && (
+              <View style={{ width: maxWidth }} className="bg-gradient-to-r from-orange-600/20 to-red-600/10 p-3 rounded-xl border border-orange-500/50 mb-3 items-center">
+                <Text className="text-orange-200 text-xs">
+                  {streakStatus.emoji} {streakStatus.message} · {progress.adherenceWeek.completed} missions this week
+                </Text>
+              </View>
+            )}
             {progressInfo}
-            <View style={{ width: maxWidth }} className="mt-4">
-              <DailyQuests 
-                quests={progress.dailyQuests} 
-                renown={progress.kingdomRenown} 
-           />
-         </View>
           </>
         )}
 
-        {/* ═══ COLLAPSIBLE SETTINGS ═══ */}
-        {!isNewUser && (<>
+        {/* ═══ COLLAPSIBLE SETTINGS (Beam / wallet / extras demoted here) ═══ */}
+        {<>
         <TouchableOpacity
           onPress={() => setShowSettings(!showSettings)}
           style={{ width: maxWidth, marginTop: 12, marginBottom: 4 }}
@@ -474,12 +506,59 @@ export const MainMenu: React.FC<MainMenuProps> = ({ onStartGame, onSelectGame, o
           accessibilityRole="button"
         >
           <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center' }}>
-            <Text style={{ color: '#6b7280', fontSize: 12 }}>⚙️ Settings {showSettings ? '▲' : '▼'}</Text>
+            <Text style={{ color: '#6b7280', fontSize: 12 }}>⚙️ More & settings {showSettings ? '▲' : '▼'}</Text>
           </View>
         </TouchableOpacity>
 
         {showSettings && (
           <>
+        <View style={{ width: maxWidth }} className="bg-black/60 p-3 rounded-xl border border-amber-700 mb-3">
+          <Text className="text-amber-400 text-xs font-bold mb-2">CARE TEAM & GROWTH</Text>
+          <TouchableOpacity
+            onPress={async () => {
+              if (!progress.activeMission) return;
+              const invite = buildSupportInvite(progress.activeMission);
+              track('caregiver_invite_shared', { from: 'home', template_id: invite.templateId });
+              await Share.share({ message: supportShareMessage(invite) });
+            }}
+            style={{ backgroundColor: 'rgba(59,130,246,0.2)', padding: 10, borderRadius: 8, marginBottom: 8, borderWidth: 1, borderColor: '#3b82f6' }}
+          >
+            <Text style={{ color: '#93c5fd', fontWeight: 'bold', fontSize: 11, textAlign: 'center' }}>Invite caregiver support</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            onPress={async () => {
+              const digest = buildLocalDigest({
+                adherence: progress.adherenceWeek,
+                missionHistory: progress.missionHistory,
+                gamesPlayedThisWeekApprox: Math.min(progress.gamesPlayed, 14),
+              });
+              const published = await publishWeeklyDigest(digest);
+              if (published?.token) {
+                setDigestMeta(published.token);
+                track('weekly_digest_created', { week: digest.weekKey });
+                router.push({ pathname: '/digest/[token]' as any, params: { token: published.token } });
+              }
+            }}
+            style={{ backgroundColor: 'rgba(34,197,94,0.15)', padding: 10, borderRadius: 8, marginBottom: 8, borderWidth: 1, borderColor: '#22c55e' }}
+          >
+            <Text style={{ color: '#86efac', fontWeight: 'bold', fontSize: 11, textAlign: 'center' }}>Weekly care-team proclamation</Text>
+          </TouchableOpacity>
+          <View style={{ flexDirection: 'row', gap: 8 }}>
+            <TouchableOpacity
+              onPress={() => onSelectGame?.()}
+              style={{ flex: 1, backgroundColor: 'rgba(217,119,6,0.2)', padding: 8, borderRadius: 8, borderWidth: 1, borderColor: '#f59e0b' }}
+            >
+              <Text style={{ color: '#fde68a', fontSize: 10, fontWeight: 'bold', textAlign: 'center' }}>Customize</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              onPress={() => { track('challenge_hub_viewed', { source: 'settings' }); router.push('/challenge' as any); }}
+              style={{ flex: 1, backgroundColor: 'rgba(139,92,246,0.2)', padding: 8, borderRadius: 8, borderWidth: 1, borderColor: '#a78bfa' }}
+            >
+              <Text style={{ color: '#c4b5fd', fontSize: 10, fontWeight: 'bold', textAlign: 'center' }}>Challenges</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+
         <View style={{ width: maxWidth }} className="bg-black/60 p-3 rounded-xl border border-cyan-700 mb-3">
           <View className="flex-row justify-between items-center">
             <View className="flex-1">
@@ -560,17 +639,34 @@ export const MainMenu: React.FC<MainMenuProps> = ({ onStartGame, onSelectGame, o
                   <Text style={{ color: '#fca5a5', fontSize: 11, fontWeight: 'bold', textAlign: 'center' }}>Connect via Apple Health</Text>
                 </TouchableOpacity>
               )}
-              <Text style={{ color: '#6b7280', fontSize: 9, textAlign: 'center' }}>See real glucose on results screen</Text>
+              <Text style={{ color: '#6b7280', fontSize: 9, textAlign: 'center' }}>Fuels today’s mission selection</Text>
             </View>
           )}
         </View>
+
+        {/* Optional persistence — demoted */}
+        <View style={{ width: maxWidth }} className="bg-black/60 p-3 rounded-xl border border-purple-900 mb-3">
+          <Text className="text-purple-400 text-xs font-bold mb-2">OPTIONAL IDENTITY</Text>
+          <BeamWalletButton
+            isConnected={isConnected}
+            address={address}
+            connectWallet={connectWallet}
+            disconnectWallet={disconnectWallet}
+          />
+          <TouchableOpacity
+            onPress={() => setShowTreasury(true)}
+            style={{ marginTop: 8, padding: 8, borderRadius: 8, borderWidth: 1, borderColor: 'rgba(167,139,250,0.4)' }}
+          >
+            <Text style={{ color: '#c4b5fd', fontSize: 11, textAlign: 'center' }}>Royal Treasury (optional)</Text>
+          </TouchableOpacity>
+        </View>
           </>
         )}
-        </>)}
+        </>}
 
         <View style={{ marginTop: 12 }}>
           <Text style={{ color: '#6b7280', fontSize: 11, textAlign: 'center' }}>
-            {isNewUser ? '🏰 Swipe to rally allies and banish the Sugar Horde!' : '💡 Chain correct actions for COMBO bonuses!'}
+            {isNewUser ? 'One mission a day. Practice, then do it in real life.' : 'Practice trains the decision — the mission changes the day.'}
           </Text>
         </View>
       </ScrollView>
@@ -623,6 +719,60 @@ export const MainMenu: React.FC<MainMenuProps> = ({ onStartGame, onSelectGame, o
       >
         <View className="flex-1 justify-end">
           <BeamAssets onClose={() => setShowTreasury(false)} />
+        </View>
+      </Modal>
+
+      <Modal
+        visible={showCoach}
+        animationType="slide"
+        transparent
+        onRequestClose={() => setShowCoach(false)}
+      >
+        <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.85)', justifyContent: 'flex-end' }}>
+          <View style={{ backgroundColor: '#0f0f1a', borderTopLeftRadius: 20, borderTopRightRadius: 20, padding: 20, borderWidth: 1, borderColor: '#a78bfa', maxHeight: '70%' }}>
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 12 }}>
+              <Text style={{ color: '#c4b5fd', fontWeight: 'bold', fontSize: 16 }}>🧙 Alchemist</Text>
+              <TouchableOpacity onPress={() => setShowCoach(false)} accessibilityRole="button">
+                <Text style={{ color: '#9ca3af' }}>Close</Text>
+              </TouchableOpacity>
+            </View>
+            <Text style={{ color: '#9ca3af', fontSize: 11, marginBottom: 10 }}>
+              Habit coach only — never dosing or medical advice.
+            </Text>
+            {progress.activeMission && (
+              <Text style={{ color: '#e5e7eb', fontSize: 13, marginBottom: 10 }}>
+                Today: {progress.activeMission.realWorldAction}
+              </Text>
+            )}
+            {coach.insights.map((line, i) => (
+              <Text key={i} style={{ color: '#a5f3fc', fontSize: 12, marginBottom: 4 }}>• {line}</Text>
+            ))}
+            {coach.chatReply && (
+              <View style={{ backgroundColor: 'rgba(167,139,250,0.15)', padding: 10, borderRadius: 10, marginVertical: 8 }}>
+                <Text style={{ color: '#e9d5ff', fontSize: 13, lineHeight: 18 }}>{coach.chatReply}</Text>
+              </View>
+            )}
+            <TextInput
+              value={coachInput}
+              onChangeText={setCoachInput}
+              placeholder="Ask about today’s mission…"
+              placeholderTextColor="#6b7280"
+              style={{ backgroundColor: '#111827', color: '#fff', borderRadius: 10, padding: 12, borderWidth: 1, borderColor: '#4b5563', marginBottom: 8 }}
+            />
+            <TouchableOpacity
+              disabled={coach.isLoading || !coachInput.trim()}
+              onPress={async () => {
+                const q = coachInput.trim();
+                setCoachInput('');
+                await coach.ask(q, signalSnapshot);
+              }}
+              style={{ backgroundColor: '#7c3aed', padding: 12, borderRadius: 10, opacity: coach.isLoading ? 0.6 : 1 }}
+            >
+              <Text style={{ color: '#fff', fontWeight: 'bold', textAlign: 'center' }}>
+                {coach.isLoading ? 'Consulting…' : 'Ask'}
+              </Text>
+            </TouchableOpacity>
+          </View>
         </View>
       </Modal>
     </View>

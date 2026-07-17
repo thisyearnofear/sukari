@@ -14,6 +14,44 @@ npx expo start
 # Android: Press 'a' in terminal
 ```
 
+## 🔐 Environment Variables
+
+Create a `.env` file at the project root (copy from `.env.example`):
+
+```bash
+cp .env.example .env
+```
+
+### Required (WalletConnect)
+- `EXPO_PUBLIC_WALLET_CONNECT_PROJECT_ID=...`
+
+### Optional (RPC)
+- `EXPO_PUBLIC_RPC_URL=...`
+
+### Optional Analytics (PostHog, web-only for now)
+This repo includes a lightweight analytics wrapper at `utils/analytics.ts`.
+
+- `EXPO_PUBLIC_POSTHOG_KEY=...` (PostHog project API key)
+- `EXPO_PUBLIC_POSTHOG_HOST=https://app.posthog.com` (optional; defaults to PostHog Cloud)
+
+### Day-1 Analytics Verification (recommended)
+After setting `EXPO_PUBLIC_POSTHOG_KEY`, run the web app and click through:
+main menu → onboarding → battle → results.
+
+In PostHog, confirm you see events such as:
+- `app_open`
+- `screen_view` (main_menu, onboarding, battle, results)
+- `onboarding_started` / `onboarding_completed`
+- `battle_started` / `battle_ended`
+- `results_viewed`
+- `beam_login_success` (if you log in)
+- `mint_clicked` / `mint_success` (if you mint)
+
+Recommended Day-1 dashboards:
+1. **Core Funnel**: `app_open → onboarding_started → battle_started → battle_ended → results_viewed`
+2. **Tier Progression**: breakdown `battle_started` and `battle_ended` by `tier`
+3. **Identity Adoption**: `beam_login_success` and `mint_success` over time
+
 ## 📁 Project Structure
 
 ```

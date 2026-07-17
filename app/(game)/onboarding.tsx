@@ -6,11 +6,23 @@ import { useGameSession } from '@/context/GameSessionContext';
 import { usePlayerProgressContext } from '@/context/PlayerProgressContext';
 import { ControlMode } from '@/types/game';
 import { GameTier } from '@/constants/gameTiers';
+import { track } from '@/utils/analytics';
 
 export default function OnboardingScreen() {
   const params = useLocalSearchParams<{ tier?: string; controlMode?: string; gameMode?: string }>();
   const { controlMode, setControlMode, tierConfig, startGameForTier, healthProfile, setSelectedTier, selectedTier } = useGameSession();
   const { progress, setSkipOnboarding } = usePlayerProgressContext();
+
+  useEffect(() => {
+    track('screen_view', { screen: 'onboarding', tier: params.tier ?? selectedTier, privacy_mode: progress.privacyMode });
+    track('onboarding_started', {
+      tier: params.tier ?? selectedTier,
+      control_mode: params.controlMode ?? controlMode,
+      game_mode: params.gameMode ?? tierConfig.gameMode,
+      privacy_mode: progress.privacyMode,
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Apply route params from game-selection
   useEffect(() => {
@@ -32,6 +44,7 @@ export default function OnboardingScreen() {
 
   const handleComplete = (mode: ControlMode) => {
     setControlMode(mode);
+    track('onboarding_completed', { tier: selectedTier, control_mode: mode, game_mode: tierConfig.gameMode, privacy_mode: progress.privacyMode });
     startGameForTier();
     router.replace('/(game)/battle');
   };
@@ -39,6 +52,7 @@ export default function OnboardingScreen() {
   const handleSkip = (mode: ControlMode) => {
     setControlMode(mode);
     setSkipOnboarding(true);
+    track('onboarding_skipped', { tier: selectedTier, control_mode: mode, game_mode: tierConfig.gameMode, privacy_mode: progress.privacyMode });
     startGameForTier();
     router.replace('/(game)/battle');
   };
