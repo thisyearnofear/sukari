@@ -70,6 +70,11 @@ npx wrangler secret put OPENAI_API_KEY
 npx wrangler deploy
 ```
 
+Live worker: `https://glucosewars-leaderboard.papaandthejimjams.workers.dev`  
+Bindings: Durable Object `LEADERBOARD`, KV `DIGEST`, secret `OPENAI_API_KEY`, var `OPENAI_MODEL=gpt-4o-mini`.
+
+If `/coach/*` returns `source: "rules"` with `openai_status: 429`, the key is valid but the OpenAI project has no completion quota — add billing at https://platform.openai.com/account/billing.
+
 Without a worker URL, the app still runs fully offline using local `selectMission` + local digests.
 
 ### Day-1 Adherence loop verification

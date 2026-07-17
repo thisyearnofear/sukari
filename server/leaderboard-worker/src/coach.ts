@@ -13,6 +13,8 @@ const ALLOWED_TEMPLATES = [
   'caregiver_support',
 ] as const;
 
+type TemplateId = (typeof ALLOWED_TEMPLATES)[number];
+
 const SYSTEM = `You are the Alchemist in Glucose Wars — a warm, concise adherence coach for at-home metabolic programmes.
 Never give insulin, medication, or dosing advice. Never diagnose.
 If the user describes an emergency, set escalate true.
@@ -23,12 +25,24 @@ export interface CoachEnv {
   OPENAI_MODEL?: string;
 }
 
+interface OpenAIResult {
+  content: string | null;
+  error?: string;
+  status?: number;
+}
+
+function isAllowedTemplate(id: unknown): id is TemplateId {
+  return typeof id === 'string' && (ALLOWED_TEMPLATES as readonly string[]).includes(id);
+}
+
 async function callOpenAI(
   env: CoachEnv,
-  messages: Array<{ role: string; content: string }>,
+  messages: { role: string; content: string }[],
   json = false,
-): Promise<string | null> {
-  if (!env.OPENAI_API_KEY) return null;
+): Promise<OpenAIResult> {
+  if (!env.OPENAI_API_KEY) {
+    return { content: null, error: 'OPENAI_API_KEY missing on worker' };
+  }
   const model = env.OPENAI_MODEL || 'gpt-4o-mini';
   try {
     const res = await fetch('https://api.openai.com/v1/chat/completions', {
@@ -44,11 +58,21 @@ async function callOpenAI(
         ...(json ? { response_format: { type: 'json_object' } } : {}),
       }),
     });
-    if (!res.ok) return null;
-    const data = (await res.json()) as any;
-    return data?.choices?.[0]?.message?.content ?? null;
-  } catch {
-    return null;
+    const raw = await res.text();
+    if (!res.ok) {
+      let detail = raw.slice(0, 240);
+      try {
+        const parsed = JSON.parse(raw);
+        detail = parsed?.error?.message || detail;
+      } catch {
+        /* keep slice */
+      }
+      return { content: null, status: res.status, error: detail };
+    }
+    const data = JSON.parse(raw) as any;
+    return { content: data?.choices?.[0]?.message?.content ?? null, status: res.status };
+  } catch (e: any) {
+    return { content: null, error: e?.message || 'OpenAI fetch failed' };
   }
 }
 
@@ -70,7 +94,7 @@ Prefer a different template than lastTemplate when possible.
 Caregiver mode should prefer caregiver_support.
 Return JSON: { "templateId": "...", "realmCopy": "...", "realWorldAction": "...", "transferHint": "...", "caregiverSupportAction": "...", "insights": ["..."] }`;
 
-  const content = await callOpenAI(
+  const ai = await callOpenAI(
     env,
     [
       { role: 'system', content: SYSTEM },
@@ -79,18 +103,20 @@ Return JSON: { "templateId": "...", "realmCopy": "...", "realWorldAction": "..."
     true,
   );
 
-  if (!content) {
+  if (!ai.content) {
     return Response.json({
       ok: true,
       source: 'rules',
       templateId: body.userMode === 'caregiver' ? 'caregiver_support' : 'protein_first',
       insights: ['Cloud Alchemist offline — using programme defaults.'],
+      openai_status: ai.status ?? null,
+      openai_error: ai.error ?? null,
     });
   }
 
   try {
-    const parsed = JSON.parse(content);
-    const templateId = ALLOWED_TEMPLATES.includes(parsed.templateId)
+    const parsed = JSON.parse(ai.content);
+    const templateId = isAllowedTemplate(parsed.templateId)
       ? parsed.templateId
       : 'protein_first';
     return Response.json({
@@ -152,7 +178,7 @@ export async function handleCoachChat(req: Request, env: CoachEnv): Promise<Resp
   const mission = body.mission
     ? `Active mission: ${body.mission.realWorldAction || body.mission.realmCopy}`
     : 'No active mission';
-  const content = await callOpenAI(env, [
+  const ai = await callOpenAI(env, [
     { role: 'system', content: SYSTEM },
     {
       role: 'user',
@@ -160,14 +186,16 @@ export async function handleCoachChat(req: Request, env: CoachEnv): Promise<Resp
     },
   ]);
 
-  if (!content) {
+  if (!ai.content) {
     return Response.json({
       ok: true,
       reply: body.mission?.realWorldAction
         ? `Start with today’s ask: ${body.mission.realWorldAction}`
         : 'Practice one short battle, then do one real-world habit tonight.',
+      openai_status: ai.status ?? null,
+      openai_error: ai.error ?? null,
     });
   }
 
-  return Response.json({ ok: true, reply: content, refused: false, escalate: false });
+  return Response.json({ ok: true, reply: ai.content, refused: false, escalate: false });
 }
