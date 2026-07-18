@@ -10,6 +10,8 @@ import { SwipeDirection, SwipeAction } from '@/types/game';
 import { track } from '@/utils/analytics';
 import { MECHANIC_DISCOVERY_MESSAGES } from '@/constants/mechanicMessages';
 import { COLORS } from '@/constants/designSystem';
+import { getPracticeCueForTemplate } from '@/domain/programme';
+import { worldToneCopy } from '@/domain/agent';
 
 export default function BattleScreenRoute() {
   const {
@@ -47,6 +49,7 @@ export default function BattleScreenRoute() {
   } = usePlayerProgressContext();
 
   const toast = missionToast || questCompletionToast;
+  const practiceCue = getPracticeCueForTemplate(progress.activeMission?.templateId);
 
   const hasTransitionedToResults = useRef(false);
   const hasTrackedBattleStart = useRef(false);
@@ -162,6 +165,8 @@ export default function BattleScreenRoute() {
         onToggleControlMode={handleToggleControlMode}
         hasMechanic={hasMechanic}
         missionAction={progress.activeMission?.realWorldAction}
+        missionPracticeFocus={practiceCue?.label}
+        missionTone={progress.worldState ? worldToneCopy(progress.worldState) : null}
       />
       {showCelebration && (
         <VictoryCelebration

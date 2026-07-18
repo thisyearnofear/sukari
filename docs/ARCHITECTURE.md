@@ -4,8 +4,8 @@ Sukari is a React Native Expo app with a local-first adherence loop and optional
 
 ```text
 live signal, labelled demo pattern, or private local check-in
-  -> programme mission
-  -> do now / make easier / later / optional mission-specific rehearsal
+  -> bounded pattern and approved programme mission
+  -> do now / make easier / later / optional mission-tuned rehearsal
   -> transfer / completion
   -> measured response
   -> care-team exception view
@@ -20,6 +20,7 @@ live signal, labelled demo pattern, or private local check-in
 - `components/programme/MissionRibbon.tsx`: keeps the real-world mission visible during practice.
 - `components/programme/TransferBeat.tsx`: done/later handoff from practice to real life.
 - `domain/agent/`: patient-visible decision trace and vetted media brief contracts.
+- `domain/programme/practiceBias.ts`: deterministic mission-to-practice tuning and patient-readable focus labels.
 - `components/programme/MissionVisual.tsx`: local visual cue with optional Runware-generated mission illustration.
 - `app/digest/[token].tsx`: patient/care-team digest view.
 - `app/care.tsx`: desktop-first programme-operator surface.
@@ -46,7 +47,7 @@ Domain code should remain pure TypeScript and should not import React Native or 
 
 ## State
 
-`PlayerProgressProvider` wraps the app in `app/_layout.tsx` and persists progress through `usePlayerProgress`. It is the single source of truth for role, selected mission, progress, and local programme state.
+`PlayerProgressProvider` wraps the app in `app/_layout.tsx` and persists progress through `usePlayerProgress`. It is the single source of truth for role, selected mission, progress, and local programme state. It also persists a mission-bound `worldState` with only: mission ID/template, an approved scene enum, tone enum, practice-intensity enum, response state, and timestamp. The state is discarded whenever the active mission changes.
 
 `GameSessionProvider` is scoped to the `(game)` route group and holds transient battle state.
 
@@ -81,6 +82,8 @@ Supporting events include `agent_trace_opened`, `practice_started`, and `signal_
 
 `manual_signal_started` and `manual_signal_submitted` measure the local check-in boundary. The submitted event contains only a bounded moment ID and chosen template ID, never free-form notes or raw health data. `mission_response_selected` normalizes do-now, easier, later, not-practical, and direct-completion choices with a coarse `input_source` (`demo`, `manual`, `cgm`, or `general`).
 
+`mission_accepted_to_rehearsal_started` includes the approved `practice_personalisation` template ID. It measures whether a mission-tuned rehearsal is useful; it is not a clinical data event.
+
 Do not add new funnel names casually. Prefer extending properties on these events unless a new product boundary is introduced.
 
 ## Care-Team Architecture
@@ -108,7 +111,13 @@ Before accepting real CGM exports, screenshots, voice notes, or free-form health
 
 ## Mission Media
 
-`POST /media/mission-image` is an optional worker route backed by Runware and deployed for the submission build. It accepts only an approved mission `templateId` and a small `visualIntent` enum. The server maps those values to fixed prompts, so it never transmits raw readings, patient identifiers, or free-form health notes to the media provider. The app always has a local visual fallback.
+`POST /media/mission-image` is an optional worker route backed by Runware and deployed for the submission build. It accepts only an approved mission `templateId`, `visualIntent`, and optional allowlisted `scene` enum. The server maps those values to fixed prompts, so it never transmits raw readings, patient identifiers, or free-form health notes to the media provider. The app always has a local visual fallback.
+
+## Personalised Rehearsal Boundary
+
+The rehearsal is deterministic personalisation, not a health simulation. `useFoodSpawner` reads the active approved mission template and applies a bounded `PracticeBias`: for example, protein-first favours protein allies and a drink mission presents more sugary-drink decisions. It then applies the mission-bound world-state intensity: an "easier" response produces an unhurried field, while mission eligibility and safety remain unchanged. The HUD exposes the matching practice focus so the person can see why this short game is relevant.
+
+No raw CGM values, inferred diagnosis, free-form check-in text, or patient identity enters the game state. Future generated audio, imagery, or 3D assets must use the same boundary: approved template IDs and visual intents only.
 
 ## Legacy Removals
 

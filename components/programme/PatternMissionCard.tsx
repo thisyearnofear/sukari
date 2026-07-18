@@ -13,8 +13,12 @@ import {
   buildMissionAdaptation,
   buildMissionMediaBrief,
   type MissionAdaptation,
+  type PersonalisedWorldState,
+  worldSceneLabel,
+  worldToneCopy,
 } from '@/domain/agent';
 import { MissionVisual } from '@/components/programme/MissionVisual';
+import { getPracticeCueForTemplate } from '@/domain/programme';
 
 const P = COLORS.PROGRAMME;
 
@@ -34,6 +38,7 @@ interface PatternMissionCardProps {
   onLater?: () => void;
   missionChoice?: MissionEase | null;
   adaptation?: MissionAdaptation | null;
+  worldState?: PersonalisedWorldState | null;
   /** Soft home state after “Later today” */
   deferred?: boolean;
 }
@@ -52,6 +57,7 @@ export function PatternMissionCard({
   onLater,
   missionChoice,
   adaptation,
+  worldState,
   deferred = false,
 }: PatternMissionCardProps) {
   const [showDetails, setShowDetails] = useState(false);
@@ -61,7 +67,8 @@ export function PatternMissionCard({
   const canLogRealWorldAction = (accepted || practiced || deferred) && !done;
   const decisionState = done ? 'completed' : deferred ? 'deferred' : accepted || practiced ? 'accepted' : 'unselected';
   const trace = buildAgentDecisionTrace(pattern, mission, decisionState);
-  const mediaBrief = buildMissionMediaBrief(pattern, mission);
+  const mediaBrief = buildMissionMediaBrief(pattern, mission, worldState);
+  const practiceCue = getPracticeCueForTemplate(mission?.templateId || pattern.suggestedBehaviour);
 
   const experimentText =
     (missionChoice === 'easier' && adaptation?.action) ||
@@ -91,8 +98,18 @@ export function PatternMissionCard({
         <Text style={[styles.eyebrow, styles.cardHeaderEyebrow]}>Today&apos;s mission</Text>
         <AgencyLaneTag lane="always" />
       </View>
-      <MissionVisual brief={mediaBrief} requestPersonalisation={showDetails} />
+      <MissionVisual brief={mediaBrief} worldState={worldState} requestPersonalisation={showDetails} />
       <Text style={styles.missionAction}>{experimentText}</Text>
+
+      {practiceCue ? (
+        <View style={styles.practiceCue} accessible accessibilityRole="summary">
+          <Text style={styles.practiceCueLabel}>TODAY&apos;S PRACTICE FIELD</Text>
+          <Text style={styles.practiceCueText}>
+            {worldState ? `${worldSceneLabel(worldState.scene)} · ${worldToneCopy(worldState)}` : practiceCue.label}
+          </Text>
+          <Text style={styles.practiceCueDetail}>{practiceCue.detail}</Text>
+        </View>
+      ) : null}
 
       {adaptation ? (
         <View style={styles.adaptation} accessibilityLiveRegion="polite">
@@ -258,6 +275,32 @@ const styles = StyleSheet.create({
     fontSize: 12,
     lineHeight: 17,
     marginTop: 4,
+  },
+  practiceCue: {
+    borderLeftWidth: 2,
+    borderLeftColor: P.cool,
+    marginTop: 14,
+    paddingLeft: 10,
+  },
+  practiceCueLabel: {
+    color: P.cool,
+    fontFamily: FONTS.bodyMedium,
+    fontSize: 9,
+    letterSpacing: 1.05,
+  },
+  practiceCueText: {
+    color: P.textSoft,
+    fontFamily: FONTS.body,
+    fontSize: 12,
+    lineHeight: 17,
+    marginTop: 3,
+  },
+  practiceCueDetail: {
+    color: P.textSoft,
+    fontFamily: FONTS.body,
+    fontSize: 11,
+    lineHeight: 16,
+    marginTop: 2,
   },
   cardHeader: {
     flexDirection: 'row',

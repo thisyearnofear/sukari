@@ -184,6 +184,9 @@ interface BattleScreenProps {
   hasMechanic?: (m: GameMechanic) => boolean;
   /** Real-world mission being rehearsed */
   missionAction?: string | null;
+  /** Bounded focus derived from the approved mission template. */
+  missionPracticeFocus?: string | null;
+  missionTone?: string | null;
 }
 
 
@@ -204,6 +207,8 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({
   onToggleControlMode,
   hasMechanic: hasMechanicProp,
   missionAction = null,
+  missionPracticeFocus = null,
+  missionTone = null,
 }) => {
   const hasMechanic = hasMechanicProp || (() => true); // Default: show everything
 
@@ -606,6 +611,8 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({
           onToggleControlMode={onToggleControlMode}
           minimal={!hasMechanic('power_ups')}
           missionAction={missionAction}
+          missionPracticeFocus={missionPracticeFocus}
+          missionTone={missionTone}
         />
       )}
       

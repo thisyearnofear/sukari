@@ -14,6 +14,7 @@ import {
 import { SeededRandom } from '@/utils/random';
 import {
   getPracticeBiasForMission,
+  applyWorldStateToPracticeBias,
   PracticeBias,
   PROTEIN_ALLY_TYPES,
   SUGARY_DRINK_TYPES,
@@ -118,9 +119,10 @@ export function useFoodSpawner({ gameState, setGameState, seededRandomRef }: Use
 
   useEffect(() => {
     if (!gameState.isGameActive || gameState.isPaused) return;
-    const missionBias = getPracticeBiasForMission(
+    const templateBias = getPracticeBiasForMission(
       missionTemplateId ? progress.activeMission : null,
     );
+    const missionBias = applyWorldStateToPracticeBias(templateBias, progress.worldState);
 
     const getSpawnInterval = () => {
       const elapsed = GAME_DURATION - gameState.timer;
@@ -170,6 +172,7 @@ export function useFoodSpawner({ gameState, setGameState, seededRandomRef }: Use
     seededRandomRef,
     missionTemplateId,
     progress.activeMission,
+    progress.worldState,
     viewportHeight,
     viewportWidth,
   ]);

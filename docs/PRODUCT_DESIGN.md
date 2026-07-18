@@ -6,11 +6,11 @@ The old name, GlucoseWars, implied a broad game or combat metaphor. Sukari is so
 
 ## Positioning
 
-**Category:** adherence layer for continuous metabolic care.
+**Category:** personalised action-and-play adherence layer for continuous metabolic care.
 
 **Tagline:** One mission today. Better evidence for tomorrow.
 
-**10-second pitch:** Sukari watches the metabolic signal, proposes one winnable experiment, follows up on the patient's chosen action, and tells the care team only when human attention can change the week.
+**10-second pitch:** Sukari turns a metabolic signal into one winnable real-world experiment, then adapts the optional practice, visual cue, and follow-up around that choice. It tells the care team only when human attention can change the week.
 
 **Explicitly not:** AI doctor, symptom chatbot, dosing assistant, game-first education app, NFT product, leaderboard, or consumer wellness toy.
 
@@ -20,14 +20,30 @@ Patients do not need more explanation first. They need the next right thing made
 
 This is the Paul Graham lens: adherence is the unglamorous schlep in digital health, which is why it is underbuilt. Do the unscalable thing first: hand-tune missions, make one patient arc feel real, and learn the messy conversion from advice to action.
 
-This is the Peter Thiel lens: do not start as a general wellness app. Dominate a narrow beachhead: adults with T2D or prediabetes in CGM-supported metabolic programmes. The wedge is not "AI plus game"; it is closed-loop adherence evidence for operators who already have patients.
+This is the Peter Thiel lens: do not start as a general wellness app. Dominate a narrow beachhead: adults with T2D or prediabetes in CGM-supported metabolic programmes. The wedge is not "AI plus game"; it is a personalised action-and-play loop that turns a real pattern into a practical choice, a relevant rehearsal, and closed-loop adherence evidence for operators who already have patients.
+
+## Personalised World State
+
+The game is not a reward layer beside care. It is the optional, low-stakes practice interface for the decision a person is facing now.
+
+```text
+approved signal pattern or local moment
+  -> deterministic, in-scope mission family
+  -> bounded world state: mission, approved scene, tone, practice intensity, visual intent
+  -> real-world choice and outcome
+  -> next approved adaptation
+```
+
+Every game and media element must earn its place by helping a real-world action happen. A post-meal movement mission creates an after-meal path scene and calmer movement rehearsal; a drink mission shows more drink decisions; a protein-first mission favours relevant ally choices. When a person chooses "make it easier," the world state moves to a gentle, unhurried field. This is visible as a concise field note, not a new dashboard.
+
+The LLM may personalise wording, offer an approved smaller variant, or summarise the bounded decision trace. Deterministic logic owns pattern detection, mission eligibility, safety boundaries, and escalation. Generative media receives only an approved template ID, visual intent, and allowlisted scene, never raw CGM readings, patient identity, or free-form health notes.
 
 ## Experience Architecture
 
 Sukari has one loop and three surfaces.
 
 1. **Patient home:** value proposition, role selection, current signal, one mission, and patient governance.
-2. **Optional rehearsal:** a short practice session tied to today's mission, never a gate before real-world action.
+2. **Optional rehearsal:** a short, mission-tuned practice session tied to today's real-world decision, never a gate before action.
 3. **Care team:** desktop-first programme-operator view with exceptions, outreach rationale, and weekly outcomes.
 
 The first mission flow now prioritizes evidence:
@@ -81,9 +97,11 @@ Sukari may autonomously detect patterns, select one in-scope mission, remember r
 - Real-world action is now the default after mission acceptance; rehearsal is elective.
 - Approved smaller mission variants now create a visible "Adjusted for you" agent moment.
 - Rehearsal now uses a single compact, responsive HUD with no full-screen flashes, shakes, or time-of-day theme changes.
+- Rehearsal mechanics and the visible practice focus now derive from the approved mission template, so play reflects the day's real-world action rather than a generic mini-game.
+- A local, mission-bound world state now carries approved scene, tone, response, and practice intensity across home, generated media, and rehearsal; it resets when the mission changes.
 - Mission cards expose an agent decision trace: observed evidence, proposal, and next patient-controlled step.
 - Demo patterns are labelled as demo evidence.
-- Mission-specific visuals use the deployed optional Runware worker when configured, with local fallback.
+- Mission-specific visuals use the deployed optional Runware worker when configured, with local fallback; only approved visual intents leave the app.
 - Desktop care surface now emphasizes operator value: exceptions, rationale, outcomes.
 - Local digest history powers the care surface instead of fixture-only data.
 - Demo cohort remains available as an explicit toggle.

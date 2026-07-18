@@ -1,5 +1,6 @@
 import type { MetabolicPattern } from '@/domain/patterns';
 import type { ProgrammeMission } from '@/domain/programme';
+import type { PersonalisedWorldState, WorldScene } from './worldState';
 
 /**
  * Patient-facing record of a bounded agent decision. The pattern detector and
@@ -18,6 +19,8 @@ export interface AgentDecisionTrace {
 export type MissionMediaBrief = {
   templateId: string;
   visualIntent: 'meal' | 'movement' | 'drink' | 'evening' | 'support';
+  /** Approved scene name only; never raw health data or free text. */
+  scene?: WorldScene;
 };
 
 export interface MissionAdaptation {
@@ -99,6 +102,7 @@ export function buildAgentDecisionTrace(
 export function buildMissionMediaBrief(
   pattern: MetabolicPattern,
   mission: ProgrammeMission | null,
+  worldState?: PersonalisedWorldState | null,
 ): MissionMediaBrief {
   const templateId = mission?.templateId || pattern.suggestedBehaviour;
   const visualIntentByTemplate: Record<string, MissionMediaBrief['visualIntent']> = {
@@ -113,5 +117,6 @@ export function buildMissionMediaBrief(
   return {
     templateId,
     visualIntent: visualIntentByTemplate[templateId] || 'meal',
+    scene: worldState?.scene,
   };
 }

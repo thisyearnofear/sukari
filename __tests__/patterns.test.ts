@@ -11,8 +11,14 @@ import {
   mayaLoopSteps,
 } from '@/domain/demo';
 import { buildLocalDigest } from '@/domain/digest/types';
-import { emptyAdherenceWeek } from '@/domain/programme';
-import { buildAgentDecisionTrace, buildMissionAdaptation, buildMissionMediaBrief } from '@/domain/agent';
+import { emptyAdherenceWeek , selectMission } from '@/domain/programme';
+import {
+  buildAgentDecisionTrace,
+  buildMissionAdaptation,
+  buildMissionMediaBrief,
+  buildPersonalisedWorldState,
+  worldSceneLabel,
+} from '@/domain/agent';
 
 describe('patterns domain', () => {
   it('returns Maya evening pattern in demo mode', () => {
@@ -44,7 +50,7 @@ describe('patterns domain', () => {
     expect(trace.observed).toBeTruthy();
     expect(trace.proposed).toContain('walk');
     expect(trace.safetyBoundary.toLowerCase()).toContain('never insulin');
-    expect(media).toEqual({ templateId: 'post_meal_walk', visualIntent: 'movement' });
+    expect(media).toEqual({ templateId: 'post_meal_walk', visualIntent: 'movement', scene: undefined });
   });
 
   it('uses an approved smaller variant when a patient asks for an easier mission', () => {
@@ -53,6 +59,23 @@ describe('patterns domain', () => {
       action: 'Walk for 5 minutes after your next meal.',
     });
     expect(buildMissionAdaptation('post_meal_walk', 'later').label).toBe('Adjusted for your day');
+  });
+
+  it('builds a bounded world state that changes presentation without retaining readings', () => {
+    const pattern = resolvePattern({ useDemo: true, demoDayIndex: 10 });
+    const mission = selectMission({ userMode: 'personal', forceTemplateId: 'post_meal_walk' });
+    const world = buildPersonalisedWorldState(pattern, mission, 'easier');
+    const media = buildMissionMediaBrief(pattern, mission, world);
+
+    expect(world).toMatchObject({
+      missionId: mission.id,
+      scene: 'after_meal_path',
+      tone: 'gentle',
+      practiceIntensity: 'unhurried',
+    });
+    expect(worldSceneLabel(world.scene)).toBe('After-meal path');
+    expect(media.scene).toBe('after_meal_path');
+    expect(JSON.stringify(world)).not.toContain('mg/dL');
   });
 
   it('turns a local check-in into transparent, bounded mission evidence', () => {

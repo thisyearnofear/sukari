@@ -36,6 +36,7 @@ import {
   resolvePattern,
   SELF_REPORTED_MOMENTS,
   type SelfReportedMoment,
+  type MetabolicPattern,
 } from '@/domain/patterns';
 import {
   MAYA_DEMO,
@@ -44,7 +45,12 @@ import {
   buildMayaClinicianDigest,
 } from '@/domain/demo';
 import { selectMission, type ProgrammeMission } from '@/domain/programme';
-import { buildMissionAdaptation, type MissionAdaptation } from '@/domain/agent';
+import {
+  buildMissionAdaptation,
+  buildPersonalisedWorldState,
+  type MissionAdaptation,
+  type WorldResponse,
+} from '@/domain/agent';
 import { MetabolicField } from '@/components/atmosphere/MetabolicField';
 import { PressableScale } from '@/components/ui/PressableScale';
 import {
@@ -91,6 +97,7 @@ export const MainMenu: React.FC<MainMenuProps> = ({
     completeActiveMission,
     setDigestMeta,
     ensureTodayMission,
+    setWorldState,
   } = usePlayerProgressContext();
   const [showUserModeSelector, setShowUserModeSelector] = useState(userModeSelected === false);
   const [supportDismissed, setSupportDismissed] = useState(false);
@@ -186,6 +193,7 @@ export const MainMenu: React.FC<MainMenuProps> = ({
     setMissionDeferred(true);
     setMissionChoice('accept');
     setAdaptation(buildMissionAdaptation(mission.templateId, 'later'));
+    if (!demoMode) setWorldState(buildPersonalisedWorldState(pattern, mission, 'later'));
     track('mission_deferred', {
       template_id: mission.templateId,
       from: 'home_pattern_card',
@@ -297,7 +305,11 @@ export const MainMenu: React.FC<MainMenuProps> = ({
     track('demo_maya_day_jump', { day: clamped });
   };
 
-  const assignFromPattern = (templateId?: string) => {
+  const assignFromPattern = (
+    templateId?: string,
+    response: WorldResponse = 'ready',
+    sourcePattern: MetabolicPattern = pattern,
+  ) => {
     if (demoMode) return;
     const selected = selectMission({
       userMode: progress.userMode,
@@ -308,7 +320,15 @@ export const MainMenu: React.FC<MainMenuProps> = ({
     });
     setMissionOverride(selected);
     ensureTodayMission(signalSnapshot, selected.templateId);
+    setWorldState(buildPersonalisedWorldState(sourcePattern, selected, response));
   };
+
+  const displayWorldState = useMemo(() => {
+    if (demoMode && displayMission) return buildPersonalisedWorldState(pattern, displayMission);
+    if (progress.worldState?.missionId === displayMission?.id) return progress.worldState;
+    if (displayMission) return buildPersonalisedWorldState(pattern, displayMission);
+    return null;
+  }, [demoMode, displayMission, pattern, progress.worldState]);
 
   const persistSignalPath = async (path: 'demo' | 'connect' | 'manual' | 'without_signal') => {
     setSignalPathChosen(true);
@@ -384,7 +404,7 @@ export const MainMenu: React.FC<MainMenuProps> = ({
     setManualMoment(moment);
     await persistSignalPath('manual');
     setChangingSignalSource(false);
-    assignFromPattern(moment.templateId);
+    assignFromPattern(moment.templateId, 'ready', buildSelfReportedPattern(moment));
     track('manual_signal_submitted', {
       moment: moment.id,
       template_id: moment.templateId,
@@ -742,12 +762,13 @@ export const MainMenu: React.FC<MainMenuProps> = ({
               demoLabel={demoMode ? MAYA_DEMO.disclaimer : null}
               missionChoice={missionChoice}
               adaptation={adaptation}
+              worldState={displayWorldState}
               deferred={missionDeferred && !demoMode}
               onAccept={() => {
                 setMissionChoice('accept');
                 setMissionDeferred(false);
                 setAdaptation(null);
-                assignFromPattern(pattern.suggestedBehaviour);
+                assignFromPattern(pattern.suggestedBehaviour, 'ready');
                 track('mission_accepted', { template: pattern.suggestedBehaviour, demo: demoMode });
                 track('role_to_mission_accepted', { template: pattern.suggestedBehaviour, demo: demoMode });
                 track('mission_response_selected', {
@@ -760,7 +781,7 @@ export const MainMenu: React.FC<MainMenuProps> = ({
                 setMissionChoice('easier');
                 setMissionDeferred(false);
                 setAdaptation(buildMissionAdaptation(displayMission?.templateId || pattern.suggestedBehaviour, 'easier'));
-                assignFromPattern(pattern.suggestedBehaviour);
+                assignFromPattern(pattern.suggestedBehaviour, 'easier');
                 track('mission_made_easier', { template: pattern.suggestedBehaviour });
                 track('role_to_mission_accepted', { template: pattern.suggestedBehaviour, variant: 'easier' });
                 track('mission_response_selected', {
@@ -782,6 +803,9 @@ export const MainMenu: React.FC<MainMenuProps> = ({
               onMarkDone={() => {
                 completionHeartbeat();
                 if (!demoMode) completeActiveMission();
+                if (!demoMode && displayMission) {
+                  setWorldState(buildPersonalisedWorldState(pattern, displayMission, 'completed'));
+                }
                 setMissionDeferred(false);
                 AsyncStorage.removeItem(DEFERRED_KEY);
                 setShowQuietWin(true);
@@ -850,6 +874,7 @@ export const MainMenu: React.FC<MainMenuProps> = ({
                   demo: demoMode,
                   elective: true,
                   input_source: missionInputSource,
+                  practice_personalisation: displayMission?.templateId || pattern.suggestedBehaviour,
                 });
               }}
               accessibilityLabel="Optionally practice today’s mission in a short rehearsal"

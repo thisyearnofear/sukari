@@ -3,6 +3,8 @@ import {
   selectMission,
   buildTransfer,
   getPracticeBiasForMission,
+  getPracticeCueForTemplate,
+  applyWorldStateToPracticeBias,
   emptyAdherenceWeek,
   rollAdherenceWeek,
 } from '@/domain/programme';
@@ -44,6 +46,31 @@ describe('programme domain', () => {
     });
     const bias = getPracticeBiasForMission(mission);
     expect(bias.preferProteinAllies).toBe(true);
+  });
+
+  it('exposes a patient-readable focus for a template-personalised rehearsal', () => {
+    expect(getPracticeCueForTemplate('reject_liquid_sugar')).toEqual({
+      label: 'Drink decisions',
+      detail: 'Sugary-drink decisions appear more often so the practice matches today\'s ask.',
+    });
+    expect(getPracticeCueForTemplate('unknown_template')).toBeNull();
+  });
+
+  it('slows the rehearsal only when the bounded world state is unhurried', () => {
+    const adjusted = applyWorldStateToPracticeBias(
+      { allyWeightBonus: 0, enemyWeightBonus: 0, preferProteinAllies: false, preferRejectSugaryDrinks: false, spawnRateMultiplier: 1 },
+      {
+        version: 1,
+        missionId: 'mission-1',
+        missionTemplateId: 'post_meal_walk',
+        scene: 'after_meal_path',
+        tone: 'gentle',
+        practiceIntensity: 'unhurried',
+        response: 'easier',
+        updatedAt: 1,
+      },
+    );
+    expect(adjusted.spawnRateMultiplier).toBe(0.78);
   });
 
   it('rolls adherence week counters', () => {

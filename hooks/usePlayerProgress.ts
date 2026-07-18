@@ -16,6 +16,7 @@ import {
   markMissionCompleted,
   markMissionRelapsed,
 } from '@/domain/programme';
+import type { PersonalisedWorldState } from '@/domain/agent';
 
 export interface SlowMoModeSession {
   plannedMeals?: { mealType: string; name: string; glucoseImpact: number }[];
@@ -71,6 +72,8 @@ export interface PlayerProgressState {
   lastMissionResetAt: number | null;
   lastDigestToken?: string | null;
   lastDigestAt?: number | null;
+  /** Bounded local presentation state for the active mission. */
+  worldState: PersonalisedWorldState | null;
 }
 
 const STORAGE_KEY = 'glucoseWars.playerProgress';
@@ -121,6 +124,7 @@ function defaultProgress(): PlayerProgressState {
     lastMissionResetAt: null,
     lastDigestToken: null,
     lastDigestAt: null,
+    worldState: null,
   };
 }
 
@@ -172,6 +176,8 @@ export function usePlayerProgress() {
             : [];
           base.adherenceWeek = parsed.adherenceWeek || emptyAdherenceWeek();
           base.activeMission = parsed.activeMission ?? null;
+          base.worldState = parsed.worldState ?? null;
+          if (base.worldState?.missionId !== base.activeMission?.id) base.worldState = null;
 
           const resetAt = parsed.lastMissionResetAt ?? parsed.lastQuestResetAt ?? null;
           if (isNewCalendarDay(resetAt)) {
@@ -183,6 +189,7 @@ export function usePlayerProgress() {
             setProgress({
               ...base,
               activeMission: mission,
+              worldState: null,
               adherenceWeek: rollAdherenceWeek(base.adherenceWeek, mission, 'assigned'),
               lastMissionResetAt: Date.now(),
             });
@@ -193,6 +200,7 @@ export function usePlayerProgress() {
                 missionHistory: base.missionHistory,
               });
               base.activeMission = mission;
+              base.worldState = null;
               base.adherenceWeek = rollAdherenceWeek(base.adherenceWeek, mission, 'assigned');
             }
             setProgress({ ...base, lastMissionResetAt: resetAt ?? Date.now() });
@@ -296,6 +304,7 @@ export function usePlayerProgress() {
         ...prev,
         userMode: mode,
         activeMission: mission,
+        worldState: sameDay ? prev.worldState : null,
         adherenceWeek: sameDay
           ? prev.adherenceWeek
           : rollAdherenceWeek(prev.adherenceWeek, mission, 'assigned'),
@@ -381,6 +390,7 @@ export function usePlayerProgress() {
         return {
           ...prev,
           activeMission: mission,
+          worldState: null,
           adherenceWeek: rollAdherenceWeek(prev.adherenceWeek, mission, 'assigned'),
           lastMissionResetAt: Date.now(),
         };
@@ -474,6 +484,7 @@ export function usePlayerProgress() {
     setProgress((prev) => ({
       ...prev,
       activeMission: mission,
+      worldState: null,
       adherenceWeek: rollAdherenceWeek(prev.adherenceWeek, mission, 'assigned'),
       lastMissionResetAt: Date.now(),
       missionHistory: [...prev.missionHistory.filter((m) => m.id !== mission.id), mission].slice(
@@ -488,6 +499,10 @@ export function usePlayerProgress() {
       lastDigestToken: token,
       lastDigestAt: Date.now(),
     }));
+  }, []);
+
+  const setWorldState = useCallback((worldState: PersonalisedWorldState | null) => {
+    setProgress((prev) => ({ ...prev, worldState }));
   }, []);
 
   const getKingdomTitle = useCallback(() => {
@@ -540,5 +555,6 @@ export function usePlayerProgress() {
     relapseActiveMission,
     setActiveMissionFromCoach,
     setDigestMeta,
+    setWorldState,
   };
 }

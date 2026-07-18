@@ -10,9 +10,10 @@ const P = COLORS.PROGRAMME;
 interface MissionRibbonProps {
   action: string;
   compact?: boolean;
+  practiceFocus?: string | null;
 }
 
-export function MissionRibbon({ action, compact }: MissionRibbonProps) {
+export function MissionRibbon({ action, compact, practiceFocus }: MissionRibbonProps) {
   const enter = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
@@ -49,6 +50,7 @@ export function MissionRibbon({ action, compact }: MissionRibbonProps) {
       <Text style={styles.action} numberOfLines={2}>
         {action}
       </Text>
+      {practiceFocus ? <Text style={styles.focus} numberOfLines={1}>Focus: {practiceFocus}</Text> : null}
     </Animated.View>
   );
 }
@@ -80,5 +82,12 @@ const styles = StyleSheet.create({
     color: P.text,
     fontSize: 12,
     lineHeight: 16,
+  },
+  focus: {
+    color: P.textSoft,
+    fontFamily: FONTS.body,
+    fontSize: 10,
+    lineHeight: 14,
+    marginTop: 3,
   },
 });

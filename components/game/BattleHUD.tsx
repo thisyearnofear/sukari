@@ -46,6 +46,9 @@ interface BattleHUDProps {
   minimal?: boolean;
   /** Today's real-world mission — keeps play tied to adherence */
   missionAction?: string | null;
+  /** Bounded focus derived from the approved mission template. */
+  missionPracticeFocus?: string | null;
+  missionTone?: string | null;
 }
 
 function zoneAccent(zone: StabilityZone): string {
@@ -98,6 +101,8 @@ const BattleHUDComponent: React.FC<BattleHUDProps> = React.memo(
     onToggleControlMode,
     minimal = false,
     missionAction = null,
+    missionPracticeFocus = null,
+    missionTone = null,
   }) => {
     const { getButtonLabel, getHUDLabel } = useAccessibility();
     const zone = getStabilityZone(stability);
@@ -242,7 +247,13 @@ const BattleHUDComponent: React.FC<BattleHUDProps> = React.memo(
             </View>
           </View>
 
-          {missionAction ? <MissionRibbon action={missionAction} compact={compactViewport} /> : null}
+          {missionAction ? (
+            <MissionRibbon
+              action={missionAction}
+              compact={compactViewport}
+              practiceFocus={missionTone ? `${missionPracticeFocus || 'Practice'} · ${missionTone}` : missionPracticeFocus}
+            />
+          ) : null}
 
           {!minimal ? (
             <View

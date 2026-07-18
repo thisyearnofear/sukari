@@ -19,7 +19,7 @@ This reflects the product thesis: adherence per minute of attention should impro
 | Mission response selected | `mission_response_selected` with `choice` and `input_source` |
 | Mission made easier | `mission_made_easier` |
 | Mission deferred | `mission_deferred` |
-| Rehearsal started | `mission_accepted_to_rehearsal_started` |
+| Mission-tuned rehearsal started | `mission_accepted_to_rehearsal_started` with `practice_personalisation` |
 | Real-world action completed or deferred | `rehearsal_to_real_world_completion` |
 | Measured response shown | `completion_to_measured_response` |
 | Care-team exception created | `measured_response_to_care_team_exception` |
@@ -34,6 +34,7 @@ This reflects the product thesis: adherence per minute of attention should impro
 - selected mission input vs current source changes;
 - mission accept/ease/defer/decline rate;
 - direct completion vs elective rehearsal, segmented by input source;
+- rehearsal start and real-world completion, segmented by approved mission template;
 - rehearsal completion rate;
 - done-now vs later-today split;
 - later-today eventual completion rate;
@@ -80,7 +81,13 @@ Hypothesis: the done/later choice drives real-world completion better than endin
 
 Primary metric: rehearsal -> real-world completion/later.
 
-### 6. Care-Team Exception Value
+### 6. Mission-Tuned Practice
+
+Hypothesis: making the practice focus visibly reflect today's approved mission improves rehearsal-to-real-world completion compared with an otherwise identical generic rehearsal.
+
+Primary metric: rehearsal -> real-world completion/later, split by `practice_personalisation`. Do not interpret a game score as a health outcome.
+
+### 7. Care-Team Exception Value
 
 Hypothesis: operators care about concise exception rationale more than raw dashboards.
 

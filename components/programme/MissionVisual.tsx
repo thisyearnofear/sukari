@@ -1,7 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import { Image, StyleSheet, Text, View } from 'react-native';
 import { Coffee, Footprints, HandHeart, MoonStar, Salad, Sparkles } from 'lucide-react-native';
-import type { MissionMediaBrief } from '@/domain/agent';
+import {
+  type MissionMediaBrief,
+  type PersonalisedWorldState,
+  worldSceneLabel,
+} from '@/domain/agent';
 import { fetchMissionMedia } from '@/domain/media';
 import { COLORS, FONTS } from '@/constants/designSystem';
 
@@ -9,6 +13,7 @@ const P = COLORS.PROGRAMME;
 
 interface MissionVisualProps {
   brief: MissionMediaBrief;
+  worldState?: PersonalisedWorldState | null;
   /** Only request generated media after a patient asks for supporting context. */
   requestPersonalisation?: boolean;
 }
@@ -31,7 +36,7 @@ function VisualGlyph({ intent }: { intent: MissionMediaBrief['visualIntent'] }) 
   return <Salad size={size} color={color} strokeWidth={1.6} />;
 }
 
-export function MissionVisual({ brief, requestPersonalisation = false }: MissionVisualProps) {
+export function MissionVisual({ brief, worldState, requestPersonalisation = false }: MissionVisualProps) {
   const [imageUrl, setImageUrl] = useState<string | null>(null);
 
   useEffect(() => {
@@ -49,7 +54,7 @@ export function MissionVisual({ brief, requestPersonalisation = false }: Mission
     return (
       <Image
         source={{ uri: imageUrl }}
-        accessibilityLabel={`Personalised visual cue: ${visualCopy[brief.visualIntent]}`}
+        accessibilityLabel={`Personalised visual cue: ${worldState ? worldSceneLabel(worldState.scene) : visualCopy[brief.visualIntent]}`}
         style={styles.image}
       />
     );
@@ -62,7 +67,9 @@ export function MissionVisual({ brief, requestPersonalisation = false }: Mission
       </View>
       <View style={styles.copy}>
         <Text style={styles.label}>TODAY&apos;S CUE</Text>
-        <Text style={styles.description}>{visualCopy[brief.visualIntent]}</Text>
+        <Text style={styles.description}>
+          {worldState ? worldSceneLabel(worldState.scene) : visualCopy[brief.visualIntent]}
+        </Text>
       </View>
       {requestPersonalisation ? <Sparkles size={16} color={P.cool} strokeWidth={1.7} /> : null}
     </View>
