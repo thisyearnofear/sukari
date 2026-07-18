@@ -8,7 +8,7 @@ The battle is the **engagement mechanism**, not the whole product — one metaph
 
 **Not** an AI doctor, dosing tool, NFT toy, or symptom chatbot. Habits only — never insulin or medication advice.
 
-**Docs:** [`docs/HACKATHON.md`](docs/HACKATHON.md) (pitch + demo) · [`docs/INVESTOR_ONEPAGER.md`](docs/INVESTOR_ONEPAGER.md) · [`docs/ROADMAP.md`](docs/ROADMAP.md) · [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md)
+**Docs:** [`docs/HACKATHON.md`](docs/HACKATHON.md) (pitch + demo) · [`docs/PRODUCT_DESIGN.md`](docs/PRODUCT_DESIGN.md) (design north star) · [`docs/INVESTOR_ONEPAGER.md`](docs/INVESTOR_ONEPAGER.md) · [`docs/ROADMAP.md`](docs/ROADMAP.md) · [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md)
 
 ## How the loop works
 

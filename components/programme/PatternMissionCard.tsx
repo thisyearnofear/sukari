@@ -7,6 +7,7 @@ import type { MetabolicPattern, ExperimentOutcome } from '@/domain/patterns';
 import type { ProgrammeMission } from '@/domain/programme';
 import { COLORS, FONTS } from '@/constants/designSystem';
 import { PressableScale } from '@/components/ui/PressableScale';
+import { AgencyLaneTag } from '@/components/programme/AgencyLaneTag';
 
 const P = COLORS.PROGRAMME;
 
@@ -71,7 +72,10 @@ export function PatternMissionCard({
         </View>
       ) : null}
 
-      <Text style={styles.eyebrow}>Tonight’s mission</Text>
+      <View style={styles.cardHeader}>
+        <Text style={[styles.eyebrow, styles.cardHeaderEyebrow]}>Tonight’s mission</Text>
+        <AgencyLaneTag lane="always" />
+      </View>
       <Text style={styles.missionAction}>{experimentText}</Text>
       <Text style={styles.patternOneLiner} numberOfLines={showDetails ? 4 : 2}>
         {pattern.headline}
@@ -209,6 +213,15 @@ const styles = StyleSheet.create({
     fontSize: 12,
     lineHeight: 17,
     marginTop: 4,
+  },
+  cardHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 8,
+  },
+  cardHeaderEyebrow: {
+    marginBottom: 0,
   },
   eyebrow: {
     fontFamily: FONTS.bodyMedium,

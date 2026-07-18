@@ -48,7 +48,7 @@ Not the game art. Not “we use GPT.”
 
 ## Traction / ask
 
-**Working prototype:** Dexcom path, pattern → mission, rehearsal battle, transfer to real life, Maya synthetic 14-day demo, clinician exception digest, habit-only coach.
+**Working prototype:** Dexcom path, pattern → mission, rehearsal battle, transfer to real life, Maya synthetic 14-day demo, clinician exception digest, habit-only coach, **Agency Charter** (published autonomy contract with lane markers on agent-initiated cards), **home field bound to live pattern state** (the field melts to steady on completion), **asks-first support proposal** on mission decline, **coach providers inverted** (OpenAI reasoning primary, Runware media reserved, deterministic templates offline).
 
 **Ask:** Design partner + clinical advisor + 8–12 week pilot (50–100 people).
 

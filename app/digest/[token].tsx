@@ -122,15 +122,15 @@ export default function WeeklyDigestScreen() {
               {'\n'}Not medical advice · Habits and adherence only · No dosing
             </Text>
 
-            <View style={[styles.outreachBanner, outreach ? styles.outreachOn : styles.outreachOff]}>
-              <Text style={styles.outreachLabel}>
-                {outreach ? 'Outreach suggested' : 'No outreach required'}
+            <View style={styles.verdictBlock}>
+              <Text style={[styles.verdict, outreach ? styles.verdictOn : styles.verdictOff]}>
+                {outreach ? 'A human helps this week.' : 'No human needed this week.'}
               </Text>
-              <Text style={styles.outreachBody}>
+              <Text style={styles.verdictReason}>
                 {digest.outreachReason ||
                   (outreach
                     ? 'Human attention may improve adherence this week.'
-                    : 'Clinician does not need continuous monitoring — review only if useful.')}
+                    : 'Adherence is holding — review only if useful.')}
               </Text>
             </View>
 
@@ -319,32 +319,27 @@ const styles = StyleSheet.create({
     marginTop: 10,
     marginBottom: 20,
   },
-  outreachBanner: {
-    borderWidth: 1,
-    borderRadius: 2,
-    paddingVertical: 14,
-    paddingHorizontal: 14,
+  verdictBlock: {
     marginBottom: 18,
   },
-  outreachOn: {
-    backgroundColor: 'rgba(196, 146, 58, 0.12)',
-    borderColor: '#C4923A',
+  verdict: {
+    fontFamily: FONTS.display,
+    fontSize: 26,
+    lineHeight: 32,
+    letterSpacing: -0.3,
   },
-  outreachOff: {
-    backgroundColor: 'rgba(61, 155, 122, 0.1)',
-    borderColor: '#3D9B7A',
+  verdictOn: {
+    color: '#C4923A',
   },
-  outreachLabel: {
-    fontFamily: FONTS.bodyBold,
-    color: '#14201B',
-    fontSize: 14,
+  verdictOff: {
+    color: '#2F7A5E',
   },
-  outreachBody: {
+  verdictReason: {
     fontFamily: FONTS.body,
     color: '#2A3A33',
     fontSize: 13,
     lineHeight: 19,
-    marginTop: 4,
+    marginTop: 6,
   },
   heroStat: {
     borderWidth: 1,

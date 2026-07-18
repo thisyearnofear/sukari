@@ -7,6 +7,7 @@ import { View, Text, StyleSheet, Animated, Easing } from 'react-native';
 import type { TransferResult } from '@/domain/programme';
 import { COLORS, FONTS, ANIMATIONS } from '@/constants/designSystem';
 import { PressableScale } from '@/components/ui/PressableScale';
+import { useReducedMotion } from '@/hooks/useReducedMotion';
 
 const P = COLORS.PROGRAMME;
 
@@ -27,39 +28,46 @@ export function TransferBeat({
   onLater,
   onInviteSupport,
 }: TransferBeatProps) {
-  const enter = useRef(new Animated.Value(0)).current;
+  // The ceremony: three staged beats — progress, the ask, the choice.
+  const reducedMotion = useReducedMotion();
+  const stageA = useRef(new Animated.Value(0)).current;
+  const stageB = useRef(new Animated.Value(0)).current;
+  const stageC = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
+    if (reducedMotion) {
+      stageA.setValue(1);
+      stageB.setValue(1);
+      stageC.setValue(1);
+      return;
+    }
     const { duration, bezier } = ANIMATIONS.MOTION.enter;
-    Animated.timing(enter, {
-      toValue: 1,
-      duration: Math.min(duration, 280),
-      easing: Easing.bezier(bezier[0], bezier[1], bezier[2], bezier[3]),
-      useNativeDriver: true,
-    }).start();
-  }, [enter]);
+    const easing = Easing.bezier(bezier[0], bezier[1], bezier[2], bezier[3]);
+    Animated.stagger(
+      110,
+      [stageA, stageB, stageC].map((v) =>
+        Animated.timing(v, {
+          toValue: 1,
+          duration: Math.min(duration, 300),
+          easing,
+          useNativeDriver: true,
+        }),
+      ),
+    ).start();
+  }, [reducedMotion, stageA, stageB, stageC]);
+
+  const rise = (v: Animated.Value) => ({
+    opacity: v,
+    transform: [{ translateY: v.interpolate({ inputRange: [0, 1], outputRange: [8, 0] }) }],
+  });
 
   const done = commit === 'done';
   const later = commit === 'later';
 
   return (
-    <Animated.View
-      style={[
-        styles.root,
-        {
-          opacity: enter,
-          transform: [
-            {
-              translateY: enter.interpolate({
-                inputRange: [0, 1],
-                outputRange: [10, 0],
-              }),
-            },
-          ],
-        },
-      ]}
-    >
-      <View style={styles.stepRow}>
+    <View style={styles.root}>
+      <Animated.View style={rise(stageA)}>
+        <View style={styles.stepRow}>
         <View style={[styles.stepDot, styles.stepDone]} />
         <Text style={styles.stepLabel}>Rehearsed</Text>
         <View style={styles.stepLine} />
@@ -69,10 +77,15 @@ export function TransferBeat({
         </Text>
       </View>
 
-      <Text style={styles.eyebrow}>{transfer.headline}</Text>
-      <Text style={styles.action}>{transfer.realWorldAction}</Text>
-      <Text style={styles.body}>{transfer.body}</Text>
+        <Text style={styles.eyebrow}>{transfer.headline}</Text>
+      </Animated.View>
 
+      <Animated.View style={rise(stageB)}>
+        <Text style={styles.action}>{transfer.realWorldAction}</Text>
+        <Text style={styles.body}>{transfer.body}</Text>
+      </Animated.View>
+
+      <Animated.View style={rise(stageC)}>
       {done ? (
         <View style={styles.doneBanner}>
           <Text style={styles.doneTitle}>Logged — real-world mission complete</Text>
@@ -129,7 +142,8 @@ export function TransferBeat({
           Support ask: {transfer.caregiverSupportAction}
         </Text>
       ) : null}
-    </Animated.View>
+      </Animated.View>
+    </View>
   );
 }
 

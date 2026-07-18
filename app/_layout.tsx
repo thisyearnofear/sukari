@@ -61,6 +61,7 @@ export default function RootLayout() {
             <ThemeProvider value={DefaultTheme}>
               <Stack screenOptions={{ headerShown: false }}>
                 <Stack.Screen name="index" />
+                <Stack.Screen name="charter" />
                 <Stack.Screen name="game-selection" />
                 <Stack.Screen name="welcome" />
                 <Stack.Screen name="(game)" />

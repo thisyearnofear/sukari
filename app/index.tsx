@@ -61,14 +61,6 @@ export default function MenuScreen() {
             params: { controlMode },
           });
         }}
-        onSelectGame={() => {
-          track('customize_battle_clicked', { from: 'main_menu', privacy_mode: progress.privacyMode });
-          router.push('/game-selection');
-        }}
-        onViewStats={() => {
-          track('view_stats_clicked', { from: 'main_menu', privacy_mode: progress.privacyMode });
-          router.push('/slowmo/stats');
-        }}
         onUserModeSelected={() => {
           track('user_mode_selected_navigate', { to: 'onboarding', privacy_mode: progress.privacyMode });
           router.push('/(game)/onboarding');

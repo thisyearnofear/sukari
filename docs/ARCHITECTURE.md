@@ -6,6 +6,7 @@ Adherence OS on top of a short rehearsal battle:
 
 ```
 domain/patterns   → observational pattern → experiment framing
+                   → fieldState (pattern → field band/intensity)
 domain/demo       → Maya synthetic timeline (hackathon demos)
 domain/programme  → missions, transfer, practice bias
 domain/signals    → CGM / snapshot
@@ -14,7 +15,13 @@ domain/digest     → care-team exception summary
 domain/invite     → caregiver support asks
 ```
 
-UI programme surfaces live under `components/programme/` (PatternMissionCard, TransferBeat, MissionRibbon, etc.). Battle remains the engagement layer; care-team digest is a separate clinical artifact.
+**UI programme surfaces:** `components/programme/` (PatternMissionCard, TransferBeat, MissionRibbon, LoopStrip, RehearsalSummary, QuietWinBeat, AgencyLaneTag) + `app/charter.tsx` (Agency Charter screen).
+
+**Atmosphere:** `components/atmosphere/MetabolicField.tsx` — living metabolic field (band/intensity interpolated on state changes).
+
+**Utilities:** `utils/fieldColor.ts` (field interpolation math), `utils/haptics.ts` (completion heartbeat).
+
+Battle remains the engagement layer; care-team digest is a separate clinical artifact.
 
 See [`HACKATHON.md`](HACKATHON.md) for positioning and demo path.
 
@@ -324,9 +331,10 @@ Import preference: `@/domain` or `@/domain/<subdomain>`. Do not import RN/Expo U
 📁 Project Structure
 ├── app/
 │   ├── _layout.tsx              # Root layout (WebProviders, PlayerProgressProvider)
-│   ├── index.tsx                # Realm Home (Main Menu)
-│   ├── game-selection.tsx       # Tier/mode selection (secondary)
-│   ├── welcome.tsx              # Returning player flow
+│   ├── index.tsx                # Programme Home (Main Menu)
+│   ├── charter.tsx              # Agency Charter screen
+│   ├── game-selection.tsx       # Redirect → / (retired)
+│   ├── welcome.tsx              # Redirect → / (retired)
 │   ├── invite/support.tsx       # Caregiver invite landing
 │   ├── digest/[token].tsx       # Weekly care-team digest view
 │   ├── (game)/                  # Game flow route group
@@ -334,25 +342,43 @@ Import preference: `@/domain` or `@/domain/<subdomain>`. Do not import RN/Expo U
 │   │   ├── onboarding.tsx       # Tier-specific tutorial screen
 │   │   ├── battle.tsx           # Active gameplay screen
 │   │   └── results.tsx          # End-of-game + transfer beat
-│   ├── challenge/               # UGC growth (after adherence core)
-│   └── slowmo/                  # Educational practice flow
+│   ├── challenge/               # Redirect → / (retired)
+│   └── slowmo/                  # Educational practice flow (meal lab)
 ├── domain/                      # Pure TS adherence OS logic (no React)
+│   ├── patterns/                # Pattern detection + fieldState
+│   ├── demo/                    # Maya synthetic timeline
+│   ├── programme/               # Missions, transfer, practice bias
+│   ├── signals/                 # CGM / snapshot
+│   ├── coach/                   # Habit coach + CLINICAL_SCOPE
+│   ├── digest/                  # Care-team exception summary
+│   └── invite/                  # Caregiver support asks
 ├── context/
 │   ├── PlayerProgressContext.tsx # Global progress (Single source of truth)
 │   ├── GameSessionContext.tsx    # Scoped game session state
 │   ├── BeamContext.tsx           # Optional Beam persistence
-│   └── Web3Context.tsx          # Optional Web3 wallet
+│   └── Web3Context.tsx           # Optional Web3 wallet (demoted)
 ├── hooks/
 │   ├── usePlayerProgress.ts      # Hydration & persistence + missions
 │   ├── useCoach.ts               # Coach API with local fallback
 │   ├── useBattleGame.ts          # Core game engine
 │   ├── useHealthProfile.ts       # Glucose simulation logic
+│   ├── useReducedMotion.ts       # Accessibility preference
 │   └── [other hooks]
-├── components/game/              # Pure UI components (Realm Home, transfer, etc.)
-├── constants/                    # Configurations & design tokens
-├── types/                        # TypeScript definitions
-├── server/leaderboard-worker/    # Leaderboard + /coach/* + /digest/*
-└── utils/                        # Utilities & helpers
+├── components/
+│   ├── atmosphere/              # MetabolicField (living background)
+│   ├── programme/               # PatternMissionCard, TransferBeat, AgencyLaneTag, etc.
+│   └── game/                    # Battle, HUD, onboarding, etc.
+├── constants/
+│   ├── designSystem.ts          # Design tokens
+│   ├── agencyCharter.ts         # Agency Charter config (single source of truth)
+│   └── [other configs]
+├── types/                       # TypeScript definitions
+├── server/leaderboard-worker/   # Leaderboard + /coach/* + /digest/*
+├── utils/
+│   ├── fieldColor.ts            # Field interpolation math
+│   ├── haptics.ts               # Completion heartbeat
+│   └── [other utilities]
+└── __tests__/                   # Jest test suites
 ```
 
 ### State Architecture

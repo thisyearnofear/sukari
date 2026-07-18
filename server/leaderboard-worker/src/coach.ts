@@ -1,5 +1,7 @@
 /**
- * Coach endpoints — Runware primary, OpenAI fallback, rules last resort.
+ * Coach endpoints — OpenAI primary (reasoning), Runware fallback, rules last resort.
+ * Runware's strength is generative media (voice/image) — reserved for future
+ * speech + share-artifact endpoints, not text chat.
  * Behaviour targets always come from known template ids (never invented dosing).
  */
 
@@ -167,28 +169,28 @@ async function callOpenAI(
   }
 }
 
-/** Primary: Runware → fallback: OpenAI */
+/** Primary: OpenAI (reasoning) → fallback: Runware */
 async function callLLM(
   env: CoachEnv,
   messages: { role: string; content: string }[],
   json = false,
 ): Promise<LLMResult> {
-  const primary = await callRunware(env, messages, json);
+  const primary = await callOpenAI(env, messages, json);
   if (primary.content) return primary;
 
-  const fallback = await callOpenAI(env, messages, json);
+  const fallback = await callRunware(env, messages, json);
   if (fallback.content) {
     return {
       ...fallback,
       error: primary.error
-        ? `runware_failed: ${primary.error}; used openai`
+        ? `openai_failed: ${primary.error}; used runware`
         : fallback.error,
     };
   }
 
   return {
     content: null,
-    error: [primary.error && `runware: ${primary.error}`, fallback.error && `openai: ${fallback.error}`]
+    error: [primary.error && `openai: ${primary.error}`, fallback.error && `runware: ${fallback.error}`]
       .filter(Boolean)
       .join(' | '),
     status: fallback.status ?? primary.status,

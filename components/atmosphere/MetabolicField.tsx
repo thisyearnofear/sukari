@@ -1,9 +1,22 @@
-import React, { useEffect, useMemo, useRef } from 'react';
+import React, { useEffect, useMemo, useReducer, useRef, useState } from 'react';
 import { Animated, Easing, Platform, StyleSheet, View, useWindowDimensions } from 'react-native';
 import Svg, { Defs, LinearGradient, Path, Stop } from 'react-native-svg';
 import { COLORS } from '@/constants/designSystem';
+import type { FieldBand } from '@/domain/patterns';
+import { useReducedMotion } from '@/hooks/useReducedMotion';
+import {
+  hexToRgb,
+  rgbToHex,
+  lerpFieldState,
+  isFieldSettled,
+  type FieldVisual,
+} from '@/utils/fieldColor';
 
-export type MetabolicBand = 'low' | 'in_range' | 'high' | 'unknown';
+/** Band type lives in the domain (fieldState) — single source of truth. */
+export type MetabolicBand = FieldBand;
+
+/** Exponential approach per frame — the field melts to its new state in ~1.2s. */
+const SETTLE_STEP = 0.06;
 
 type Props = {
   band?: MetabolicBand;
@@ -36,22 +49,56 @@ export function MetabolicField({ band = 'unknown', intensity = 0.55 }: Props) {
 }
 
 function MetabolicFieldNative({ band, intensity }: Required<Props>) {
+  const reducedMotion = useReducedMotion();
+  const target = useMemo<FieldVisual>(
+    () => ({ rgb: hexToRgb(bandAccent(band)), intensity }),
+    [band, intensity],
+  );
+  const [current, setCurrent] = useState<FieldVisual>(target);
+  const currentRef = useRef(current);
+  currentRef.current = current;
+
+  // The Settle: interpolate toward the new state — never a hard cut.
+  useEffect(() => {
+    if (reducedMotion) {
+      currentRef.current = target;
+      setCurrent(target);
+      return;
+    }
+    let raf = 0;
+    const step = () => {
+      const next = lerpFieldState(currentRef.current, target, SETTLE_STEP);
+      if (isFieldSettled(next, target)) {
+        currentRef.current = target;
+        setCurrent(target);
+        return;
+      }
+      currentRef.current = next;
+      setCurrent(next);
+      raf = requestAnimationFrame(step);
+    };
+    raf = requestAnimationFrame(step);
+    return () => cancelAnimationFrame(raf);
+  }, [target, reducedMotion]);
+
+  const accent = rgbToHex(current.rgb);
   const phase = useRef(new Animated.Value(0)).current;
-  const accent = bandAccent(band);
   const { width, height } = useWindowDimensions();
+  // Quantized so the drift loop restarts at most a few times per transition.
+  const loopIntensity = Math.round(current.intensity * 10) / 10;
 
   useEffect(() => {
     const loop = Animated.loop(
       Animated.timing(phase, {
         toValue: 1,
-        duration: 9000 / Math.max(0.35, intensity),
+        duration: 9000 / Math.max(0.35, loopIntensity),
         easing: Easing.linear,
         useNativeDriver: true,
       }),
     );
     loop.start();
     return () => loop.stop();
-  }, [intensity, phase]);
+  }, [loopIntensity, phase]);
 
   const drift = phase.interpolate({
     inputRange: [0, 1],
@@ -88,7 +135,16 @@ function MetabolicFieldNative({ band, intensity }: Required<Props>) {
 function MetabolicFieldWeb({ band, intensity }: Required<Props>) {
   const hostRef = useRef<View>(null);
   const { width, height } = useWindowDimensions();
-  const accent = useMemo(() => bandAccent(band), [band]);
+  const targetRef = useRef<FieldVisual>({ rgb: hexToRgb(bandAccent(band)), intensity });
+  const [snapTick, bumpSnapTick] = useReducer((x: number) => x + 1, 0);
+
+  useEffect(() => {
+    targetRef.current = { rgb: hexToRgb(bandAccent(band)), intensity };
+    const rm =
+      typeof window !== 'undefined' &&
+      window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+    if (rm) bumpSnapTick(); // Reduced motion: one repaint snapped to the new state
+  }, [band, intensity]);
 
   useEffect(() => {
     if (typeof document === 'undefined') return;
@@ -114,6 +170,11 @@ function MetabolicFieldWeb({ band, intensity }: Required<Props>) {
     let t = 0;
     const dpr = Math.min(window.devicePixelRatio || 1, 2);
     const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    // Current visual state — lerps toward target each frame (the Settle).
+    const current: FieldVisual = {
+      rgb: { ...targetRef.current.rgb },
+      intensity: targetRef.current.intensity,
+    };
 
     const resize = () => {
       canvas.width = Math.floor(width * dpr);
@@ -123,13 +184,24 @@ function MetabolicFieldWeb({ band, intensity }: Required<Props>) {
     resize();
 
     const draw = () => {
-      t += reducedMotion ? 0 : 0.008 * (0.4 + intensity);
+      const target = targetRef.current;
+      if (reducedMotion) {
+        current.rgb = { ...target.rgb };
+        current.intensity = target.intensity;
+      } else {
+        const next = lerpFieldState(current, target, SETTLE_STEP);
+        current.rgb = next.rgb;
+        current.intensity = next.intensity;
+      }
+      const accent = rgbToHex(current.rgb);
+
+      t += reducedMotion ? 0 : 0.008 * (0.4 + current.intensity);
       ctx.fillStyle = COLORS.PROGRAMME.ink;
       ctx.fillRect(0, 0, width, height);
 
       const cols = 28;
       const rows = 16;
-      const amp = 10 + intensity * 18;
+      const amp = 10 + current.intensity * 18;
       ctx.strokeStyle = accent;
       ctx.lineWidth = 1;
 
@@ -166,7 +238,7 @@ function MetabolicFieldWeb({ band, intensity }: Required<Props>) {
       cancelAnimationFrame(raf);
       canvas.remove();
     };
-  }, [accent, height, intensity, width]);
+  }, [height, width, snapTick]);
 
   return <View ref={hostRef} style={StyleSheet.absoluteFill} pointerEvents="none" />;
 }

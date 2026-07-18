@@ -31,6 +31,12 @@ const SCENES = [
     band: 'in_range' as const,
   },
   {
+    title: 'An agent whose powers you can read',
+    sub: 'It acts on habits, asks before involving anyone, and never touches medication. The charter is always one tap away.',
+    duration: 2600,
+    band: 'in_range' as const,
+  },
+  {
     title: 'Your care team stays informed — without another dashboard',
     sub: 'Exception-oriented summaries when human attention can help.',
     duration: 2400,

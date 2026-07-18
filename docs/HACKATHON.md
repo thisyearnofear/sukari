@@ -29,10 +29,18 @@ Shipped end-to-end closed loop for judging and investors:
 | Clinician exception digest (outreach on/off, safety flags) | Done |
 | Meal lab labeled educational simulation | Done |
 | Unified “steady the field” register across home / battle / coach | Done |
+| Agency Charter (`/charter`, lane markers on agent cards, home + intro entry) | Done |
+| Home field bound to live pattern state (`fieldStateFromPattern`) | Done |
+| The Settle — field melts to steady on completion + haptic heartbeat | Done |
+| Transfer ceremony — staged beats, reduced-motion aware | Done |
+| Digest verdict hero — "a human helps / no human needed" in 5s | Done |
+| Asks-first support proposal on decline (charter Proposal lane, live) | Done |
+| Coach providers inverted — OpenAI reasoning primary, Runware media reserved | Done |
+| Legacy game shell retired — routes redirect, settings pruned | Done |
 | Investor leave-behind | [`INVESTOR_ONEPAGER.md`](INVESTOR_ONEPAGER.md) |
 
-**Domain additions:** `domain/patterns`, `domain/demo` (Maya fixture).  
-**UI additions:** `components/programme/*` (PatternMissionCard, TransferBeat, MissionRibbon, LoopStrip, RehearsalSummary, QuietWinBeat).
+**Domain additions:** `domain/patterns` (incl. `fieldState`), `domain/demo` (Maya fixture).  
+**UI additions:** `components/programme/*` (PatternMissionCard, TransferBeat, MissionRibbon, LoopStrip, RehearsalSummary, QuietWinBeat, AgencyLaneTag) · `app/charter.tsx` (Agency Charter).
 
 ---
 
@@ -61,6 +69,8 @@ Coach adapts · care team gets exception summary
 1. **Meet Maya** (20s) — Tap **Judging? Start Maya demo** on home (not Settings).
 2. **Pattern detected** (35s) — Scene **1 · Pattern**. Evening excursion; open **Why this?** if asked.
 3. **One mission** (30s) — Accept / Easier / Another / Not now.
+   - Optional beat: tap **Not now** → the agent proposes inviting a supporter (charter
+     asks-first lane, live) with one concrete, no-monitoring support ask.
 4. **Rehearse** (40s) — “Rehearse in 45 seconds” → mission ribbon in battle → transfer beat (I did it / Later today).
 5. **Time jump** (35s) — Scene **2 · Measure** → associated response language (not “caused”).
 6. **Care team** (35s) — Scene **3 · Outreach** then **Care team** → outreach suggested + safety flag.

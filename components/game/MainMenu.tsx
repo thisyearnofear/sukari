@@ -5,7 +5,6 @@ import {
   TouchableOpacity,
   Animated,
   Easing,
-  Platform,
   ScrollView,
   Modal,
   TextInput,
@@ -20,20 +19,17 @@ import { usePlayerProgressContext } from '@/context/PlayerProgressContext';
 import { USER_MODE_CONFIGS } from '@/constants/userModes';
 import { PrivacyToggle } from '@/components/PrivacyToggle';
 import { PrivacySettingsModal } from '@/components/PrivacySettings';
-import { useWeb3 } from '@/context/Web3Context';
 import { useBeam } from '@/context/BeamContext';
-import { RoleBadgeModal } from '@/components/game/RoleBadgeModal';
 import { COLORS, FONTS, ANIMATIONS } from '@/constants/designSystem';
-import { GrandLibrary } from '@/components/game/GrandLibrary';
-import { BeamAssets } from '@/components/game/BeamAssets';
 import { track } from '@/utils/analytics';
+import { completionHeartbeat } from '@/utils/haptics';
 import { useCGMConnection } from '@/hooks/useCGMConnection';
 import { MedicalDisclaimer } from '@/components/MedicalDisclaimer';
 import { useCoach } from '@/hooks/useCoach';
 import { buildSignalSnapshot } from '@/domain/signals';
 import { buildLocalDigest, publishWeeklyDigest } from '@/domain/digest';
 import { buildSupportInvite, supportShareMessage } from '@/domain/invite';
-import { resolvePattern } from '@/domain/patterns';
+import { resolvePattern, fieldStateFromPattern } from '@/domain/patterns';
 import {
   MAYA_DEMO,
   getMayaDay,
@@ -48,6 +44,7 @@ import {
   MissionEase,
 } from '@/components/programme/PatternMissionCard';
 import { LoopStrip } from '@/components/programme/LoopStrip';
+import { AgencyLaneTag } from '@/components/programme/AgencyLaneTag';
 import { QuietWinBeat } from '@/components/programme/QuietWinBeat';
 
 const maxWidth = 400;
@@ -58,15 +55,12 @@ const DEFERRED_KEY = 'glucoseWars.missionDeferred';
 
 interface MainMenuProps {
   onStartGame: (controlMode: ControlMode) => void;
-  onSelectGame: () => void;
   onUserModeSelected?: (mode: string) => void;
   userModeSelected?: boolean;
-  onViewStats?: () => void;
 }
 
 export const MainMenu: React.FC<MainMenuProps> = ({
   onStartGame,
-  onSelectGame,
   onUserModeSelected,
   userModeSelected,
 }) => {
@@ -83,10 +77,7 @@ export const MainMenu: React.FC<MainMenuProps> = ({
     ensureTodayMission,
   } = usePlayerProgressContext();
   const [showUserModeSelector, setShowUserModeSelector] = useState(userModeSelected === false);
-  const [selectedRole, setSelectedRole] = useState<UserMode | null>(null);
-  const [showMintModal, setShowMintModal] = useState(false);
-  const [showLibrary, setShowLibrary] = useState(false);
-  const [showTreasury, setShowTreasury] = useState(false);
+  const [supportDismissed, setSupportDismissed] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [showCGMDisclaimer, setShowCGMDisclaimer] = useState(false);
   const [showCoach, setShowCoach] = useState(false);
@@ -98,7 +89,6 @@ export const MainMenu: React.FC<MainMenuProps> = ({
   const [showQuietWin, setShowQuietWin] = useState(false);
   const cgm = useCGMConnection();
   const coach = useCoach();
-  const { isConnected, address, connectWallet, disconnectWallet } = useWeb3();
   const beamContext = useBeam();
   const playerAccount = beamContext?.playerAccount;
   const showSyncFeedback = beamContext?.showSyncFeedback;
@@ -185,6 +175,11 @@ export const MainMenu: React.FC<MainMenuProps> = ({
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [showUserModeSelector, cgm.connection.isConnected, progress.userMode, demoMode]);
+
+  // A new mission re-arms the support proposal.
+  useEffect(() => {
+    setSupportDismissed(false);
+  }, [displayMission?.templateId]);
 
   useEffect(() => {
     if (cgm.connection.isConnected && !demoMode) {
@@ -301,7 +296,6 @@ export const MainMenu: React.FC<MainMenuProps> = ({
                 <PressableScale
                   key={mode}
                   onPress={() => {
-                    setSelectedRole(mode);
                     setUserMode(mode);
                     setShowUserModeSelector(false);
                     track('user_mode_selected', { user_mode: mode, privacy_mode: progress.privacyMode });
@@ -321,14 +315,6 @@ export const MainMenu: React.FC<MainMenuProps> = ({
             })}
           </View>
         </ScrollView>
-
-        <RoleBadgeModal
-          visible={showMintModal}
-          onClose={() => setShowMintModal(false)}
-          role={selectedRole}
-          userMode={progress.userMode}
-          onMintSuccess={() => setShowMintModal(false)}
-        />
       </View>
     );
   }
@@ -339,23 +325,14 @@ export const MainMenu: React.FC<MainMenuProps> = ({
       ? `CGM · ${band.replace('_', ' ')}${signalSnapshot.trend ? ` · ${signalSnapshot.trend}` : ''}`
       : 'No CGM · missions use programme defaults';
 
-  const homeBand =
-    demoMode
-      ? 'high'
-      : progress.activeMission?.status === 'completed'
-        ? 'in_range'
-        : missionDeferred
-          ? 'high'
-          : band;
-
-  const homeIntensity =
-    progress.activeMission?.status === 'completed'
-      ? 0.4
-      : missionDeferred
-        ? 0.7
-        : homeBand === 'unknown'
-          ? 0.4
-          : 0.6;
+  // Home field is a live instrument: band/intensity follow the detected
+  // pattern; completion visibly settles the field (docs/PRODUCT_DESIGN.md §7).
+  const { band: homeBand, intensity: homeIntensity } = fieldStateFromPattern(pattern, {
+    missionCompleted: demoMode
+      ? maya?.mission?.status === 'completed'
+      : progress.activeMission?.status === 'completed',
+    deferred: !demoMode && missionDeferred,
+  });
 
   return (
     <View style={styles.root}>
@@ -376,14 +353,27 @@ export const MainMenu: React.FC<MainMenuProps> = ({
             {showSyncFeedback ? ' · synced' : ''}
           </Text>
         </View>
-        <TouchableOpacity
-          onPress={() => setShowSettings(true)}
-          accessibilityLabel="Open settings"
-          accessibilityRole="button"
-          style={styles.iconBtn}
-        >
-          <Ionicons name="settings-outline" size={20} color={P.textMuted} />
-        </TouchableOpacity>
+        <View style={styles.topBarActions}>
+          <TouchableOpacity
+            onPress={() => {
+              track('charter_opened', { from: 'home_topbar' });
+              router.push('/charter');
+            }}
+            accessibilityLabel="What your agent does"
+            accessibilityRole="button"
+            style={styles.iconBtn}
+          >
+            <Ionicons name="shield-checkmark-outline" size={20} color={P.textMuted} />
+          </TouchableOpacity>
+          <TouchableOpacity
+            onPress={() => setShowSettings(true)}
+            accessibilityLabel="Open settings"
+            accessibilityRole="button"
+            style={styles.iconBtn}
+          >
+            <Ionicons name="settings-outline" size={20} color={P.textMuted} />
+          </TouchableOpacity>
+        </View>
       </View>
 
       <ScrollView
@@ -527,6 +517,7 @@ export const MainMenu: React.FC<MainMenuProps> = ({
                 track('mission_not_practical', { template: pattern.suggestedBehaviour });
               }}
               onMarkDone={() => {
+                completionHeartbeat();
                 if (!demoMode) completeActiveMission();
                 setMissionDeferred(false);
                 AsyncStorage.removeItem(DEFERRED_KEY);
@@ -535,6 +526,42 @@ export const MainMenu: React.FC<MainMenuProps> = ({
               }}
             />
           </View>
+
+          {missionChoice === 'not_practical' && !supportDismissed && displayMission ? (
+            <View style={styles.supportCard}>
+              <View style={styles.supportHead}>
+                <Text style={styles.supportEyebrow}>Suggested by your agent</Text>
+                <AgencyLaneTag lane="asks_first" />
+              </View>
+              <Text style={styles.supportTitle}>A human can help with this one.</Text>
+              <Text style={styles.supportBody}>
+                {displayMission.caregiverSupportAction ||
+                  'Someone you trust can make today’s ask easier — one concrete action, no monitoring.'}
+              </Text>
+              <View style={styles.supportRow}>
+                <PressableScale
+                  onPress={async () => {
+                    const invite = buildSupportInvite(displayMission);
+                    track('support_invite_shared', {
+                      from: 'decline_proposal',
+                      template_id: invite.templateId,
+                    });
+                    await Share.share({ message: supportShareMessage(invite) });
+                  }}
+                  style={styles.supportBtn}
+                  accessibilityRole="button"
+                >
+                  <Text style={styles.supportBtnText}>Invite support</Text>
+                </PressableScale>
+                <PressableScale
+                  onPress={() => setSupportDismissed(true)}
+                  accessibilityRole="button"
+                >
+                  <Text style={styles.supportGhost}>Not now</Text>
+                </PressableScale>
+              </View>
+            </View>
+          ) : null}
 
           <PressableScale
             onPress={() => {
@@ -689,13 +716,6 @@ export const MainMenu: React.FC<MainMenuProps> = ({
               </SettingsSection>
 
               <SettingsSection title="Practice">
-                <SheetButton
-                  label="Customize practice"
-                  onPress={() => {
-                    setShowSettings(false);
-                    onSelectGame?.();
-                  }}
-                />
                 <View style={styles.controlRow}>
                   {(['swipe', 'tap'] as ControlMode[]).map((mode) => (
                     <PressableScale
@@ -751,40 +771,12 @@ export const MainMenu: React.FC<MainMenuProps> = ({
                 <SheetButton label="Privacy details" onPress={() => setShowPrivacySettings(true)} />
               </SettingsSection>
 
-              <SettingsSection title="Optional / advanced">
+              <SettingsSection title="Educational">
                 <SheetButton
-                  label="Historical meal lab (educational)"
+                  label="Meal lab (educational simulation)"
                   onPress={() => {
                     setShowSettings(false);
                     router.push('/slowmo' as any);
-                  }}
-                />
-                <SheetButton
-                  label="Challenges"
-                  onPress={() => {
-                    setShowSettings(false);
-                    track('challenge_hub_viewed', { source: 'settings' });
-                    router.push('/challenge' as any);
-                  }}
-                />
-                <SheetButton
-                  label="Library"
-                  onPress={() => {
-                    setShowSettings(false);
-                    setShowLibrary(true);
-                  }}
-                />
-                <BeamWalletButton
-                  isConnected={isConnected}
-                  address={address}
-                  connectWallet={connectWallet}
-                  disconnectWallet={disconnectWallet}
-                />
-                <SheetButton
-                  label="Identity treasury (optional)"
-                  onPress={() => {
-                    setShowSettings(false);
-                    setShowTreasury(true);
                   }}
                 />
               </SettingsSection>
@@ -824,19 +816,6 @@ export const MainMenu: React.FC<MainMenuProps> = ({
         onClose={() => setShowPrivacySettings(false)}
         visible={showPrivacySettings}
       />
-
-      <Modal visible={showLibrary} animationType="slide" onRequestClose={() => setShowLibrary(false)}>
-        <GrandLibrary
-          discoveredLoreIds={progress.discoveredLoreIds}
-          onClose={() => setShowLibrary(false)}
-        />
-      </Modal>
-
-      <Modal visible={showTreasury} animationType="slide" transparent onRequestClose={() => setShowTreasury(false)}>
-        <View style={{ flex: 1, justifyContent: 'flex-end' }}>
-          <BeamAssets onClose={() => setShowTreasury(false)} />
-        </View>
-      </Modal>
 
       <Modal visible={showCoach} animationType="slide" transparent onRequestClose={() => setShowCoach(false)}>
         <View style={styles.coachBackdrop}>
@@ -907,54 +886,6 @@ function SheetButton({ label, onPress }: { label: string; onPress: () => void })
   );
 }
 
-const BeamWalletButton: React.FC<{
-  isConnected: boolean;
-  address: string | null;
-  connectWallet: () => Promise<void>;
-  disconnectWallet: () => void;
-}> = ({ isConnected, address, connectWallet, disconnectWallet }) => {
-  const beamContext = useBeam();
-  const playerAccount = beamContext?.playerAccount;
-  const login = beamContext?.login;
-  const logout = beamContext?.logout;
-  const isLoading = beamContext?.isLoading;
-
-  if (playerAccount) {
-    const truncatedAddress = `${playerAccount.address.substring(0, 6)}...${playerAccount.address.substring(playerAccount.address.length - 4)}`;
-    return (
-      <TouchableOpacity onPress={logout} disabled={isLoading} style={styles.sheetBtn}>
-        <Text style={styles.sheetBody}>{truncatedAddress} (optional sync)</Text>
-      </TouchableOpacity>
-    );
-  }
-
-  if (isConnected && address) {
-    const truncatedAddress = `${address.substring(0, 6)}...${address.substring(address.length - 4)}`;
-    return (
-      <TouchableOpacity onPress={disconnectWallet} style={styles.sheetBtn}>
-        <Text style={styles.sheetBody}>{truncatedAddress}</Text>
-      </TouchableOpacity>
-    );
-  }
-
-  return (
-    <View style={{ gap: 8 }}>
-      <SheetButton
-        label={Platform.OS === 'web' ? 'Connect wallet (optional)' : 'Wallet (optional)'}
-        onPress={() => {
-          void connectWallet();
-        }}
-      />
-      <SheetButton
-        label={isLoading ? '…' : 'Continue with social (optional)'}
-        onPress={() => {
-          if (login) void login();
-        }}
-      />
-    </View>
-  );
-};
-
 const styles = StyleSheet.create({
   root: {
     flex: 1,
@@ -984,6 +915,66 @@ const styles = StyleSheet.create({
     color: P.textSoft,
     fontSize: 13,
     marginTop: 2,
+  },
+  topBarActions: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  supportCard: {
+    marginTop: 12,
+    borderWidth: 1,
+    borderColor: P.cool,
+    backgroundColor: P.coolSoft,
+    borderRadius: 2,
+    paddingVertical: 14,
+    paddingHorizontal: 14,
+  },
+  supportHead: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 8,
+  },
+  supportEyebrow: {
+    fontFamily: FONTS.bodyMedium,
+    color: P.textMuted,
+    fontSize: 10,
+    letterSpacing: 1.3,
+    textTransform: 'uppercase',
+  },
+  supportTitle: {
+    fontFamily: FONTS.bodyBold,
+    color: P.text,
+    fontSize: 14,
+  },
+  supportBody: {
+    fontFamily: FONTS.body,
+    color: P.textSoft,
+    fontSize: 13,
+    lineHeight: 19,
+    marginTop: 4,
+  },
+  supportRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    marginTop: 12,
+  },
+  supportBtn: {
+    backgroundColor: P.cool,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    borderRadius: 2,
+  },
+  supportBtnText: {
+    fontFamily: FONTS.bodyBold,
+    color: P.ink,
+    fontSize: 13,
+  },
+  supportGhost: {
+    fontFamily: FONTS.bodyMedium,
+    color: P.cool,
+    fontSize: 13,
   },
   iconBtn: {
     padding: 10,

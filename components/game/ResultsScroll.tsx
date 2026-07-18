@@ -20,6 +20,7 @@ import { buildTransfer } from '@/domain/programme';
 import { buildSupportInvite, supportShareMessage } from '@/domain/invite';
 import { track } from '@/utils/analytics';
 import { MetabolicField } from '@/components/atmosphere/MetabolicField';
+import { completionHeartbeat } from '@/utils/haptics';
 import { PressableScale } from '@/components/ui/PressableScale';
 import { TransferBeat, TransferCommit } from '@/components/programme/TransferBeat';
 import { RehearsalSummary } from '@/components/programme/RehearsalSummary';
@@ -116,6 +117,7 @@ export const ResultsScroll: React.FC<ResultsScrollProps> = ({
   const cardMaxWidth = Math.min(screenWidth * 0.92, 400);
 
   const markDone = () => {
+    completionHeartbeat();
     completeActiveMission();
     setCommit('done');
     setShowQuietWin(true);
