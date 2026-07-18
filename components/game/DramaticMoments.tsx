@@ -1,176 +1,237 @@
 /**
- * DramaticMoments — Immersive visual overlays for key game events.
- * Brief, non-blocking, kingdom-themed. All use Animated API only.
+ * DramaticMoments — metabolic beats for key practice events.
+ * Brief, non-blocking. Same component APIs as before.
  */
 import React, { useEffect, useRef } from 'react';
 import { View, Text, Animated, StyleSheet } from 'react-native';
+import { COLORS, FONTS } from '@/constants/designSystem';
 
-// ─── #1: Game Start — "The Gates Open" ───────────────────────
+const P = COLORS.PROGRAMME;
 
-export const GatesOpen: React.FC<{ onComplete?: () => void; tier?: string }> = ({ onComplete, tier }) => {
+// ─── Game start — Field opens ────────────────────────────────
+
+export const GatesOpen: React.FC<{ onComplete?: () => void; tier?: string }> = ({
+  onComplete,
+  tier,
+}) => {
   const fade = useRef(new Animated.Value(1)).current;
-  const scale = useRef(new Animated.Value(0.8)).current;
+  const slide = useRef(new Animated.Value(14)).current;
   const textFade = useRef(new Animated.Value(0)).current;
 
-  const tierTheme = tier === 'tier3' ? { emoji: '⚡', text: 'SURVIVE THE STORM!', color: '#a78bfa' }
-                  : tier === 'tier2' ? { emoji: '🏛️', text: 'ENTER THE FEAST!', color: '#fbbf24' }
-                  :                    { emoji: '🌿', text: 'DEFEND THE GARDEN!', color: '#34d399' };
+  const copy =
+    tier === 'tier3'
+      ? { title: 'Storm practice', sub: 'Hold the field under pressure' }
+      : tier === 'tier2'
+        ? { title: 'Day practice', sub: 'Decisions from dawn to dusk' }
+        : { title: 'Field opens', sub: 'Practice begins' };
 
   useEffect(() => {
     Animated.sequence([
       Animated.parallel([
-        Animated.timing(textFade, { toValue: 1, duration: 300, useNativeDriver: true }),
-        Animated.spring(scale, { toValue: 1.1, friction: 4, useNativeDriver: true }),
+        Animated.timing(textFade, { toValue: 1, duration: 280, useNativeDriver: true }),
+        Animated.timing(slide, { toValue: 0, duration: 320, useNativeDriver: true }),
       ]),
-      Animated.delay(600),
-      Animated.timing(fade, { toValue: 0, duration: 400, useNativeDriver: true }),
+      Animated.delay(700),
+      Animated.timing(fade, { toValue: 0, duration: 360, useNativeDriver: true }),
     ]).start(onComplete);
-  }, [fade, scale, textFade, onComplete]);
+  }, [fade, slide, textFade, onComplete]);
 
   return (
-    <Animated.View style={[styles.fullOverlay, { opacity: fade, backgroundColor: 'rgba(0,0,0,0.8)' }]}>
-      <Animated.View style={{ transform: [{ scale }], alignItems: 'center' }}>
-        <Animated.Text style={[styles.gatesEmoji, { opacity: textFade }]}>{tierTheme.emoji}</Animated.Text>
-        <Animated.Text style={[styles.gatesText, { opacity: textFade, color: tierTheme.color }]}>{tierTheme.text}</Animated.Text>
+    <Animated.View style={[styles.fullOverlay, { opacity: fade, backgroundColor: 'rgba(11,18,16,0.88)' }]}>
+      <Animated.View
+        style={{
+          opacity: textFade,
+          transform: [{ translateY: slide }],
+          alignItems: 'center',
+          paddingHorizontal: 32,
+        }}
+      >
+        <Text style={styles.brand}>Glucose Wars</Text>
+        <Text style={styles.gatesTitle}>{copy.title}</Text>
+        <Text style={styles.gatesSub}>{copy.sub}</Text>
       </Animated.View>
     </Animated.View>
   );
 };
 
-// ─── #3: Critical Zone — "The Kingdom Trembles" ──────────────
+// ─── Critical zone — Field unsettles ─────────────────────────
 
-export const KingdomTrembles: React.FC<{ zone: 'critical-low' | 'critical-high' }> = ({ zone }) => {
+export const KingdomTrembles: React.FC<{ zone: 'critical-low' | 'critical-high' }> = ({
+  zone,
+}) => {
   const pulse = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
     const anim = Animated.loop(
       Animated.sequence([
-        Animated.timing(pulse, { toValue: 0.4, duration: 400, useNativeDriver: true }),
-        Animated.timing(pulse, { toValue: 0, duration: 400, useNativeDriver: true }),
-      ])
+        Animated.timing(pulse, { toValue: 0.35, duration: 420, useNativeDriver: true }),
+        Animated.timing(pulse, { toValue: 0.08, duration: 420, useNativeDriver: true }),
+      ]),
     );
     anim.start();
     return () => anim.stop();
   }, [pulse]);
 
-  const color = zone === 'critical-high' ? 'rgba(239,68,68,' : 'rgba(6,182,212,';
+  const border = zone === 'critical-high' ? P.danger : P.cool;
+  const wash =
+    zone === 'critical-high' ? 'rgba(196,92,92,0.18)' : 'rgba(74,143,168,0.18)';
 
   return (
     <Animated.View
       pointerEvents="none"
-      style={[styles.fullOverlay, {
-        opacity: pulse,
-        borderWidth: 8,
-        borderColor: zone === 'critical-high' ? '#ef4444' : '#06b6d4',
-        backgroundColor: `${color}0.15)`,
-      }]}
+      style={[
+        styles.fullOverlay,
+        {
+          opacity: pulse,
+          borderWidth: 10,
+          borderColor: border,
+          backgroundColor: wash,
+        },
+      ]}
     />
   );
 };
 
-// ─── #4: Plot Twist — "A Storm Approaches" ───────────────────
+// ─── Plot twist — Metabolic event ────────────────────────────
 
-export const StormApproaches: React.FC<{ name: string; icon: string; onComplete?: () => void }> = ({ name, icon, onComplete }) => {
+export const StormApproaches: React.FC<{
+  name: string;
+  icon: string;
+  onComplete?: () => void;
+}> = ({ name, icon, onComplete }) => {
   const fade = useRef(new Animated.Value(0)).current;
   const flash = useRef(new Animated.Value(0)).current;
-  const scale = useRef(new Animated.Value(0.5)).current;
+  const slide = useRef(new Animated.Value(12)).current;
 
   useEffect(() => {
     Animated.sequence([
-      // Lightning flash
-      Animated.timing(flash, { toValue: 1, duration: 80, useNativeDriver: true }),
-      Animated.timing(flash, { toValue: 0, duration: 80, useNativeDriver: true }),
-      // Reveal
+      Animated.timing(flash, { toValue: 0.45, duration: 70, useNativeDriver: true }),
+      Animated.timing(flash, { toValue: 0, duration: 90, useNativeDriver: true }),
       Animated.parallel([
-        Animated.timing(fade, { toValue: 1, duration: 200, useNativeDriver: true }),
-        Animated.spring(scale, { toValue: 1, friction: 5, useNativeDriver: true }),
+        Animated.timing(fade, { toValue: 1, duration: 220, useNativeDriver: true }),
+        Animated.timing(slide, { toValue: 0, duration: 280, useNativeDriver: true }),
       ]),
-      Animated.delay(1200),
-      Animated.timing(fade, { toValue: 0, duration: 300, useNativeDriver: true }),
+      Animated.delay(1100),
+      Animated.timing(fade, { toValue: 0, duration: 280, useNativeDriver: true }),
     ]).start(onComplete);
-  }, [fade, flash, scale, onComplete]);
+  }, [fade, flash, slide, onComplete]);
 
   return (
     <>
-      <Animated.View pointerEvents="none" style={[styles.fullOverlay, { opacity: flash, backgroundColor: 'rgba(255,255,255,0.6)' }]} />
-      <Animated.View style={[styles.fullOverlay, { opacity: fade, backgroundColor: 'rgba(88,28,135,0.7)', justifyContent: 'center', alignItems: 'center' }]}>
-        <Animated.View style={{ transform: [{ scale }], alignItems: 'center' }}>
+      <Animated.View
+        pointerEvents="none"
+        style={[styles.fullOverlay, { opacity: flash, backgroundColor: 'rgba(232,240,235,0.25)' }]}
+      />
+      <Animated.View
+        style={[
+          styles.fullOverlay,
+          {
+            opacity: fade,
+            backgroundColor: 'rgba(11,18,16,0.82)',
+            justifyContent: 'center',
+            alignItems: 'center',
+          },
+        ]}
+      >
+        <Animated.View
+          style={{ transform: [{ translateY: slide }], alignItems: 'center', paddingHorizontal: 28 }}
+        >
+          <Text style={styles.eventEyebrow}>Metabolic event</Text>
           <Text style={styles.stormIcon}>{icon}</Text>
           <Text style={styles.stormText}>{name}</Text>
-          <Text style={styles.stormSub}>⚡ PLOT TWIST ⚡</Text>
         </Animated.View>
       </Animated.View>
     </>
   );
 };
 
-// ─── #2: First Combo — "The Kingdom Rallies" ─────────────────
+// ─── Combo — Harmony flash ───────────────────────────────────
 
 export const KingdomRallies: React.FC<{ color: string }> = ({ color }) => {
   const pulse = useRef(new Animated.Value(0)).current;
-  const scale = useRef(new Animated.Value(0.5)).current;
+  const scale = useRef(new Animated.Value(0.6)).current;
 
   useEffect(() => {
     Animated.parallel([
-      Animated.timing(pulse, { toValue: 0.5, duration: 200, useNativeDriver: true }),
-      Animated.spring(scale, { toValue: 2.5, friction: 6, useNativeDriver: true }),
+      Animated.timing(pulse, { toValue: 0.4, duration: 180, useNativeDriver: true }),
+      Animated.timing(scale, { toValue: 2.2, duration: 420, useNativeDriver: true }),
     ]).start(() => {
-      Animated.timing(pulse, { toValue: 0, duration: 400, useNativeDriver: true }).start();
+      Animated.timing(pulse, { toValue: 0, duration: 360, useNativeDriver: true }).start();
     });
   }, [pulse, scale]);
 
   return (
-    <Animated.View pointerEvents="none" style={[styles.fullOverlay, { justifyContent: 'center', alignItems: 'center' }]}>
-      <Animated.View style={{
-        width: 200, height: 200, borderRadius: 100,
-        backgroundColor: color, opacity: pulse,
-        transform: [{ scale }],
-      }} />
+    <Animated.View
+      pointerEvents="none"
+      style={[styles.fullOverlay, { justifyContent: 'center', alignItems: 'center' }]}
+    >
+      <Animated.View
+        style={{
+          width: 180,
+          height: 180,
+          borderRadius: 90,
+          backgroundColor: color || P.accent,
+          opacity: pulse,
+          transform: [{ scale }],
+        }}
+      />
     </Animated.View>
   );
 };
 
-// ─── #6: Defeat — "The Kingdom Falls" ────────────────────────
+// ─── Defeat — Soft collapse ──────────────────────────────────
 
 export const KingdomFalls: React.FC = () => {
   const grey = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
     Animated.sequence([
-      Animated.timing(grey, { toValue: 0.6, duration: 300, useNativeDriver: true }),
-      Animated.delay(200),
-      Animated.timing(grey, { toValue: 0, duration: 500, useNativeDriver: true }),
+      Animated.timing(grey, { toValue: 0.55, duration: 280, useNativeDriver: true }),
+      Animated.delay(180),
+      Animated.timing(grey, { toValue: 0, duration: 480, useNativeDriver: true }),
     ]).start();
   }, [grey]);
 
   return (
-    <Animated.View pointerEvents="none" style={[styles.fullOverlay, { opacity: grey, backgroundColor: 'rgba(30,30,30,0.8)' }]}>
-      <View style={styles.crackContainer}>
-        {['╲', '╱', '│', '─', '╲'].map((c, i) => (
-          <Text key={i} style={[styles.crack, { left: `${15 + i * 17}%`, top: `${20 + (i % 3) * 25}%`, transform: [{ rotate: `${i * 35}deg` }] }]}>{c}</Text>
-        ))}
+    <Animated.View
+      pointerEvents="none"
+      style={[
+        styles.fullOverlay,
+        { opacity: grey, backgroundColor: 'rgba(11,18,16,0.75)' },
+      ]}
+    >
+      <View style={styles.collapseCenter}>
+        <Text style={styles.collapseText}>Field collapsed</Text>
       </View>
     </Animated.View>
   );
 };
 
-// ─── #7: Mechanic Unlock — "New Power" glow ──────────────────
+// ─── Mechanic unlock glow ────────────────────────────────────
 
 export const NewPowerGlow: React.FC = () => {
   const glow = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
     Animated.sequence([
-      Animated.timing(glow, { toValue: 0.4, duration: 300, useNativeDriver: true }),
-      Animated.timing(glow, { toValue: 0, duration: 800, useNativeDriver: true }),
+      Animated.timing(glow, { toValue: 0.35, duration: 280, useNativeDriver: true }),
+      Animated.timing(glow, { toValue: 0, duration: 700, useNativeDriver: true }),
     ]).start();
   }, [glow]);
 
   return (
-    <Animated.View pointerEvents="none" style={[styles.fullOverlay, {
-      opacity: glow, backgroundColor: 'rgba(34,197,94,0.3)',
-      borderWidth: 4, borderColor: '#22c55e',
-    }]} />
+    <Animated.View
+      pointerEvents="none"
+      style={[
+        styles.fullOverlay,
+        {
+          opacity: glow,
+          backgroundColor: P.accentSoft,
+          borderWidth: 3,
+          borderColor: P.accent,
+        },
+      ]}
+    />
   );
 };
 
@@ -179,11 +240,49 @@ const styles = StyleSheet.create({
     ...StyleSheet.absoluteFillObject,
     zIndex: 100,
   },
-  gatesEmoji: { fontSize: 64, marginBottom: 8 },
-  gatesText: { color: '#fbbf24', fontSize: 32, fontWeight: 'bold', letterSpacing: 6 },
-  stormIcon: { fontSize: 56, marginBottom: 8 },
-  stormText: { color: '#fff', fontSize: 22, fontWeight: 'bold', letterSpacing: 2 },
-  stormSub: { color: '#c4b5fd', fontSize: 12, marginTop: 4, letterSpacing: 3 },
-  crackContainer: { ...StyleSheet.absoluteFillObject },
-  crack: { position: 'absolute', color: 'rgba(255,255,255,0.4)', fontSize: 48, fontWeight: 'bold' },
+  brand: {
+    fontFamily: FONTS.display,
+    color: P.text,
+    fontSize: 20,
+    marginBottom: 16,
+  },
+  gatesTitle: {
+    fontFamily: FONTS.display,
+    color: P.textSoft,
+    fontSize: 28,
+    letterSpacing: -0.3,
+    textAlign: 'center',
+  },
+  gatesSub: {
+    fontFamily: FONTS.body,
+    color: P.textMuted,
+    fontSize: 14,
+    marginTop: 10,
+    textAlign: 'center',
+  },
+  eventEyebrow: {
+    fontFamily: FONTS.bodyMedium,
+    color: P.warn,
+    fontSize: 11,
+    letterSpacing: 1.6,
+    textTransform: 'uppercase',
+    marginBottom: 10,
+  },
+  stormIcon: { fontSize: 40, marginBottom: 8 },
+  stormText: {
+    fontFamily: FONTS.display,
+    color: P.text,
+    fontSize: 22,
+    textAlign: 'center',
+  },
+  collapseCenter: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  collapseText: {
+    fontFamily: FONTS.display,
+    color: P.textMuted,
+    fontSize: 18,
+  },
 });

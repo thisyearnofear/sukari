@@ -18,6 +18,11 @@ import { usePlayerProgressContext } from '@/context/PlayerProgressContext';
 import { buildTransfer } from '@/domain/programme';
 import { buildSupportInvite, supportShareMessage } from '@/domain/invite';
 import { track } from '@/utils/analytics';
+import { MetabolicField } from '@/components/atmosphere/MetabolicField';
+import { PressableScale } from '@/components/ui/PressableScale';
+import { COLORS, FONTS } from '@/constants/designSystem';
+
+const P = COLORS.PROGRAMME;
 
 // Kingdom Lore and Wisdom
 // MOVED TO constants/gameConfig.ts
@@ -338,13 +343,12 @@ export const ResultsScroll: React.FC<ResultsScrollProps> = ({
   const cardMaxWidth = Math.min(screenWidth * 0.9, 380);
 
   return (
-    <View style={{ flex: 1, backgroundColor: '#0f0f1a', alignItems: 'center', justifyContent: 'center', padding: 16 }}>
-      {/* Background */}
-      <View style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: isVictory ? 'rgba(217, 119, 6, 0.1)' : 'rgba(239, 68, 68, 0.1)' }} />
+    <View style={{ flex: 1, backgroundColor: P.ink, alignItems: 'center', justifyContent: 'center', padding: 16 }}>
+      <MetabolicField band={isVictory ? 'in_range' : 'high'} intensity={isVictory ? 0.4 : 0.7} />
 
-      {/* Scroll Integration Panel (Victory only) */}
+      {/* Scroll Integration Panel (Victory only) — demoted optional persistence */}
       {isVictory && (
-        <View style={{ position: 'absolute', top: 40, left: 16, right: 16, maxWidth: cardMaxWidth, alignSelf: 'center' }}>
+        <View style={{ position: 'absolute', top: 40, left: 16, right: 16, maxWidth: cardMaxWidth, alignSelf: 'center', zIndex: 20 }}>
           <ScrollIntegration 
             visible={showScrollPanel}
             onDismiss={() => setShowScrollPanel(false)}
@@ -360,8 +364,9 @@ export const ResultsScroll: React.FC<ResultsScrollProps> = ({
           ],
           opacity: fadeAnim,
           width: cardMaxWidth,
-          marginTop: showScrollPanel ? 240 : 0,
+          marginTop: showScrollPanel ? 200 : 0,
           alignSelf: 'center',
+          zIndex: 10,
         }}
       >
         {showTipsCard ? (
@@ -369,65 +374,79 @@ export const ResultsScroll: React.FC<ResultsScrollProps> = ({
         ) : (
           /* Stats Card */
           <View style={{ 
-            backgroundColor: 'rgba(0,0,0,0.9)',
-            padding: 16,
-            borderRadius: 16,
-            borderWidth: 2,
-            borderColor: isVictory ? '#fbbf24' : '#ef4444',
+            backgroundColor: 'rgba(11,18,16,0.88)',
+            padding: 18,
+            borderRadius: 2,
+            borderWidth: 1,
+            borderColor: P.line,
           }}>
             {/* Result header */}
-            <View style={{ alignItems: 'center', marginBottom: 10 }}>
-              <Text style={{ fontSize: 36, marginBottom: 2 }}>{isVictory ? '👑' : '💀'}</Text>
-              <Text style={{ fontSize: 22, fontWeight: 'bold', color: isVictory ? '#fbbf24' : '#ef4444' }}>
-                {isVictory ? 'VICTORY!' : 'DEFEAT'}
+            <View style={{ marginBottom: 14 }}>
+              <Text style={{ fontFamily: FONTS.display, fontSize: 22, color: P.text, letterSpacing: -0.3 }}>
+                Glucose Wars
               </Text>
-              {/* Mode-specific hero message */}
-              {isVictory && getModeSpecificMessage(userMode, tier) && (
-                <Text style={{ 
-                  fontSize: 14, 
-                  color: '#fbbf24',
+              <Text style={{
+                fontFamily: FONTS.display,
+                fontSize: 26,
+                color: isVictory ? P.accent : P.danger,
+                marginTop: 6,
+              }}>
+                {isVictory ? 'Practice complete' : 'Field collapsed'}
+              </Text>
+              {isVictory && getModeSpecificMessage(userMode, tier) ? (
+                <Text style={{
+                  fontFamily: FONTS.body,
+                  fontSize: 13,
+                  color: P.textMuted,
                   marginTop: 6,
-                  fontWeight: '600',
-                  textAlign: 'center',
+                  lineHeight: 18,
                 }}>
                   {getModeSpecificMessage(userMode, tier)}
                 </Text>
-              )}
+              ) : null}
             </View>
 
-            {/* Grade */}
-            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', marginBottom: 10 }}>
-              <View style={{ 
-                width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center',
-                borderWidth: 2, borderColor: gradeInfo.color, backgroundColor: gradeInfo.color + '20', marginRight: 8,
-              }}>
-                <Text style={{ fontSize: 22, fontWeight: 'bold', color: gradeInfo.color }}>{gradeInfo.grade}</Text>
-              </View>
-              <Text style={{ fontSize: 14, fontWeight: 'bold', color: gradeInfo.color }}>{gradeInfo.title}</Text>
-            </View>
-
-            {/* Transfer beat — practice → real-world mission */}
-            {transfer && (
+            {/* Transfer beat — hero of results */}
+            {transfer ? (
               <View style={{
-                backgroundColor: 'rgba(34, 197, 94, 0.12)',
-                padding: 12,
-                borderRadius: 12,
+                backgroundColor: P.mist,
+                padding: 16,
+                borderRadius: 2,
                 borderWidth: 1,
-                borderColor: 'rgba(34, 197, 94, 0.45)',
-                marginBottom: 10,
+                borderColor: P.accent,
+                marginBottom: 14,
               }}>
-                <Text style={{ color: '#86efac', fontSize: 10, fontWeight: 'bold', letterSpacing: 1, marginBottom: 4 }}>
-                  {transfer.headline.toUpperCase()}
+                <Text style={{
+                  fontFamily: FONTS.bodyMedium,
+                  color: P.accent,
+                  fontSize: 11,
+                  letterSpacing: 1.4,
+                  textTransform: 'uppercase',
+                  marginBottom: 8,
+                }}>
+                  {transfer.headline}
                 </Text>
-                <Text style={{ color: '#e5e7eb', fontSize: 12, lineHeight: 17, marginBottom: 8 }}>
+                <Text style={{
+                  fontFamily: FONTS.display,
+                  color: P.text,
+                  fontSize: 18,
+                  lineHeight: 24,
+                  marginBottom: 10,
+                }}>
+                  {transfer.realWorldAction}
+                </Text>
+                <Text style={{
+                  fontFamily: FONTS.body,
+                  color: P.textSoft,
+                  fontSize: 13,
+                  lineHeight: 19,
+                  marginBottom: 14,
+                }}>
                   {transfer.body}
                 </Text>
-                <Text style={{ color: '#fde68a', fontSize: 12, fontWeight: '600', marginBottom: 8 }}>
-                  → {transfer.realWorldAction}
-                </Text>
                 <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
-                  {!missionMarked && progress.activeMission?.status !== 'completed' && (
-                    <TouchableOpacity
+                  {!missionMarked && progress.activeMission?.status !== 'completed' ? (
+                    <PressableScale
                       onPress={() => {
                         completeActiveMission();
                         setMissionMarked(true);
@@ -438,18 +457,18 @@ export const ResultsScroll: React.FC<ResultsScrollProps> = ({
                         });
                       }}
                       style={{
-                        backgroundColor: '#16a34a',
-                        paddingHorizontal: 12,
-                        paddingVertical: 8,
-                        borderRadius: 10,
+                        backgroundColor: P.accent,
+                        paddingHorizontal: 14,
+                        paddingVertical: 12,
+                        borderRadius: 2,
                       }}
                       accessibilityRole="button"
                       accessibilityLabel="Mark real-world mission done"
                     >
-                      <Text style={{ color: '#fff', fontWeight: 'bold', fontSize: 11 }}>I DID IT</Text>
-                    </TouchableOpacity>
-                  )}
-                  <TouchableOpacity
+                      <Text style={{ color: P.ink, fontFamily: FONTS.bodyBold, fontSize: 13 }}>I did it</Text>
+                    </PressableScale>
+                  ) : null}
+                  <PressableScale
                     onPress={async () => {
                       const invite = buildSupportInvite(transfer.mission);
                       const msg = supportShareMessage(invite);
@@ -460,24 +479,43 @@ export const ResultsScroll: React.FC<ResultsScrollProps> = ({
                       await Share.share({ message: msg });
                     }}
                     style={{
-                      backgroundColor: 'rgba(59, 130, 246, 0.25)',
                       borderWidth: 1,
-                      borderColor: '#3b82f6',
-                      paddingHorizontal: 12,
-                      paddingVertical: 8,
-                      borderRadius: 10,
+                      borderColor: P.line,
+                      paddingHorizontal: 14,
+                      paddingVertical: 12,
+                      borderRadius: 2,
                     }}
                     accessibilityRole="button"
                     accessibilityLabel="Share support ask with caregiver"
                   >
-                    <Text style={{ color: '#93c5fd', fontWeight: 'bold', fontSize: 11 }}>SHARE WITH CAREGIVER</Text>
-                  </TouchableOpacity>
+                    <Text style={{ color: P.textSoft, fontFamily: FONTS.bodyMedium, fontSize: 13 }}>
+                      Invite support
+                    </Text>
+                  </PressableScale>
                 </View>
                 {missionMarked || progress.activeMission?.status === 'completed' ? (
-                  <Text style={{ color: '#86efac', fontSize: 11, marginTop: 8 }}>Mission marked complete. Realm steadied.</Text>
+                  <Text style={{
+                    fontFamily: FONTS.body,
+                    color: P.accent,
+                    fontSize: 12,
+                    marginTop: 10,
+                  }}>
+                    Mission marked complete
+                  </Text>
                 ) : null}
               </View>
-            )}
+            ) : null}
+
+            {/* Grade — secondary */}
+            <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 12 }}>
+              <View style={{ 
+                width: 40, height: 40, borderRadius: 2, alignItems: 'center', justifyContent: 'center',
+                borderWidth: 1, borderColor: gradeInfo.color, backgroundColor: gradeInfo.color + '20', marginRight: 10,
+              }}>
+                <Text style={{ fontFamily: FONTS.display, fontSize: 20, color: gradeInfo.color }}>{gradeInfo.grade}</Text>
+              </View>
+              <Text style={{ fontFamily: FONTS.bodyMedium, fontSize: 13, color: P.textSoft }}>{gradeInfo.title}</Text>
+            </View>
 
             {/* Alchemist Observation */}
             {observation && (
@@ -707,24 +745,23 @@ export const ResultsScroll: React.FC<ResultsScrollProps> = ({
               </View>
             )}
 
-            {/* Post-game blockchain prompt — contextual, shown on first victory */}
+            {/* Optional identity — demoted */}
             {isFirstVictory && !beamContext?.playerAccount && (
               <TouchableOpacity
                 onPress={() => beamContext?.login?.()}
                 style={{
-                  backgroundColor: 'rgba(139, 92, 246, 0.2)',
-                  padding: 12, borderRadius: 12,
-                  borderWidth: 1, borderColor: '#a78bfa',
+                  backgroundColor: P.mist,
+                  padding: 12,
+                  borderRadius: 2,
+                  borderWidth: 1,
+                  borderColor: P.line,
                   marginBottom: 10,
                 }}
-                accessibilityLabel="Save this achievement on-chain with social login"
+                accessibilityLabel="Optional: save progress with social login"
                 accessibilityRole="button"
               >
-                <Text style={{ color: '#c4b5fd', fontSize: 12, fontWeight: 'bold', textAlign: 'center' }}>
-                  👑 Save this Deed of Valor on-chain?
-                </Text>
-                <Text style={{ color: '#9ca3af', fontSize: 10, textAlign: 'center', marginTop: 2 }}>
-                  Sign in with Google or Apple — no wallet needed
+                <Text style={{ color: P.textMuted, fontSize: 11, fontFamily: FONTS.bodyMedium, textAlign: 'center' }}>
+                  Optional: sync progress with social login
                 </Text>
               </TouchableOpacity>
             )}
@@ -734,21 +771,16 @@ export const ResultsScroll: React.FC<ResultsScrollProps> = ({
               <TouchableOpacity
                 onPress={onPlayAgain}
                 style={{
-                  backgroundColor: '#d97706',
-                  paddingVertical: 11,
-                  borderRadius: 10,
-                  borderWidth: 2,
-                  borderColor: '#fbbf24',
-                  marginBottom: 6,
+                  backgroundColor: P.accent,
+                  paddingVertical: 14,
+                  borderRadius: 2,
+                  marginBottom: 8,
                 }}
-                activeOpacity={0.8}
+                activeOpacity={0.85}
               >
-                <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center' }}>
-                  <Text style={{ fontSize: 18, marginRight: 6 }}>⚔️</Text>
-                  <Text style={{ color: 'white', fontSize: 15, fontWeight: 'bold' }}>
-                    {!isVictory ? '⚔️ AVENGE YOUR KINGDOM' : tier === 'tier3' ? 'PLAY AGAIN' : '⚡ NEXT CHALLENGE'}
-                  </Text>
-                </View>
+                <Text style={{ color: P.ink, fontSize: 15, fontFamily: FONTS.bodyBold, textAlign: 'center' }}>
+                  {!isVictory ? 'Practice again' : tier === 'tier3' ? 'Practice again' : 'Continue'}
+                </Text>
               </TouchableOpacity>
 
               <View style={{ flexDirection: 'row', gap: 6 }}>
@@ -756,17 +788,16 @@ export const ResultsScroll: React.FC<ResultsScrollProps> = ({
                   onPress={onMainMenu}
                   style={{
                     flex: 1,
-                    backgroundColor: '#1f2937',
-                    paddingVertical: 10,
-                    borderRadius: 10,
-                    borderWidth: 2,
-                    borderColor: '#4b5563',
+                    backgroundColor: P.mist,
+                    paddingVertical: 12,
+                    borderRadius: 2,
+                    borderWidth: 1,
+                    borderColor: P.line,
                   }}
-                  activeOpacity={0.8}
+                  activeOpacity={0.85}
                 >
                   <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center' }}>
-                    <Text style={{ fontSize: 14, marginRight: 4 }}>🏰</Text>
-                    <Text style={{ color: '#e5e7eb', fontSize: 13, fontWeight: 'bold' }}>MENU</Text>
+                    <Text style={{ color: P.textSoft, fontSize: 13, fontFamily: FONTS.bodyMedium }}>Realm Home</Text>
                   </View>
                 </TouchableOpacity>
 

@@ -14,6 +14,31 @@ import { getGlucoseZone } from '@/constants/healthScenarios';
 import { TierConfig } from '@/constants/gameTiers';
 import { getStabilityZone } from '@/utils/gameLogic';
 import { GatesOpen, KingdomTrembles, StormApproaches, KingdomRallies, KingdomFalls, NewPowerGlow } from './DramaticMoments';
+import { MetabolicField, type MetabolicBand } from '@/components/atmosphere/MetabolicField';
+import { COLORS, FONTS } from '@/constants/designSystem';
+
+const P = COLORS.PROGRAMME;
+
+function zoneToBand(zone: StabilityZone): MetabolicBand {
+  switch (zone) {
+    case 'critical-low':
+    case 'warning-low':
+      return 'low';
+    case 'critical-high':
+    case 'warning-high':
+      return 'high';
+    case 'balanced':
+      return 'in_range';
+    default:
+      return 'unknown';
+  }
+}
+
+function zoneIntensity(zone: StabilityZone): number {
+  if (zone === 'critical-low' || zone === 'critical-high') return 0.9;
+  if (zone === 'warning-low' || zone === 'warning-high') return 0.7;
+  return 0.45;
+}
 
 // Screen-wide combo burst effect
 const ComboBurst: React.FC<{
@@ -385,33 +410,42 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({
     }
   }, [gameState.announcement, gameState.announcementType]);
 
+  const fieldBand = zoneToBand(zone);
+  const fieldIntensity = zoneIntensity(zone);
+
   return (
     <Animated.View 
       style={[
-        { flex: 1, backgroundColor: '#0a0a12', alignSelf: 'center', width: '100%', maxWidth: 500 },
+        { flex: 1, backgroundColor: P.ink, alignSelf: 'center', width: '100%', maxWidth: 500 },
         { transform: [{ translateX: shakeAnim }] }
       ]}
     >
-      {/* Animated background */}
-      <AnimatedBackground 
-        zone={zone}
-        comboCount={gameState.comboCount}
-        timer={gameState.timer}
-        timePhase={gameState.timePhase}
-        gameMode={gameState.gameMode}
-        tier={tierConfig?.tier}
-      />
+      <MetabolicField band={fieldBand} intensity={fieldIntensity} />
+
+      {/* Life mode: soft time wash only — field remains the hero */}
+      {gameState.gameMode === 'life' ? (
+        <View style={{ ...StyleSheet.absoluteFillObject, opacity: 0.22 }} pointerEvents="none">
+          <AnimatedBackground
+            zone={zone}
+            comboCount={gameState.comboCount}
+            timer={gameState.timer}
+            timePhase={gameState.timePhase}
+            gameMode={gameState.gameMode}
+            tier={tierConfig?.tier}
+          />
+        </View>
+      ) : null}
 
       {/* #8: Morning condition badge (Life Mode) */}
       {gameState.gameMode === 'life' && gameState.morningCondition !== 'normal_day' && (
-        <View style={{ position: 'absolute', top: insets.top + 90, right: 8, zIndex: 30, backgroundColor: 'rgba(0,0,0,0.7)', paddingHorizontal: 8, paddingVertical: 4, borderRadius: 8, borderWidth: 1, borderColor: '#fbbf2440' }}>
-          <Text style={{ color: '#fbbf24', fontSize: 10 }}>
-            {gameState.morningCondition === 'well_rested' ? '😊 Well Rested' :
-             gameState.morningCondition === 'poor_sleep' ? '😴 Poor Sleep' :
-             gameState.morningCondition === 'sick_day' ? '🤒 Sick Day' :
-             gameState.morningCondition === 'stressed' ? '😰 Stressed' :
-             gameState.morningCondition === 'marathon_day' ? '🏃 Marathon' :
-             gameState.morningCondition === 'recovery_day' ? '🩹 Recovery' : ''}
+        <View style={{ position: 'absolute', top: insets.top + 100, right: 8, zIndex: 30, backgroundColor: P.mist, paddingHorizontal: 10, paddingVertical: 6, borderRadius: 2, borderWidth: 1, borderColor: P.line }}>
+          <Text style={{ color: P.textSoft, fontSize: 10, fontFamily: FONTS.bodyMedium }}>
+            {gameState.morningCondition === 'well_rested' ? 'Well rested' :
+             gameState.morningCondition === 'poor_sleep' ? 'Poor sleep' :
+             gameState.morningCondition === 'sick_day' ? 'Sick day' :
+             gameState.morningCondition === 'stressed' ? 'Stressed' :
+             gameState.morningCondition === 'marathon_day' ? 'Marathon day' :
+             gameState.morningCondition === 'recovery_day' ? 'Recovery day' : ''}
           </Text>
         </View>
       )}
@@ -448,18 +482,18 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({
 
        {/* Contextual food tooltip */}
        {shownContextualTip && gameState.foods.some(f => f.faction === 'contextual') && (
-         <View style={{ position: 'absolute', top: 120, left: 20, right: 20, zIndex: 60, alignItems: 'center' }}>
+         <View style={{ position: 'absolute', top: 130, left: 20, right: 20, zIndex: 60, alignItems: 'center' }}>
            <View
              style={{
-               backgroundColor: 'rgba(139, 92, 246, 0.95)',
+               backgroundColor: 'rgba(11,18,16,0.92)',
                paddingHorizontal: 16, paddingVertical: 10,
-               borderRadius: 12, borderWidth: 1, borderColor: '#a78bfa',
+               borderRadius: 2, borderWidth: 1, borderColor: P.warn,
              }}
              accessible accessibilityRole="alert"
              accessibilityLabel="Contextual food: this food's effect depends on the time of day"
            >
-             <Text style={{ color: 'white', fontSize: 12, fontWeight: 'bold', textAlign: 'center' }}>
-               ☕ This food&apos;s effect depends on the time of day!
+             <Text style={{ color: P.text, fontSize: 12, fontFamily: FONTS.bodyMedium, textAlign: 'center' }}>
+               Context matters — this food’s effect depends on the time of day
              </Text>
            </View>
          </View>
@@ -467,17 +501,17 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({
 
        {/* Life Mode 4-direction hint */}
        {shownLifeModeTip && (
-         <View style={{ position: 'absolute', top: 120, left: 20, right: 20, zIndex: 60, alignItems: 'center' }}>
+         <View style={{ position: 'absolute', top: 130, left: 20, right: 20, zIndex: 60, alignItems: 'center' }}>
            <View
              style={{
-               backgroundColor: 'rgba(59, 130, 246, 0.95)',
+               backgroundColor: 'rgba(11,18,16,0.92)',
                paddingHorizontal: 16, paddingVertical: 10,
-               borderRadius: 12, borderWidth: 1, borderColor: '#3b82f6',
+               borderRadius: 2, borderWidth: 1, borderColor: P.line,
              }}
              accessible accessibilityRole="alert"
            >
-             <Text style={{ color: 'white', fontSize: 12, fontWeight: 'bold', textAlign: 'center' }}>
-               👆 Consume · 👇 Reject · 👈 Save · 👉 Share
+             <Text style={{ color: P.textSoft, fontSize: 12, fontFamily: FONTS.bodyMedium, textAlign: 'center' }}>
+               Up steady · Down refuse · Left save · Right share
              </Text>
            </View>
          </View>
@@ -525,27 +559,27 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({
         </View>
       )}
 
-      {/* Castle gate line — tier-themed end zone */}
+      {/* Decision threshold — end zone for foods */}
       <View style={{
         position: 'absolute', bottom: 200, left: 0, right: 0, zIndex: 5,
         alignItems: 'center',
       }}>
         <View style={{
-          width: '90%', height: 2,
-          backgroundColor: tierConfig?.tier === 'tier3' ? 'rgba(168,85,247,0.4)' : tierConfig?.tier === 'tier2' ? 'rgba(251,191,36,0.4)' : 'rgba(34,197,94,0.3)',
+          width: '88%', height: 1,
+          backgroundColor: P.line,
           borderRadius: 1,
         }} />
-        <Text style={{ color: tierConfig?.tier === 'tier3' ? 'rgba(168,85,247,0.4)' : tierConfig?.tier === 'tier2' ? 'rgba(251,191,36,0.4)' : 'rgba(34,197,94,0.3)', fontSize: 9, marginTop: 2 }}>
-          {tierConfig?.tier === 'tier3' ? '⚡ STORM WALL ⚡' : tierConfig?.tier === 'tier2' ? '🏛️ FEAST HALL 🏛️' : '🌿 GARDEN GATE 🌿'}
+        <Text style={{ color: P.textMuted, fontSize: 10, marginTop: 4, fontFamily: FONTS.body, letterSpacing: 1.2, textTransform: 'uppercase' }}>
+          Decision line
         </Text>
       </View>
 
       {/* Low stability hint — sugar isn't always bad */}
       {gameState.stability < 30 && gameState.gameMode === 'classic' && (
         <View style={{ position: 'absolute', bottom: 220, left: 20, right: 20, zIndex: 10, alignItems: 'center' }}>
-          <View style={{ backgroundColor: 'rgba(6,182,212,0.9)', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 8 }}>
-            <Text style={{ color: 'white', fontSize: 10, fontWeight: 'bold', textAlign: 'center' }}>
-              ❄️ Harmony LOW — swipe UP on sugar to raise it!
+          <View style={{ backgroundColor: 'rgba(11,18,16,0.9)', paddingHorizontal: 12, paddingVertical: 8, borderRadius: 2, borderWidth: 1, borderColor: P.cool }}>
+            <Text style={{ color: P.text, fontSize: 11, fontFamily: FONTS.bodyMedium, textAlign: 'center' }}>
+              Harmony low — swipe up on fuel to raise it
             </Text>
           </View>
         </View>

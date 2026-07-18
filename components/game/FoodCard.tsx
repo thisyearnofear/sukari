@@ -4,6 +4,9 @@ import { FoodUnit, ControlMode, SwipeDirection, SwipeAction } from '@/types/game
 import { SWIPE_THRESHOLD } from '@/constants/gameConfig';
 import { useAccessibility } from '@/hooks/useAccessibility';
 import { ExplosionParticle, ShockwaveRing, SwipeTrail, ElectricArc } from './FoodCardEffects';
+import { COLORS, FONTS } from '@/constants/designSystem';
+
+const P = COLORS.PROGRAMME;
 
 interface FoodCardProps {
   food: FoodUnit;
@@ -35,20 +38,32 @@ export const FoodCard: React.FC<FoodCardProps> = ({ food, onSwipe, controlMode, 
   // Determine visual appearance based on faction and contextual state
   const isAlly = food.faction === 'ally' || (food.faction === 'contextual' && food.isContextuallyGood);
   const isContextual = food.faction === 'contextual';
-  const borderColor = isContextual 
-    ? (food.isContextuallyGood ? '#a855f7' : '#f97316') // Purple for good contextual, orange for bad
-    : (isAlly ? '#22c55e' : '#ef4444');
+  const borderColor = isContextual
+    ? food.isContextuallyGood
+      ? P.accent
+      : P.warn
+    : isAlly
+      ? P.accent
+      : P.danger;
   const glowColor = isContextual
-    ? (food.isContextuallyGood ? 'rgba(168, 85, 247, 0.4)' : 'rgba(249, 115, 22, 0.4)')
-    : (isAlly ? 'rgba(34, 197, 94, 0.4)' : 'rgba(239, 68, 68, 0.4)');
+    ? food.isContextuallyGood
+      ? P.accentSoft
+      : P.warnSoft
+    : isAlly
+      ? P.accentSoft
+      : 'rgba(196, 92, 92, 0.28)';
 
   // Get direction color for hints
   const getDirectionColor = (dir: SwipeDirection) => {
     switch (dir) {
-      case 'up': return '#22c55e';
-      case 'down': return '#ef4444';
-      case 'left': return '#3b82f6';
-      case 'right': return '#f59e0b';
+      case 'up':
+        return P.accent;
+      case 'down':
+        return P.danger;
+      case 'left':
+        return P.cool;
+      case 'right':
+        return P.warn;
     }
   };
 
@@ -93,8 +108,8 @@ export const FoodCard: React.FC<FoodCardProps> = ({ food, onSwipe, controlMode, 
     // Subtle pulse
     const pulse = Animated.loop(
       Animated.sequence([
-        Animated.timing(pulseAnim, { toValue: 1.05, duration: 600, useNativeDriver: true }),
-        Animated.timing(pulseAnim, { toValue: 1, duration: 600, useNativeDriver: true }),
+        Animated.timing(pulseAnim, { toValue: 1.02, duration: 900, useNativeDriver: true }),
+        Animated.timing(pulseAnim, { toValue: 1, duration: 900, useNativeDriver: true }),
       ])
     );
     pulse.start();
@@ -102,8 +117,8 @@ export const FoodCard: React.FC<FoodCardProps> = ({ food, onSwipe, controlMode, 
     // Glow pulse
     const glow = Animated.loop(
       Animated.sequence([
-        Animated.timing(glowIntensity, { toValue: 0.6, duration: 800, useNativeDriver: true }),
-        Animated.timing(glowIntensity, { toValue: 0.3, duration: 800, useNativeDriver: true }),
+        Animated.timing(glowIntensity, { toValue: 0.4, duration: 1100, useNativeDriver: true }),
+        Animated.timing(glowIntensity, { toValue: 0.2, duration: 1100, useNativeDriver: true }),
       ])
     );
     glow.start();
@@ -267,10 +282,10 @@ export const FoodCard: React.FC<FoodCardProps> = ({ food, onSwipe, controlMode, 
     
     // Different particle types based on action
     const particleConfig: Record<string, { types: ('spark' | 'ring' | 'star' | 'droplet' | 'ember')[]; color: string; secondaryColor: string }> = {
-      rally: { types: ['star', 'spark', 'ring'], color: '#22c55e', secondaryColor: '#86efac' },
-      banish: { types: ['ember', 'spark', 'droplet'], color: '#ef4444', secondaryColor: '#fca5a5' },
-      save: { types: ['star', 'ring', 'spark'], color: '#3b82f6', secondaryColor: '#93c5fd' },
-      share: { types: ['star', 'ring', 'spark'], color: '#f59e0b', secondaryColor: '#fcd34d' },
+      rally: { types: ['star', 'spark', 'ring'], color: P.accent, secondaryColor: '#6ee7b7' },
+      banish: { types: ['ember', 'spark', 'droplet'], color: P.danger, secondaryColor: '#fca5a5' },
+      save: { types: ['star', 'ring', 'spark'], color: P.cool, secondaryColor: '#7dd3fc' },
+      share: { types: ['star', 'ring', 'spark'], color: P.warn, secondaryColor: '#fcd34d' },
     };
     
     const config = particleConfig[explosionType] || particleConfig.rally;
@@ -310,10 +325,10 @@ export const FoodCard: React.FC<FoodCardProps> = ({ food, onSwipe, controlMode, 
     if (gameMode !== 'life') return null;
     
     const indicators = [
-      { dir: 'up' as SwipeDirection, icon: '👆', label: 'EAT', y: -35, x: 22 },
-      { dir: 'down' as SwipeDirection, icon: '👇', label: 'NO', y: 65, x: 22 },
-      { dir: 'left' as SwipeDirection, icon: '👈', label: 'SAVE', y: 15, x: -30 },
-      { dir: 'right' as SwipeDirection, icon: '👉', label: 'SHARE', y: 15, x: 70 },
+      { dir: 'up' as SwipeDirection, icon: '↑', label: 'Steady', y: -35, x: 18 },
+      { dir: 'down' as SwipeDirection, icon: '↓', label: 'Refuse', y: 65, x: 18 },
+      { dir: 'left' as SwipeDirection, icon: '←', label: 'Save', y: 15, x: -34 },
+      { dir: 'right' as SwipeDirection, icon: '→', label: 'Share', y: 15, x: 70 },
     ];
     
     return indicators.map(({ dir, icon, label, x, y }) => {
@@ -394,32 +409,17 @@ export const FoodCard: React.FC<FoodCardProps> = ({ food, onSwipe, controlMode, 
       {/* Electric arc effect */}
       <ElectricArc color={borderColor} />
       
-      {/* Animated glow effect */}
+      {/* Soft aura — quieter than neon glow */}
       <Animated.View
         style={{
           position: 'absolute',
-          top: -8,
-          left: -8,
-          right: -8,
-          bottom: -8,
-          borderRadius: 22,
+          top: -6,
+          left: -6,
+          right: -6,
+          bottom: -6,
+          borderRadius: 4,
           backgroundColor: glowColor,
-          opacity: glowIntensity,
-        }}
-      />
-      
-      {/* Secondary glow ring */}
-      <View
-        style={{
-          position: 'absolute',
-          top: -4,
-          left: -4,
-          right: -4,
-          bottom: -4,
-          borderRadius: 18,
-          borderWidth: 1,
-          borderColor: borderColor,
-          opacity: 0.5,
+          opacity: Animated.multiply(glowIntensity, 0.55),
         }}
       />
       
@@ -427,61 +427,48 @@ export const FoodCard: React.FC<FoodCardProps> = ({ food, onSwipe, controlMode, 
       <View
         style={{
           width: 64,
-          backgroundColor: '#0f0f1a',
-          borderWidth: 3,
+          backgroundColor: P.inkElevated,
+          borderWidth: 1.5,
           borderColor: borderColor,
-          borderRadius: 16,
+          borderRadius: 2,
           alignItems: 'center',
           justifyContent: 'center',
           paddingVertical: 8,
           shadowColor: borderColor,
           shadowOffset: { width: 0, height: 0 },
-          shadowOpacity: 0.8,
-          shadowRadius: 12,
-          elevation: 10,
+          shadowOpacity: 0.35,
+          shadowRadius: 6,
+          elevation: 6,
         }}
       >
-        {/* Faction badge with glow */}
+        {/* Faction mark */}
         <View
           style={{
             position: 'absolute',
-            top: -12,
-            right: -12,
-            width: 30,
-            height: 30,
-            borderRadius: 15,
+            top: -8,
+            right: -8,
+            width: 20,
+            height: 20,
+            borderRadius: 2,
             backgroundColor: borderColor,
             alignItems: 'center',
             justifyContent: 'center',
-            shadowColor: borderColor,
-            shadowOffset: { width: 0, height: 0 },
-            shadowOpacity: 1,
-            shadowRadius: 10,
-            borderWidth: 2.5,
-            borderColor: '#fff',
           }}
         >
-          <Text style={{ fontSize: 16, color: 'white', fontWeight: 'bold' }}>
-            {isAlly ? '✓' : '✗'}
+          <Text style={{ fontSize: 11, color: P.ink, fontFamily: FONTS.bodyBold }}>
+            {isAlly ? '+' : '−'}
           </Text>
         </View>
         
-        {/* Food sprite with shadow */}
-        <View style={{ 
-          shadowColor: borderColor,
-          shadowOffset: { width: 0, height: 2 },
-          shadowOpacity: 0.5,
-          shadowRadius: 4,
-        }}>
-          <Text style={{ fontSize: 32 }}>{food.sprite}</Text>
-        </View>
+        {/* Food sprite */}
+        <Text style={{ fontSize: 30 }}>{food.sprite}</Text>
         
         {/* Swipe hint (swipe mode) */}
         {controlMode === 'swipe' && (
           <View 
             style={{
               position: 'absolute',
-              bottom: -18,
+              bottom: -16,
               left: 0,
               right: 0,
               alignItems: 'center',
@@ -489,18 +476,16 @@ export const FoodCard: React.FC<FoodCardProps> = ({ food, onSwipe, controlMode, 
           >
             <View 
               style={{
-                backgroundColor: borderColor,
-                paddingHorizontal: 10,
-                paddingVertical: 3,
-                borderRadius: 10,
-                shadowColor: borderColor,
-                shadowOffset: { width: 0, height: 0 },
-                shadowOpacity: 0.8,
-                shadowRadius: 6,
+                backgroundColor: P.ink,
+                borderWidth: 1,
+                borderColor: borderColor,
+                paddingHorizontal: 8,
+                paddingVertical: 2,
+                borderRadius: 2,
               }}
             >
-              <Text style={{ color: 'white', fontSize: 12, fontWeight: 'bold' }}>
-                {isAlly ? '👆' : '👇'}
+              <Text style={{ color: borderColor, fontSize: 9, fontFamily: FONTS.bodyMedium }}>
+                {isAlly ? '↑ Steady' : '↓ Spike'}
               </Text>
             </View>
           </View>

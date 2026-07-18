@@ -1,12 +1,19 @@
+/**
+ * InstrumentHUD — clinical-instrument battle chrome.
+ * Harmony is the hero; score/timer/actions stay quiet.
+ */
 import React, { useEffect, useRef, useState } from 'react';
-import { View, Text, TouchableOpacity, Animated, Easing, StyleSheet } from 'react-native';
+import { View, Text, Animated, Easing, StyleSheet } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { StabilityZone } from '@/types/game';
 import { COMBO_TIERS } from '@/constants/gameConfig';
-import { COLORS } from '@/constants/designSystem';
+import { COLORS, FONTS, ANIMATIONS } from '@/constants/designSystem';
 import { useAccessibility } from '@/hooks/useAccessibility';
 import { AnimatedCounter } from './AnimatedCounter';
 import { getStabilityZone } from '@/utils/gameLogic';
+import { PressableScale } from '@/components/ui/PressableScale';
+
+const P = COLORS.PROGRAMME;
 
 interface BattleHUDProps {
   score: number;
@@ -16,7 +23,16 @@ interface BattleHUDProps {
   exerciseCharges: number;
   rationCharges: number;
   announcement: string | null;
-  announcementType: 'info' | 'success' | 'warning' | 'error' | 'plot_twist' | 'joke' | 'fact' | 'special_mode' | 'reflection';
+  announcementType:
+    | 'info'
+    | 'success'
+    | 'warning'
+    | 'error'
+    | 'plot_twist'
+    | 'joke'
+    | 'fact'
+    | 'special_mode'
+    | 'reflection';
   onExercise: () => void;
   onRations: () => void;
   isPaused?: boolean;
@@ -26,1373 +42,637 @@ interface BattleHUDProps {
   showComboCounter?: boolean;
   controlMode?: 'swipe' | 'tap';
   onToggleControlMode?: () => void;
-  minimal?: boolean; // Tier1: hide decorative elements, show only essentials
+  minimal?: boolean;
 }
 
-const getStabilityColor = (zone: StabilityZone): string => {
+function zoneAccent(zone: StabilityZone): string {
   switch (zone) {
-    case 'balanced': return COLORS.ZONES.balanced;
+    case 'balanced':
+      return P.accent;
     case 'warning-low':
-    case 'warning-high': return COLORS.ZONES.warningHigh;
-    case 'critical-low': return COLORS.ZONES.criticalLow;
-    case 'critical-high': return COLORS.ZONES.criticalHigh;
+    case 'critical-low':
+      return P.cool;
+    case 'warning-high':
+      return P.warn;
+    case 'critical-high':
+      return P.danger;
   }
-};
+}
 
-const getZoneLabel = (zone: StabilityZone): string => {
+function zoneLabel(zone: StabilityZone): string {
   switch (zone) {
-    case 'balanced': return '💚 THRIVING';
-    case 'warning-low': return '🧊 ENERGY LOW';
-    case 'warning-high': return '🔥 SUGAR RUSH';
-    case 'critical-low': return '💀 CRASHING';
-    case 'critical-high': return '💀 OVERLOAD';
+    case 'balanced':
+      return 'In range';
+    case 'warning-low':
+      return 'Falling';
+    case 'warning-high':
+      return 'Rising';
+    case 'critical-low':
+      return 'Critical low';
+    case 'critical-high':
+      return 'Critical high';
   }
-};
+}
 
-// Particle component for effects
-const Particle: React.FC<{
-  x: number;
-  y: number;
-  color: string;
-  type: 'spark' | 'ember' | 'droplet' | 'star';
-  delay?: number;
-}> = ({ x, y, color, type, delay = 0 }) => {
-  const anim = useRef(new Animated.Value(0)).current;
-  
-  useEffect(() => {
-    const animation = Animated.loop(
-      Animated.sequence([
-        Animated.delay(delay),
-        Animated.timing(anim, {
-          toValue: 1,
-          duration: type === 'ember' ? 2000 : 1500,
-          easing: Easing.out(Easing.quad),
-          useNativeDriver: true,
-        }),
-        Animated.timing(anim, {
-          toValue: 0,
-          duration: 0,
-          useNativeDriver: true,
-        }),
-      ])
-    );
-    animation.start();
-    return () => animation.stop();
-  }, [anim, delay, type]);
+const BattleHUDComponent: React.FC<BattleHUDProps> = React.memo(
+  ({
+    score,
+    stability,
+    timer,
+    comboCount,
+    exerciseCharges,
+    rationCharges,
+    announcement,
+    announcementType,
+    onExercise,
+    onRations,
+    isPaused = false,
+    onPause,
+    onResume,
+    onRestart,
+    showComboCounter = true,
+    controlMode = 'swipe',
+    onToggleControlMode,
+    minimal = false,
+  }) => {
+    const { getButtonLabel, getHUDLabel } = useAccessibility();
+    const zone = getStabilityZone(stability);
+    const accent = zoneAccent(zone);
+    const isLowTimer = timer <= 10;
+    const isCritical = zone === 'critical-low' || zone === 'critical-high';
+    const insets = useSafeAreaInsets();
 
-  const translateY = anim.interpolate({
-    inputRange: [0, 1],
-    outputRange: [0, type === 'ember' ? -40 : -25],
-  });
+    const scoreFlashAnim = useRef(new Animated.Value(0)).current;
+    const timerShakeAnim = useRef(new Animated.Value(0)).current;
+    const toastAnim = useRef(new Animated.Value(0)).current;
+    const prevScoreRef = useRef(score);
+    const prevComboRef = useRef(comboCount);
+    const [showComboBreak, setShowComboBreak] = useState(false);
 
-  const opacity = anim.interpolate({
-    inputRange: [0, 0.3, 0.7, 1],
-    outputRange: [0, 1, 1, 0],
-  });
+    useEffect(() => {
+      if (prevComboRef.current >= 3 && comboCount === 0) {
+        setShowComboBreak(true);
+        const t = setTimeout(() => setShowComboBreak(false), 900);
+        return () => clearTimeout(t);
+      }
+      prevComboRef.current = comboCount;
+    }, [comboCount]);
 
-  const scale = anim.interpolate({
-    inputRange: [0, 0.5, 1],
-    outputRange: [0.5, 1.2, 0.3],
-  });
-
-  const getParticleContent = () => {
-    switch (type) {
-      case 'spark': return '⚡';
-      case 'ember': return '🔥';
-      case 'droplet': return '💧';
-      case 'star': return '✨';
-    }
-  };
-
-  return (
-    <Animated.View
-      style={{
-        position: 'absolute',
-        left: x,
-        top: y,
-        transform: [{ translateY }, { scale }],
-        opacity,
-      }}
-    >
-      <Text style={{ fontSize: 10, color }}>{getParticleContent()}</Text>
-    </Animated.View>
-  );
-};
-
-// Animated border glow component
-const AnimatedBorderGlow: React.FC<{
-  color: string;
-  intensity: 'low' | 'medium' | 'high';
-}> = ({ color, intensity }) => {
-  const glowAnim = useRef(new Animated.Value(0)).current;
-  
-  useEffect(() => {
-    const duration = intensity === 'high' ? 500 : intensity === 'medium' ? 800 : 1200;
-    const animation = Animated.loop(
-      Animated.sequence([
-        Animated.timing(glowAnim, {
-          toValue: 1,
-          duration,
-          easing: Easing.inOut(Easing.sin),
-          useNativeDriver: true,
-        }),
-        Animated.timing(glowAnim, {
-          toValue: 0,
-          duration,
-          easing: Easing.inOut(Easing.sin),
-          useNativeDriver: true,
-        }),
-      ])
-    );
-    animation.start();
-    return () => animation.stop();
-  }, [glowAnim, intensity]);
-
-  const opacity = glowAnim.interpolate({
-    inputRange: [0, 1],
-    outputRange: [0.3, intensity === 'high' ? 1 : 0.7],
-  });
-
-  return (
-    <Animated.View
-      style={{
-        position: 'absolute',
-        top: -3,
-        left: -3,
-        right: -3,
-        bottom: -3,
-        borderRadius: 16,
-        borderWidth: 2,
-        borderColor: color,
-        opacity,
-      }}
-    />
-  );
-};
-
-// Electric arc effect
-const ElectricArc: React.FC<{ color: string; active: boolean }> = ({ color, active }) => {
-  const arcAnim = useRef(new Animated.Value(0)).current;
-  
-  useEffect(() => {
-    if (active) {
-      const animation = Animated.loop(
+    useEffect(() => {
+      if (score !== prevScoreRef.current) {
         Animated.sequence([
-          Animated.timing(arcAnim, {
+          Animated.timing(scoreFlashAnim, {
             toValue: 1,
-            duration: 100,
+            duration: ANIMATIONS.MOTION.press.duration,
             useNativeDriver: true,
           }),
-          Animated.timing(arcAnim, {
+          Animated.timing(scoreFlashAnim, {
             toValue: 0,
-            duration: 100,
+            duration: ANIMATIONS.MOTION.exit.duration,
             useNativeDriver: true,
           }),
-        ])
-      );
-      animation.start();
-      return () => animation.stop();
-    }
-  }, [active, arcAnim]);
+        ]).start();
+        prevScoreRef.current = score;
+      }
+    }, [score, scoreFlashAnim]);
 
-  if (!active) return null;
+    useEffect(() => {
+      if (isLowTimer && !isPaused) {
+        const shake = Animated.loop(
+          Animated.sequence([
+            Animated.timing(timerShakeAnim, { toValue: 2, duration: 40, useNativeDriver: true }),
+            Animated.timing(timerShakeAnim, { toValue: -2, duration: 40, useNativeDriver: true }),
+            Animated.timing(timerShakeAnim, { toValue: 0, duration: 40, useNativeDriver: true }),
+          ]),
+        );
+        shake.start();
+        return () => shake.stop();
+      }
+      timerShakeAnim.setValue(0);
+    }, [isLowTimer, isPaused, timerShakeAnim]);
 
-  return (
-    <Animated.View
-      style={{
-        position: 'absolute',
-        top: 0,
-        left: 0,
-        right: 0,
-        bottom: 0,
-        opacity: arcAnim,
-      }}
-    >
-      <View style={[styles.electricArc, { backgroundColor: color }]} />
-    </Animated.View>
-  );
-};
+    useEffect(() => {
+      if (!announcement) {
+        toastAnim.setValue(0);
+        return;
+      }
+      const { duration, bezier } = ANIMATIONS.MOTION.toast;
+      Animated.timing(toastAnim, {
+        toValue: 1,
+        duration,
+        easing: Easing.bezier(bezier[0], bezier[1], bezier[2], bezier[3]),
+        useNativeDriver: true,
+      }).start();
+    }, [announcement, toastAnim]);
 
-const BattleHUDComponent: React.FC<BattleHUDProps> = React.memo(({
-  score,
-  stability,
-  timer,
-  comboCount,
-  exerciseCharges,
-  rationCharges,
-  announcement,
-  announcementType,
-  onExercise,
-  onRations,
-  isPaused = false,
-  onPause,
-  onResume,
-  onRestart,
-  showComboCounter = true,
-  controlMode = 'swipe',
-  onToggleControlMode,
-  minimal = false,
-}) => {
-  const { getButtonLabel, getHUDLabel } = useAccessibility();
-  const zone = getStabilityZone(stability);
-  const stabilityColor = getStabilityColor(zone);
-  const isLowTimer = timer <= 10;
-  const isCritical = zone === 'critical-low' || zone === 'critical-high';
-  const insets = useSafeAreaInsets();
+    const currentTier = [...COMBO_TIERS].reverse().find((t) => comboCount >= t.count);
+    const scoreScale = scoreFlashAnim.interpolate({
+      inputRange: [0, 1],
+      outputRange: [1, 1.08],
+    });
 
-  // Animation refs
-  const patternAnim = useRef(new Animated.Value(0)).current;
-  const pulseAnim = useRef(new Animated.Value(1)).current;
-  const scoreFlashAnim = useRef(new Animated.Value(0)).current;
-  const timerShakeAnim = useRef(new Animated.Value(0)).current;
-  const borderFlowAnim = useRef(new Animated.Value(0)).current;
-  
-  // Track previous score for flash effect
-  const prevScoreRef = useRef(score);
-  // Track combo break
-  const prevComboRef = useRef(comboCount);
-  const [showComboBreak, setShowComboBreak] = useState(false);
+    const announcementTint =
+      announcementType === 'success'
+        ? P.accent
+        : announcementType === 'warning'
+          ? P.warn
+          : announcementType === 'error'
+            ? P.danger
+            : announcementType === 'plot_twist'
+              ? P.cool
+              : P.textSoft;
 
-  useEffect(() => {
-    if (prevComboRef.current >= 3 && comboCount === 0) {
-      setShowComboBreak(true);
-      const t = setTimeout(() => setShowComboBreak(false), 1000);
-      return () => clearTimeout(t);
-    }
-    prevComboRef.current = comboCount;
-  }, [comboCount]);
-  
-  // Score flash effect
-  useEffect(() => {
-    if (score !== prevScoreRef.current) {
-      Animated.sequence([
-        Animated.timing(scoreFlashAnim, {
-          toValue: 1,
-          duration: 100,
-          useNativeDriver: true,
-        }),
-        Animated.timing(scoreFlashAnim, {
-          toValue: 0,
-          duration: 300,
-          useNativeDriver: true,
-        }),
-      ]).start();
-      prevScoreRef.current = score;
-    }
-  }, [score, scoreFlashAnim]);
-
-  // Continuous border flow animation
-  useEffect(() => {
-    if (!isPaused) {
-      const animation = Animated.loop(
-        Animated.timing(borderFlowAnim, {
-          toValue: 1,
-          duration: 3000,
-          easing: Easing.linear,
-          useNativeDriver: true,
-        })
-      );
-      animation.start();
-      return () => animation.stop();
-    }
-  }, [isPaused, borderFlowAnim]);
-
-  // Pattern animation
-  useEffect(() => {
-    if (!isPaused) {
-      const patternAnimation = Animated.loop(
-        Animated.timing(patternAnim, {
-          toValue: 1,
-          duration: 2000,
-          easing: Easing.linear,
-          useNativeDriver: true,
-        })
-      );
-      patternAnimation.start();
-      return () => patternAnimation.stop();
-    }
-  }, [isPaused, patternAnim]);
-
-  // Pulse animation for critical zones
-  useEffect(() => {
-    if (isCritical && !isPaused) {
-      const pulseAnimation = Animated.loop(
-        Animated.sequence([
-          Animated.timing(pulseAnim, {
-            toValue: 1.05,
-            duration: 200,
-            useNativeDriver: true,
-          }),
-          Animated.timing(pulseAnim, {
-            toValue: 1,
-            duration: 200,
-            useNativeDriver: true,
-          }),
-        ])
-      );
-      pulseAnimation.start();
-      return () => pulseAnimation.stop();
-    }
-  }, [isCritical, isPaused, pulseAnim]);
-
-  // Timer shake for low time
-  useEffect(() => {
-    if (isLowTimer && !isPaused) {
-      const shakeAnimation = Animated.loop(
-        Animated.sequence([
-          Animated.timing(timerShakeAnim, {
-            toValue: 3,
-            duration: 50,
-            useNativeDriver: true,
-          }),
-          Animated.timing(timerShakeAnim, {
-            toValue: -3,
-            duration: 50,
-            useNativeDriver: true,
-          }),
-          Animated.timing(timerShakeAnim, {
-            toValue: 0,
-            duration: 50,
-            useNativeDriver: true,
-          }),
-        ])
-      );
-      shakeAnimation.start();
-      return () => shakeAnimation.stop();
-    }
-  }, [isLowTimer, isPaused, timerShakeAnim]);
-
-  const currentTier = [...COMBO_TIERS].reverse().find(t => comboCount >= t.count);
-  const comboTierIndex = currentTier ? COMBO_TIERS.indexOf(currentTier) : 0;
-
-  const getAnnouncementStyle = () => {
-    switch (announcementType) {
-      case 'success': return { bg: '#16a34a', border: '#22c55e', icon: '✅' };
-      case 'warning': return { bg: '#d97706', border: '#f59e0b', icon: '⚠️' };
-      case 'error': return { bg: '#dc2626', border: '#ef4444', icon: '❌' };
-      case 'plot_twist': return { bg: '#7c3aed', border: '#a78bfa', icon: '🎭' };
-      default: return { bg: '#7c3aed', border: '#a78bfa', icon: '📢' };
-    }
-  };
-
-  // Generate particles based on zone
-  const renderParticles = () => {
-    const particles = [];
-    const particleType = zone === 'critical-high' ? 'ember' : 
-                         zone === 'critical-low' ? 'droplet' : 
-                         zone === 'balanced' ? 'star' : 'spark';
-    
-    for (let i = 0; i < 8; i++) {
-      particles.push(
-        <Particle
-          key={i}
-          x={20 + (i * 40)}
-          y={-5}
-          color={stabilityColor}
-          type={particleType}
-          delay={i * 200}
-        />
-      );
-    }
-    return particles;
-  };
-
-  const scoreScale = scoreFlashAnim.interpolate({
-    inputRange: [0, 1],
-    outputRange: [1, 1.3],
-  });
-
-  return (
-    <>
-      {/* ═══════════════════════════════════════════════════════════════════════════
-          TOP HUD - MEDIEVAL FANTASY HEADER
-          ═══════════════════════════════════════════════════════════════════════════ */}
-      <View 
-        style={{ 
-          position: 'absolute',
-          top: 0,
-          left: 0,
-          right: 0,
-          paddingTop: 44,
-          paddingHorizontal: 8,
-          zIndex: 50,
-        }}
-      >
-        {/* Ornate frame container */}
-        <Animated.View 
-          style={[
-            styles.topHudContainer,
-            { 
-              borderColor: stabilityColor,
-              shadowColor: stabilityColor,
-              transform: [{ scale: pulseAnim }],
-            }
-          ]}
-        >
-          {/* Animated border glow */}
-          {!minimal && <AnimatedBorderGlow 
-            color={stabilityColor} 
-            intensity={isCritical ? 'high' : zone === 'balanced' ? 'low' : 'medium'} 
-          />}
-          
-          {/* Electric arcs for critical zones */}
-          {!minimal && <ElectricArc color={stabilityColor} active={isCritical} />}
-          
-          {/* Particle effects */}
-          {!minimal && <View style={styles.particleContainer}>
-            {renderParticles()}
-          </View>}
-
-          {/* Corner ornaments */}
-          {!minimal && <>
-          <View style={[styles.cornerOrnament, styles.topLeft]}>
-            <Text style={{ color: stabilityColor, fontSize: 16 }}>⚜️</Text>
-          </View>
-          <View style={[styles.cornerOrnament, styles.topRight]}>
-            <Text style={{ color: stabilityColor, fontSize: 16 }}>⚜️</Text>
-          </View>
-          </>}
-
-          {/* Main content */}
-          <View style={styles.topHudContent}>
-            {/* Score section with crown */}
-            <View style={styles.scoreSection} accessible accessibilityLabel={getHUDLabel('score', score)} accessibilityRole="text">
-              <Text style={styles.crownIcon}>👑</Text>
+    return (
+      <>
+        <View style={[styles.topWrap, { paddingTop: Math.max(insets.top, 12) }]} pointerEvents="box-none">
+          <View style={styles.topStrip}>
+            <View
+              style={styles.scoreBlock}
+              accessible
+              accessibilityLabel={getHUDLabel('score', score)}
+              accessibilityRole="text"
+            >
+              <Text style={styles.metaLabel}>Score</Text>
               <Animated.View style={{ transform: [{ scale: scoreScale }] }}>
-                <AnimatedCounter value={score} style={styles.scoreText} />
+                <AnimatedCounter value={score} style={styles.scoreValue} />
               </Animated.View>
-              <Text style={styles.scoreLabel}>GLORY</Text>
             </View>
 
-            {/* Center - Timer with dramatic styling */}
-            <View style={styles.timerSection} accessible accessibilityLabel={getHUDLabel('timer', timer)} accessibilityRole="timer">
-              <Animated.View 
-                style={[
-                  styles.timerContainer,
-                  { 
-                    borderColor: isLowTimer ? '#ef4444' : stabilityColor,
-                    backgroundColor: isLowTimer ? 'rgba(239,68,68,0.3)' : 'rgba(0,0,0,0.6)',
-                    transform: [{ translateX: timerShakeAnim }],
-                  }
-                ]}
-              >
-                <Text style={styles.timerIcon}>{isLowTimer ? '⏰' : '⌛'}</Text>
-                <Text style={[
-                  styles.timerText,
-                  { color: isLowTimer ? '#ef4444' : '#fbbf24' }
-                ]}>
-                  {timer}
-                </Text>
-              </Animated.View>
-              {isLowTimer && (
-                <Text style={styles.urgentText}>FINAL WAVE!</Text>
-              )}
-            </View>
+            <Animated.View
+              style={[
+                styles.timerBlock,
+                isLowTimer && styles.timerUrgent,
+                { transform: [{ translateX: timerShakeAnim }] },
+              ]}
+              accessible
+              accessibilityLabel={getHUDLabel('timer', timer)}
+              accessibilityRole="timer"
+            >
+              <Text style={[styles.timerValue, isLowTimer && { color: P.danger }]}>{timer}</Text>
+              <Text style={styles.metaLabel}>{isLowTimer ? 'Finish' : 'Seconds'}</Text>
+            </Animated.View>
 
-            {/* Control Mode & Pause buttons */}
-            <View style={styles.pauseSection}>
-              {onToggleControlMode && (
-                <TouchableOpacity
+            <View style={styles.topActions}>
+              {onToggleControlMode ? (
+                <PressableScale
                   onPress={onToggleControlMode}
-                  style={styles.controlModeButton}
                   accessibilityLabel={`Switch to ${controlMode === 'swipe' ? 'tap' : 'swipe'} controls`}
                   accessibilityRole="button"
+                  style={styles.iconChip}
                 >
-                  <Text style={styles.controlModeIcon}>
-                    {controlMode === 'swipe' ? '👆' : '🖱️'}
-                  </Text>
-                </TouchableOpacity>
-              )}
-              {onPause && !isPaused && (
-                <TouchableOpacity
+                  <Text style={styles.iconChipText}>{controlMode === 'swipe' ? 'Swipe' : 'Tap'}</Text>
+                </PressableScale>
+              ) : null}
+              {onPause && !isPaused ? (
+                <PressableScale
                   onPress={onPause}
-                  style={styles.pauseButton}
                   accessibilityLabel={getButtonLabel('pause')}
                   accessibilityRole="button"
+                  style={styles.iconChip}
                 >
-                  <Text style={styles.pauseIcon}>⏸️</Text>
-                </TouchableOpacity>
-              )}
+                  <Text style={styles.iconChipText}>Pause</Text>
+                </PressableScale>
+              ) : null}
             </View>
           </View>
 
-          {/* Stability meter - hidden until stability_bar mechanic unlocked (minimal=true means not yet) */}
-          {!minimal && (
-          <View style={styles.stabilitySection} accessible accessibilityLabel={getHUDLabel('harmony', Math.round(stability))} accessibilityRole="progressbar">
-            <View style={styles.stabilityLabelContainer}>
-              <Text style={[styles.stabilityLabel, { color: stabilityColor }]}>
-                {getZoneLabel(zone)}
-              </Text>
-            </View>
-            
-            <View style={[styles.stabilityBarOuter, { borderColor: stabilityColor }]}>
-              {/* Zone color backgrounds */}
-              <View style={styles.zoneBackgrounds}>
-                <View style={[styles.zoneSegment, { flex: 25, backgroundColor: 'rgba(6,182,212,0.4)' }]} />
-                <View style={[styles.zoneSegment, { flex: 15, backgroundColor: 'rgba(245,158,11,0.3)' }]} />
-                <View style={[styles.zoneSegment, { flex: 20, backgroundColor: 'rgba(16,185,129,0.5)' }]} />
-                <View style={[styles.zoneSegment, { flex: 15, backgroundColor: 'rgba(245,158,11,0.3)' }]} />
-                <View style={[styles.zoneSegment, { flex: 25, backgroundColor: 'rgba(239,68,68,0.4)' }]} />
+          {!minimal ? (
+            <View
+              style={[styles.harmonyCard, isCritical && { borderColor: accent }]}
+              accessible
+              accessibilityLabel={getHUDLabel('harmony', Math.round(stability))}
+              accessibilityRole="progressbar"
+            >
+              <View style={styles.harmonyHeader}>
+                <Text style={[styles.harmonyZone, { color: accent }]}>{zoneLabel(zone)}</Text>
+                <Text style={[styles.harmonyPercent, { color: accent }]}>
+                  {Math.round(stability)}%
+                </Text>
               </View>
-              
-              {/* Animated fill */}
-              <Animated.View 
-                style={[
-                  styles.stabilityFill,
-                  { 
-                    width: `${Math.min(100, Math.max(0, stability))}%`,
-                    backgroundColor: stabilityColor,
-                  }
-                ]}
-              >
-                {/* Animated shine */}
-                <Animated.View 
+              <View style={styles.harmonyTrack}>
+                <View style={styles.zoneBands}>
+                  <View style={[styles.zoneSeg, { flex: 25, backgroundColor: 'rgba(74,143,168,0.35)' }]} />
+                  <View style={[styles.zoneSeg, { flex: 15, backgroundColor: 'rgba(196,146,58,0.28)' }]} />
+                  <View style={[styles.zoneSeg, { flex: 20, backgroundColor: 'rgba(61,155,122,0.4)' }]} />
+                  <View style={[styles.zoneSeg, { flex: 15, backgroundColor: 'rgba(196,146,58,0.28)' }]} />
+                  <View style={[styles.zoneSeg, { flex: 25, backgroundColor: 'rgba(196,92,92,0.35)' }]} />
+                </View>
+                <View
                   style={[
-                    styles.stabilityShine,
+                    styles.harmonyNeedle,
                     {
-                      transform: [{
-                        translateX: patternAnim.interpolate({
-                          inputRange: [0, 1],
-                          outputRange: [-50, 200],
-                        })
-                      }],
-                    }
+                      left: `${Math.min(98, Math.max(2, stability))}%`,
+                      backgroundColor: accent,
+                    },
                   ]}
                 />
-              </Animated.View>
-              
-              {/* Indicator marker */}
-              <View 
-                style={[
-                  styles.stabilityIndicator,
-                  { left: `${Math.min(98, Math.max(2, stability))}%` }
-                ]}
-              />
+              </View>
+              <Text style={styles.harmonyCaption}>Harmony</Text>
             </View>
-            
-            <Text style={[styles.stabilityPercent, { color: stabilityColor }]}>
-              {Math.round(stability)}%
-            </Text>
-          </View>
-          )}
-        </Animated.View>
-      </View>
+          ) : null}
+        </View>
 
-      {/* ═══════════════════════════════════════════════════════════════════════════
-          PAUSE OVERLAY
-          ═══════════════════════════════════════════════════════════════════════════ */}
-      {isPaused && (
-        <View style={styles.pauseOverlay}>
-          <View style={styles.pauseModal}>
-            <View style={styles.pauseOrnament}>
-              <Text style={{ fontSize: 40 }}>⚔️</Text>
-            </View>
-            <Text style={styles.pauseTitle}>BATTLE PAUSED</Text>
-            <Text style={styles.pauseSubtitle}>The realm awaits your command...</Text>
-            
-            {/* Timer Display */}
-            <View style={styles.pauseTimerContainer}>
-              <Text style={styles.pauseTimerLabel}>TIME REMAINING</Text>
-              <Text style={styles.pauseTimerValue}>{timer}s</Text>
-            </View>
-            
-            <TouchableOpacity
-              onPress={onResume}
-              style={styles.resumeButton}
-              accessibilityLabel={getButtonLabel('resume')}
-              accessibilityRole="button"
-            >
-              <Text style={styles.resumeButtonText}>▶️ RESUME BATTLE</Text>
-            </TouchableOpacity>
-           
-            {/* Control Mode Toggle */}
-            {onToggleControlMode && (
-              <TouchableOpacity
-                onPress={onToggleControlMode}
-                style={styles.controlToggleButton}
-              >
-                <View style={styles.controlToggleContent}>
-                  <Text style={styles.controlToggleIcon}>{controlMode === 'swipe' ? '👆👇' : '🖱️'}</Text>
-                  <View style={styles.controlToggleInfo}>
-                    <Text style={styles.controlToggleLabel}>CONTROL MODE</Text>
-                    <Text style={styles.controlToggleValue}>{controlMode === 'swipe' ? 'SWIPE' : 'TAP'}</Text>
-                  </View>
-                  <Text style={styles.controlToggleSwitch}>🔄</Text>
-                </View>
-              </TouchableOpacity>
-            )}
-          
-            <View style={styles.pauseButtonRow}>
-              <TouchableOpacity
-                onPress={onRestart}
-                style={styles.restartButtonSmall}
-                accessibilityLabel={getButtonLabel('restart')}
+        {isPaused ? (
+          <View style={styles.pauseOverlay}>
+            <View style={styles.pauseSheet}>
+              <Text style={styles.pauseBrand}>Glucose Wars</Text>
+              <Text style={styles.pauseTitle}>Paused</Text>
+              <Text style={styles.pauseSub}>{timer}s remaining</Text>
+
+              <PressableScale
+                onPress={onResume}
+                accessibilityLabel={getButtonLabel('resume')}
                 accessibilityRole="button"
+                style={styles.primaryBtn}
               >
-                <Text style={styles.restartButtonText}>🔄 RESTART</Text>
-              </TouchableOpacity>
-              
-              {onPause && (
-                <TouchableOpacity
-                  onPress={onPause}
-                  style={styles.exitButtonSmall}
-                  accessibilityLabel={getButtonLabel('exit')}
+                <Text style={styles.primaryBtnText}>Resume</Text>
+              </PressableScale>
+
+              {onToggleControlMode ? (
+                <PressableScale onPress={onToggleControlMode} style={styles.ghostBtn}>
+                  <Text style={styles.ghostBtnText}>
+                    Controls: {controlMode === 'swipe' ? 'Swipe' : 'Tap'}
+                  </Text>
+                </PressableScale>
+              ) : null}
+
+              <View style={styles.pauseRow}>
+                <PressableScale
+                  onPress={onRestart}
+                  accessibilityLabel={getButtonLabel('restart')}
                   accessibilityRole="button"
+                  style={[styles.ghostBtn, { flex: 1 }]}
                 >
-                  <Text style={styles.exitButtonText}>🚪 EXIT</Text>
-                </TouchableOpacity>
-              )}
+                  <Text style={styles.ghostBtnText}>Restart</Text>
+                </PressableScale>
+                {onPause ? (
+                  <PressableScale
+                    onPress={onPause}
+                    accessibilityLabel={getButtonLabel('exit')}
+                    accessibilityRole="button"
+                    style={[styles.ghostBtn, { flex: 1 }]}
+                  >
+                    <Text style={styles.ghostBtnText}>Exit</Text>
+                  </PressableScale>
+                ) : null}
+              </View>
             </View>
           </View>
-        </View>
-      )}
+        ) : null}
 
-      {/* ═══════════════════════════════════════════════════════════════════════════
-          COMBO INDICATOR - FLOATING BANNER
-          ═══════════════════════════════════════════════════════════════════════════ */}
-      {(showComboCounter !== false) && comboCount >= 3 && (
-        <View style={styles.comboContainer} accessible accessibilityLabel={getHUDLabel('combo', comboCount)} accessibilityRole="text">
-          <Animated.View 
-            style={[
-              styles.comboBanner,
-              { 
-                borderColor: currentTier?.color || '#fbbf24',
-                shadowColor: currentTier?.color || '#fbbf24',
-                shadowRadius: 8 + comboTierIndex * 4,
-                shadowOpacity: 0.5 + comboTierIndex * 0.1,
-                transform: [{ scale: 1 + comboTierIndex * 0.05 }],
-              }
-            ]}
+        {showComboCounter !== false && comboCount >= 3 ? (
+          <View
+            style={styles.comboWrap}
+            accessible
+            accessibilityLabel={getHUDLabel('combo', comboCount)}
+            accessibilityRole="text"
           >
-            <Text style={styles.comboIcon}>⚡</Text>
-            <Text style={[styles.comboCount, { color: currentTier?.color || '#fbbf24', fontSize: 16 + comboTierIndex * 2 }]}>
-              {comboCount}x
-            </Text>
-            <Text style={[styles.comboTitle, { color: currentTier?.color || '#fbbf24' }]}>
-              {currentTier?.title || 'COMBO'}
-            </Text>
-            <Text style={styles.comboIcon}>⚡</Text>
+            <View style={[styles.comboChip, { borderColor: currentTier?.color || P.accent }]}>
+              <Text style={[styles.comboText, { color: currentTier?.color || P.accent }]}>
+                {comboCount}× {currentTier?.title || 'Streak'}
+              </Text>
+            </View>
+          </View>
+        ) : null}
+
+        {showComboBreak ? (
+          <View style={styles.comboWrap}>
+            <View style={[styles.comboChip, { borderColor: P.danger }]}>
+              <Text style={[styles.comboText, { color: P.danger }]}>Streak broken</Text>
+            </View>
+          </View>
+        ) : null}
+
+        {announcement ? (
+          <Animated.View
+            style={[
+              styles.toastWrap,
+              {
+                opacity: toastAnim,
+                transform: [
+                  {
+                    translateY: toastAnim.interpolate({
+                      inputRange: [0, 1],
+                      outputRange: [-12, 0],
+                    }),
+                  },
+                ],
+              },
+            ]}
+            accessible
+            accessibilityLabel={announcement}
+            accessibilityRole="alert"
+            accessibilityLiveRegion="assertive"
+          >
+            <View style={[styles.toast, { borderColor: announcementTint }]}>
+              <Text style={styles.toastText}>{announcement}</Text>
+            </View>
           </Animated.View>
-        </View>
-      )}
+        ) : null}
 
-      {/* COMBO BREAK FLASH */}
-      {showComboBreak && (
-        <View style={[styles.comboContainer, { opacity: 0.9 }]}>
-          <View style={[styles.comboBanner, { borderColor: '#ef4444', backgroundColor: 'rgba(239,68,68,0.3)' }]}>
-            <Text style={{ color: '#ef4444', fontSize: 14, fontWeight: 'bold' }}>💔 COMBO LOST!</Text>
-          </View>
-        </View>
-      )}
-
-      {/* ═══════════════════════════════════════════════════════════════════════════
-          ANNOUNCEMENT BANNER
-          ═══════════════════════════════════════════════════════════════════════════ */}
-      {announcement && (
-        <View style={styles.announcementContainer} accessible accessibilityLabel={announcement} accessibilityRole="alert" accessibilityLiveRegion="assertive">
-          <View 
-            style={[
-              styles.announcementBanner,
-              { 
-                backgroundColor: getAnnouncementStyle().bg,
-                borderColor: getAnnouncementStyle().border,
-              }
-            ]}
-          >
-            <Text style={styles.announcementIcon}>{getAnnouncementStyle().icon}</Text>
-            <Text style={styles.announcementText}>{announcement}</Text>
-          </View>
-        </View>
-      )}
-
-      {/* ═══════════════════════════════════════════════════════════════════════════
-          BOTTOM HUD - MEDIEVAL POWER-UP BAR (hidden in minimal/tier1)
-          ═══════════════════════════════════════════════════════════════════════════ */}
-      {!minimal && (
-      <View 
-        style={[
-          styles.bottomHudWrapper,
-          { bottom: insets.bottom }
-        ]}
-      >
-        <View style={styles.bottomHudContainer}>
-          {/* Decorative top border with ornaments */}
-          <View style={styles.bottomBorderDecoration}>
-            <View style={[styles.borderLine, { backgroundColor: stabilityColor }]} />
-            <View style={styles.centerOrnament}>
-              <Text style={{ color: stabilityColor, fontSize: 20 }}>⚔️</Text>
-            </View>
-            <View style={[styles.borderLine, { backgroundColor: stabilityColor }]} />
-          </View>
-
-          {/* Status banner */}
-          <View style={styles.statusBanner}>
-            {announcement ? (
-              <View 
+        {!minimal ? (
+          <View style={[styles.bottomWrap, { bottom: Math.max(insets.bottom, 8) }]}>
+            <View style={styles.actionRow}>
+              <PressableScale
+                onPress={onExercise}
+                disabled={exerciseCharges <= 0}
+                accessibilityLabel={getButtonLabel('exercise', exerciseCharges)}
+                accessibilityRole="button"
                 style={[
-                  styles.statusContent,
-                  { backgroundColor: getAnnouncementStyle().bg + '40' }
+                  styles.actionChip,
+                  exerciseCharges <= 0 && styles.actionDisabled,
                 ]}
               >
-                <Text style={[styles.statusText, { color: getAnnouncementStyle().border }]}>
-                  {getAnnouncementStyle().icon} {announcement}
-                </Text>
-              </View>
-            ) : (
-              <View style={styles.statusContent}>
-                <Text style={styles.kingdomText}>⚔️ DEFEND THE REALM ⚔️</Text>
-              </View>
-            )}
+                <Text style={styles.actionTitle}>Move</Text>
+                <Text style={styles.actionSub}>−harmony · {exerciseCharges}</Text>
+              </PressableScale>
+              <PressableScale
+                onPress={onRations}
+                disabled={rationCharges <= 0}
+                accessibilityLabel={getButtonLabel('rations', rationCharges)}
+                accessibilityRole="button"
+                style={[
+                  styles.actionChip,
+                  rationCharges <= 0 && styles.actionDisabled,
+                ]}
+              >
+                <Text style={styles.actionTitle}>Fuel</Text>
+                <Text style={styles.actionSub}>+harmony · {rationCharges}</Text>
+              </PressableScale>
+            </View>
           </View>
-
-          {/* Power-up buttons */}
-          <View style={styles.powerUpRow}>
-            {/* Exercise Power-up */}
-            <TouchableOpacity
-              onPress={onExercise}
-              disabled={exerciseCharges <= 0}
-              accessible={true}
-              accessibilityLabel={getButtonLabel('exercise', exerciseCharges)}
-              accessibilityRole="button"
-              accessibilityHint="Double tap to call exercise action"
-              style={[
-                styles.powerUpButton,
-                exerciseCharges > 0 ? styles.powerUpActive : styles.powerUpDisabled,
-                { borderColor: exerciseCharges > 0 ? '#3b82f6' : '#4b5563' }
-              ]}
-            >
-              <View style={styles.powerUpIconContainer}>
-                <Text style={styles.powerUpEmoji}>⚔️</Text>
-                {exerciseCharges > 0 && (
-                  <View style={[styles.powerUpGlow, { backgroundColor: '#3b82f6' }]} />
-                )}
-              </View>
-              <View style={styles.powerUpInfo}>
-                <Text style={[
-                  styles.powerUpName,
-                  { color: exerciseCharges > 0 ? '#93c5fd' : '#6b7280' }
-                ]}>
-                  EXERCISE
-                </Text>
-                <Text style={[
-                  styles.powerUpDesc,
-                  { color: exerciseCharges > 0 ? '#60a5fa' : '#4b5563' }
-                ]}>
-                  -50 Stability
-                </Text>
-              </View>
-              <View style={[
-                styles.chargeIndicator,
-                { backgroundColor: exerciseCharges > 0 ? 'rgba(59,130,246,0.3)' : 'rgba(75,85,99,0.3)' }
-              ]}>
-                {[...Array(3)].map((_, i) => (
-                  <View 
-                    key={i}
-                    style={[
-                      styles.chargeDot,
-                      { 
-                        backgroundColor: i < exerciseCharges ? '#3b82f6' : '#374151',
-                        shadowColor: i < exerciseCharges ? '#3b82f6' : 'transparent',
-                      }
-                    ]}
-                  />
-                ))}
-              </View>
-            </TouchableOpacity>
-
-            {/* Rations Power-up */}
-            <TouchableOpacity
-              onPress={onRations}
-              disabled={rationCharges <= 0}
-              accessible={true}
-              accessibilityLabel={getButtonLabel('rations', rationCharges)}
-              accessibilityRole="button"
-              accessibilityHint="Double tap to consume emergency rations"
-              style={[
-                styles.powerUpButton,
-                rationCharges > 0 ? styles.powerUpActive : styles.powerUpDisabled,
-                { borderColor: rationCharges > 0 ? '#fbbf24' : '#4b5563' }
-              ]}
-            >
-              <View style={styles.powerUpIconContainer}>
-                <Text style={styles.powerUpEmoji}>🍖</Text>
-                {rationCharges > 0 && (
-                  <View style={[styles.powerUpGlow, { backgroundColor: '#fbbf24' }]} />
-                )}
-              </View>
-              <View style={styles.powerUpInfo}>
-                <Text style={[
-                  styles.powerUpName,
-                  { color: rationCharges > 0 ? '#fde68a' : '#6b7280' }
-                ]}>
-                  RATIONS
-                </Text>
-                <Text style={[
-                  styles.powerUpDesc,
-                  { color: rationCharges > 0 ? '#fbbf24' : '#4b5563' }
-                ]}>
-                  +25 Stability
-                </Text>
-              </View>
-              <View style={[
-                styles.chargeIndicator,
-                { backgroundColor: rationCharges > 0 ? 'rgba(251,191,36,0.3)' : 'rgba(75,85,99,0.3)' }
-              ]}>
-                {[...Array(3)].map((_, i) => (
-                  <View 
-                    key={i}
-                    style={[
-                      styles.chargeDot,
-                      { 
-                        backgroundColor: i < rationCharges ? '#fbbf24' : '#374151',
-                        shadowColor: i < rationCharges ? '#fbbf24' : 'transparent',
-                      }
-                    ]}
-                  />
-                ))}
-              </View>
-            </TouchableOpacity>
-          </View>
-        </View>
-      </View>
-      )}
-    </>
-  );
-});
+        ) : null}
+      </>
+    );
+  },
+);
 
 BattleHUDComponent.displayName = 'BattleHUD';
 export const BattleHUD = BattleHUDComponent;
 
 const styles = StyleSheet.create({
-  // Top HUD styles
-  topHudContainer: {
-    backgroundColor: 'rgba(10,10,18,0.95)',
-    borderRadius: 16,
-    borderWidth: 3,
-    padding: 12,
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.8,
-    shadowRadius: 15,
-    elevation: 10,
-    overflow: 'hidden',
-  },
-  particleContainer: {
+  topWrap: {
     position: 'absolute',
     top: 0,
     left: 0,
     right: 0,
-    height: 30,
-    overflow: 'visible',
+    zIndex: 50,
+    paddingHorizontal: 12,
   },
-  cornerOrnament: {
-    position: 'absolute',
-    zIndex: 10,
+  topStrip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 4,
+    marginBottom: 10,
   },
-  topLeft: {
-    top: -8,
-    left: -8,
+  scoreBlock: {
+    minWidth: 72,
   },
-  topRight: {
-    top: -8,
-    right: -8,
+  metaLabel: {
+    fontFamily: FONTS.body,
+    color: P.textMuted,
+    fontSize: 10,
+    letterSpacing: 1,
+    textTransform: 'uppercase',
   },
-  topHudContent: {
+  scoreValue: {
+    fontFamily: FONTS.display,
+    color: P.text,
+    fontSize: 26,
+    lineHeight: 30,
+  },
+  timerBlock: {
+    alignItems: 'center',
+    minWidth: 64,
+    paddingVertical: 4,
+    paddingHorizontal: 12,
+    borderWidth: 1,
+    borderColor: P.line,
+    backgroundColor: P.mist,
+    borderRadius: 2,
+  },
+  timerUrgent: {
+    borderColor: P.danger,
+    backgroundColor: 'rgba(196,92,92,0.12)',
+  },
+  timerValue: {
+    fontFamily: FONTS.display,
+    color: P.text,
+    fontSize: 28,
+    lineHeight: 32,
+  },
+  topActions: {
+    flexDirection: 'row',
+    gap: 6,
+    minWidth: 72,
+    justifyContent: 'flex-end',
+  },
+  iconChip: {
+    borderWidth: 1,
+    borderColor: P.line,
+    backgroundColor: P.mist,
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+    borderRadius: 2,
+  },
+  iconChipText: {
+    fontFamily: FONTS.bodyMedium,
+    color: P.textSoft,
+    fontSize: 11,
+  },
+  harmonyCard: {
+    borderWidth: 1,
+    borderColor: P.line,
+    backgroundColor: 'rgba(11,18,16,0.72)',
+    borderRadius: 2,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+  },
+  harmonyHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 10,
+    alignItems: 'baseline',
+    marginBottom: 8,
   },
-  scoreSection: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    flex: 1,
-  },
-  crownIcon: {
+  harmonyZone: {
+    fontFamily: FONTS.display,
     fontSize: 18,
-    marginRight: 4,
+    letterSpacing: -0.2,
   },
-  scoreText: {
-    color: '#fbbf24',
-    fontSize: 22,
-    fontWeight: 'bold',
-    textShadowColor: '#fbbf24',
-    textShadowOffset: { width: 0, height: 0 },
-    textShadowRadius: 10,
+  harmonyPercent: {
+    fontFamily: FONTS.bodyBold,
+    fontSize: 13,
   },
-  scoreLabel: {
-    color: '#92400e',
-    fontSize: 10,
-    fontWeight: 'bold',
-    marginLeft: 4,
-  },
-  timerSection: {
-    alignItems: 'center',
-    flex: 1,
-  },
-  timerContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 6,
-    borderRadius: 20,
-    borderWidth: 2,
-  },
-  timerIcon: {
-    fontSize: 16,
-    marginRight: 4,
-  },
-  timerText: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    textShadowColor: 'rgba(0,0,0,0.5)',
-    textShadowOffset: { width: 1, height: 1 },
-    textShadowRadius: 2,
-  },
-  urgentText: {
-    color: '#ef4444',
-    fontSize: 10,
-    fontWeight: 'bold',
-    marginTop: 2,
-    textShadowColor: '#ef4444',
-    textShadowOffset: { width: 0, height: 0 },
-    textShadowRadius: 5,
-  },
-  pauseSection: {
-    flex: 1,
-    alignItems: 'flex-end',
-  },
-  pauseButton: {
-    padding: 8,
-    backgroundColor: 'rgba(255,255,255,0.1)',
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.2)',
-    marginLeft: 8,
-  },
-  pauseIcon: {
-    fontSize: 18,
-  },
-  controlModeButton: {
-    padding: 8,
-    backgroundColor: 'rgba(59,130,246,0.2)',
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: 'rgba(59,130,246,0.5)',
-  },
-  controlModeIcon: {
-    fontSize: 16,
-  },
-  stabilitySection: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  stabilityLabelContainer: {
-    width: 80,
-  },
-  stabilityLabel: {
-    fontSize: 10,
-    fontWeight: 'bold',
-  },
-  stabilityBarOuter: {
-    flex: 1,
-    height: 18,
-    borderRadius: 9,
-    borderWidth: 2,
+  harmonyTrack: {
+    height: 10,
+    borderRadius: 2,
     overflow: 'hidden',
-    backgroundColor: 'rgba(0,0,0,0.6)',
+    backgroundColor: 'rgba(0,0,0,0.35)',
+    position: 'relative',
   },
-  zoneBackgrounds: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
+  zoneBands: {
+    ...StyleSheet.absoluteFillObject,
     flexDirection: 'row',
   },
-  zoneSegment: {
+  zoneSeg: {
     height: '100%',
   },
-  stabilityFill: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    bottom: 0,
-    borderRadius: 7,
-    overflow: 'hidden',
-  },
-  stabilityShine: {
-    position: 'absolute',
-    top: 0,
-    bottom: 0,
-    width: 30,
-    backgroundColor: 'rgba(255,255,255,0.4)',
-    transform: [{ skewX: '-20deg' }],
-  },
-  stabilityIndicator: {
+  harmonyNeedle: {
     position: 'absolute',
     top: -2,
-    bottom: -2,
-    width: 4,
-    backgroundColor: '#fff',
-    borderRadius: 2,
-    shadowColor: '#fff',
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 1,
-    shadowRadius: 4,
+    width: 3,
+    height: 14,
+    marginLeft: -1.5,
+    borderRadius: 1,
   },
-  stabilityPercent: {
-    width: 45,
-    textAlign: 'right',
-    fontSize: 14,
-    fontWeight: 'bold',
-    marginLeft: 8,
+  harmonyCaption: {
+    fontFamily: FONTS.body,
+    color: P.textMuted,
+    fontSize: 10,
+    letterSpacing: 1.2,
+    textTransform: 'uppercase',
+    marginTop: 8,
   },
-  electricArc: {
-    position: 'absolute',
-    top: 0,
-    left: '10%',
-    right: '10%',
-    height: 2,
-    opacity: 0.8,
-  },
-
-  // Pause overlay styles
   pauseOverlay: {
-    position: 'absolute',
-    top: -100,
-    left: 0,
-    right: 0,
-    bottom: -100,
-    backgroundColor: 'rgba(0,0,0,0.9)',
-    zIndex: 1000,
+    ...StyleSheet.absoluteFillObject,
+    zIndex: 80,
+    backgroundColor: 'rgba(0,0,0,0.65)',
     justifyContent: 'center',
     alignItems: 'center',
+    padding: 24,
   },
-  pauseModal: {
-    backgroundColor: 'rgba(20,20,30,0.98)',
-    borderRadius: 20,
-    borderWidth: 3,
-    borderColor: '#fbbf24',
-    padding: 30,
-    alignItems: 'center',
-    shadowColor: '#fbbf24',
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.5,
-    shadowRadius: 30,
-    minWidth: 280,
+  pauseSheet: {
+    width: '100%',
+    maxWidth: 360,
+    backgroundColor: P.inkElevated,
+    borderWidth: 1,
+    borderColor: P.line,
+    borderRadius: 2,
+    padding: 24,
   },
-  pauseOrnament: {
-    marginBottom: 10,
+  pauseBrand: {
+    fontFamily: FONTS.display,
+    color: P.text,
+    fontSize: 20,
   },
   pauseTitle: {
-    color: '#fbbf24',
-    fontSize: 28,
-    fontWeight: 'bold',
-    marginBottom: 8,
-    textShadowColor: '#fbbf24',
-    textShadowOffset: { width: 0, height: 0 },
-    textShadowRadius: 10,
+    fontFamily: FONTS.display,
+    color: P.textSoft,
+    fontSize: 26,
+    marginTop: 6,
   },
-  pauseSubtitle: {
-    color: '#9ca3af',
-    fontSize: 14,
-    marginBottom: 24,
-    fontStyle: 'italic',
-  },
-  pauseTimerContainer: {
-    backgroundColor: 'rgba(0,0,0,0.4)',
-    borderRadius: 12,
-    padding: 12,
+  pauseSub: {
+    fontFamily: FONTS.body,
+    color: P.textMuted,
+    fontSize: 13,
+    marginTop: 6,
     marginBottom: 20,
-    borderWidth: 2,
-    borderColor: '#fbbf24',
-    alignItems: 'center',
   },
-  pauseTimerLabel: {
-    color: '#9ca3af',
-    fontSize: 10,
-    fontWeight: 'bold',
-    marginBottom: 4,
-  },
-  pauseTimerValue: {
-    color: '#fbbf24',
-    fontSize: 28,
-    fontWeight: 'bold',
-  },
-  pauseButtonRow: {
-    flexDirection: 'row',
-    gap: 10,
-    width: '100%',
-  },
-  restartButtonSmall: {
-    flex: 1,
-    backgroundColor: 'rgba(251,191,36,0.2)',
-    paddingVertical: 12,
-    borderRadius: 10,
-    borderWidth: 2,
-    borderColor: '#fbbf24',
-  },
-  exitButtonSmall: {
-    flex: 1,
-    backgroundColor: 'rgba(239,68,68,0.2)',
-    paddingVertical: 12,
-    borderRadius: 10,
-    borderWidth: 2,
-    borderColor: '#ef4444',
-  },
-  exitButtonText: {
-    color: '#fca5a5',
-    fontSize: 14,
-    fontWeight: 'bold',
-    textAlign: 'center',
-  },
-  resumeButton: {
-    backgroundColor: '#16a34a',
-    paddingHorizontal: 30,
+  primaryBtn: {
+    backgroundColor: P.accent,
     paddingVertical: 14,
-    borderRadius: 12,
-    borderWidth: 2,
-    borderColor: '#22c55e',
-    marginBottom: 12,
-    width: '100%',
-    shadowColor: '#22c55e',
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.5,
-    shadowRadius: 10,
-  },
-  resumeButtonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: 'bold',
-    textAlign: 'center',
-  },
-  restartButton: {
-    backgroundColor: 'rgba(251,191,36,0.2)',
-    paddingHorizontal: 30,
-    paddingVertical: 14,
-    borderRadius: 12,
-    borderWidth: 2,
-    borderColor: '#fbbf24',
-    width: '100%',
-  },
-  restartButtonText: {
-    color: '#fbbf24',
-    fontSize: 16,
-    fontWeight: 'bold',
-    textAlign: 'center',
-  },
-  controlToggleButton: {
-    backgroundColor: 'rgba(59,130,246,0.2)',
-    paddingHorizontal: 20,
-    paddingVertical: 12,
-    borderRadius: 12,
-    borderWidth: 2,
-    borderColor: '#3b82f6',
-    marginBottom: 12,
-    width: '100%',
-  },
-  controlToggleContent: {
-    flexDirection: 'row',
+    borderRadius: 2,
     alignItems: 'center',
-    justifyContent: 'center',
+    marginBottom: 10,
   },
-  controlToggleIcon: {
-    fontSize: 20,
-    marginRight: 10,
+  primaryBtnText: {
+    fontFamily: FONTS.bodyBold,
+    color: P.ink,
+    fontSize: 15,
   },
-  controlToggleInfo: {
-    flex: 1,
+  ghostBtn: {
+    borderWidth: 1,
+    borderColor: P.line,
+    paddingVertical: 12,
+    borderRadius: 2,
+    alignItems: 'center',
+    marginBottom: 8,
   },
-  controlToggleLabel: {
-    color: '#93c5fd',
-    fontSize: 10,
-    fontWeight: 'bold',
+  ghostBtnText: {
+    fontFamily: FONTS.bodyMedium,
+    color: P.textSoft,
+    fontSize: 13,
   },
-  controlToggleValue: {
-    color: '#fff',
-    fontSize: 14,
-    fontWeight: 'bold',
+  pauseRow: {
+    flexDirection: 'row',
+    gap: 8,
+    marginTop: 4,
   },
-  controlToggleSwitch: {
-    fontSize: 16,
-    color: '#60a5fa',
-  },
-
-  // Combo styles
-  comboContainer: {
+  comboWrap: {
     position: 'absolute',
-    top: 140,
+    top: '28%',
     left: 0,
     right: 0,
     alignItems: 'center',
     zIndex: 40,
   },
-  comboBanner: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: 'rgba(0,0,0,0.8)',
-    paddingHorizontal: 20,
-    paddingVertical: 10,
-    borderRadius: 25,
-    borderWidth: 2,
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.8,
-    shadowRadius: 15,
+  comboChip: {
+    borderWidth: 1,
+    backgroundColor: 'rgba(11,18,16,0.85)',
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: 2,
   },
-  comboIcon: {
-    fontSize: 18,
+  comboText: {
+    fontFamily: FONTS.bodyBold,
+    fontSize: 13,
+    letterSpacing: 0.3,
   },
-  comboCount: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    marginHorizontal: 8,
-  },
-  comboTitle: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    marginRight: 8,
-  },
-
-  // Announcement styles
-  announcementContainer: {
+  toastWrap: {
     position: 'absolute',
-    top: 190,
+    top: '22%',
     left: 20,
     right: 20,
+    zIndex: 45,
     alignItems: 'center',
-    zIndex: 35,
   },
-  announcementBanner: {
-    flexDirection: 'row',
-    alignItems: 'center',
+  toast: {
+    borderWidth: 1,
+    backgroundColor: 'rgba(11,18,16,0.9)',
     paddingHorizontal: 16,
     paddingVertical: 10,
-    borderRadius: 12,
-    borderWidth: 2,
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.6,
-    shadowRadius: 10,
+    borderRadius: 2,
+    maxWidth: 400,
   },
-  announcementIcon: {
-    fontSize: 16,
-    marginRight: 8,
+  toastText: {
+    fontFamily: FONTS.body,
+    color: P.text,
+    fontSize: 13,
+    textAlign: 'center',
+    lineHeight: 18,
   },
-  announcementText: {
-    color: '#fff',
-    fontSize: 14,
-    fontWeight: 'bold',
-  },
-
-  // Bottom HUD styles
-  bottomHudWrapper: {
+  bottomWrap: {
     position: 'absolute',
-    left: 0,
-    right: 0,
-    zIndex: 100,
+    left: 12,
+    right: 12,
+    zIndex: 50,
   },
-  bottomHudContainer: {
-    backgroundColor: 'rgba(10,10,18,0.98)',
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
-    overflow: 'hidden',
-  },
-  bottomBorderDecoration: {
+  actionRow: {
     flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 20,
-    paddingTop: 8,
+    gap: 8,
   },
-  borderLine: {
+  actionChip: {
     flex: 1,
-    height: 2,
-    borderRadius: 1,
-  },
-  centerOrnament: {
+    borderWidth: 1,
+    borderColor: P.line,
+    backgroundColor: 'rgba(11,18,16,0.75)',
+    borderRadius: 2,
+    paddingVertical: 12,
     paddingHorizontal: 12,
   },
-  statusBanner: {
-    paddingHorizontal: 12,
-    paddingVertical: 8,
+  actionDisabled: {
+    opacity: 0.35,
   },
-  statusContent: {
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 8,
-    alignItems: 'center',
+  actionTitle: {
+    fontFamily: FONTS.bodyBold,
+    color: P.text,
+    fontSize: 13,
   },
-  statusText: {
-    fontSize: 12,
-    fontWeight: 'bold',
-  },
-  kingdomText: {
-    color: '#fbbf24',
-    fontSize: 12,
-    fontWeight: 'bold',
-    textShadowColor: '#fbbf24',
-    textShadowOffset: { width: 0, height: 0 },
-    textShadowRadius: 5,
-  },
-  powerUpRow: {
-    flexDirection: 'row',
-    paddingHorizontal: 12,
-    paddingBottom: 12,
-    gap: 10,
-  },
-  powerUpButton: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 10,
-    borderRadius: 12,
-    borderWidth: 2,
-  },
-  powerUpActive: {
-    backgroundColor: 'rgba(0,0,0,0.6)',
-  },
-  powerUpDisabled: {
-    backgroundColor: 'rgba(30,30,40,0.6)',
-    opacity: 0.6,
-  },
-  powerUpIconContainer: {
-    width: 40,
-    height: 40,
-    justifyContent: 'center',
-    alignItems: 'center',
-    position: 'relative',
-  },
-  powerUpEmoji: {
-    fontSize: 24,
-    zIndex: 1,
-  },
-  powerUpGlow: {
-    position: 'absolute',
-    width: 30,
-    height: 30,
-    borderRadius: 15,
-    opacity: 0.3,
-  },
-  powerUpInfo: {
-    flex: 1,
-    marginLeft: 8,
-  },
-  powerUpName: {
-    fontSize: 12,
-    fontWeight: 'bold',
-  },
-  powerUpDesc: {
-    fontSize: 10,
-  },
-  chargeIndicator: {
-    flexDirection: 'row',
-    padding: 6,
-    borderRadius: 8,
-    gap: 4,
-  },
-  chargeDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.8,
+  actionSub: {
+    fontFamily: FONTS.body,
+    color: P.textMuted,
+    fontSize: 11,
+    marginTop: 2,
   },
 });
