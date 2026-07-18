@@ -1,19 +1,33 @@
 /**
- * Weekly care-team digest — shareable proclamation (no dosing advice).
+ * Weekly care-team digest — shareable programme summary (no dosing advice).
  */
-import React, { useEffect, useState } from 'react';
-import { View, Text, TouchableOpacity, ScrollView, Share } from 'react-native';
+import React, { useEffect, useRef, useState } from 'react';
+import {
+  View,
+  Text,
+  ScrollView,
+  Share,
+  StyleSheet,
+  Animated,
+  Easing,
+} from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { fetchWeeklyDigest, WeeklyDigestPayload } from '@/domain/digest';
 import { track } from '@/utils/analytics';
+import { COLORS, FONTS, ANIMATIONS } from '@/constants/designSystem';
+import { MetabolicField } from '@/components/atmosphere/MetabolicField';
+import { PressableScale } from '@/components/ui/PressableScale';
 
 const LOCAL_DIGEST_KEY = 'glucoseWars.lastDigest';
+const P = COLORS.PROGRAMME;
 
 export default function WeeklyDigestScreen() {
   const { token } = useLocalSearchParams<{ token: string }>();
   const [digest, setDigest] = useState<WeeklyDigestPayload | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const enter = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
     track('weekly_digest_opened', { token: token || '' });
@@ -40,97 +54,295 @@ export default function WeeklyDigestScreen() {
     load();
   }, [token]);
 
+  useEffect(() => {
+    if (!digest) return;
+    const { duration, bezier } = ANIMATIONS.MOTION.enter;
+    Animated.timing(enter, {
+      toValue: 1,
+      duration,
+      easing: Easing.bezier(bezier[0], bezier[1], bezier[2], bezier[3]),
+      useNativeDriver: true,
+    }).start();
+  }, [digest, enter]);
+
   if (error) {
     return (
-      <View style={{ flex: 1, backgroundColor: '#0a0a12', justifyContent: 'center', padding: 24 }}>
-        <Text style={{ color: '#f87171', textAlign: 'center', marginBottom: 16 }}>{error}</Text>
-        <TouchableOpacity onPress={() => router.replace('/')} style={{ padding: 14 }}>
-          <Text style={{ color: '#93c5fd', textAlign: 'center' }}>Back to Realm</Text>
-        </TouchableOpacity>
+      <View style={styles.root}>
+        <MetabolicField band="unknown" intensity={0.25} />
+        <SafeAreaView style={styles.centered}>
+          <Text style={styles.errorText}>{error}</Text>
+          <PressableScale onPress={() => router.replace('/')} style={styles.ghostBtn}>
+            <Text style={styles.ghostText}>Back to Realm</Text>
+          </PressableScale>
+        </SafeAreaView>
       </View>
     );
   }
 
   if (!digest) {
     return (
-      <View style={{ flex: 1, backgroundColor: '#0a0a12', justifyContent: 'center' }}>
-        <Text style={{ color: '#9ca3af', textAlign: 'center' }}>Loading proclamation…</Text>
+      <View style={styles.root}>
+        <MetabolicField band="in_range" intensity={0.3} />
+        <SafeAreaView style={styles.centered}>
+          <Text style={styles.brand}>Glucose Wars</Text>
+          <Text style={styles.loading}>Opening weekly digest…</Text>
+        </SafeAreaView>
       </View>
     );
   }
 
+  const assigned = Math.max(digest.missionsAssigned, 1);
+  const rate = Math.round((digest.missionsCompleted / assigned) * 100);
+
   return (
-    <View style={{ flex: 1, backgroundColor: '#0a0a12' }}>
-      <ScrollView contentContainerStyle={{ padding: 20 }}>
-        <Text style={{ color: '#fbbf24', fontSize: 20, fontWeight: 'bold', marginBottom: 4 }}>
-          Weekly Proclamation
-        </Text>
-        <Text style={{ color: '#9ca3af', fontSize: 12, marginBottom: 16 }}>
-          Week of {digest.weekKey} · For care team review · Not medical advice
-        </Text>
-
-        <View style={{ backgroundColor: 'rgba(0,0,0,0.5)', borderRadius: 14, padding: 14, marginBottom: 12, borderWidth: 1, borderColor: 'rgba(245,158,11,0.35)' }}>
-          <Text style={{ color: '#fde68a', fontWeight: 'bold', marginBottom: 8 }}>Adherence</Text>
-          <Text style={{ color: '#e5e7eb', fontSize: 13 }}>
-            {digest.missionsCompleted}/{Math.max(digest.missionsAssigned, 1)} missions completed ·{' '}
-            {digest.practiceSessions} practice sessions
-          </Text>
-          {digest.adherence?.relapses != null && Number(digest.adherence.relapses) > 0 && (
-            <Text style={{ color: '#fca5a5', fontSize: 12, marginTop: 6 }}>
-              Soft relapses: {String(digest.adherence.relapses)} (recovery coaching recommended)
-            </Text>
-          )}
-        </View>
-
-        {digest.narrative ? (
-          <Text style={{ color: '#d1d5db', fontSize: 13, lineHeight: 20, marginBottom: 14 }}>
-            {digest.narrative}
-          </Text>
-        ) : null}
-
-        <Text style={{ color: '#86efac', fontWeight: 'bold', marginBottom: 6 }}>Wins</Text>
-        {digest.wins.map((w, i) => (
-          <Text key={i} style={{ color: '#e5e7eb', fontSize: 12, marginBottom: 4 }}>• {w}</Text>
-        ))}
-
-        {digest.concerns.length > 0 && (
-          <>
-            <Text style={{ color: '#fbbf24', fontWeight: 'bold', marginTop: 14, marginBottom: 6 }}>
-              Notes
-            </Text>
-            {digest.concerns.map((c, i) => (
-              <Text key={i} style={{ color: '#e5e7eb', fontSize: 12, marginBottom: 4 }}>• {c}</Text>
-            ))}
-          </>
-        )}
-
-        {digest.topBehaviours.length > 0 && (
-          <>
-            <Text style={{ color: '#93c5fd', fontWeight: 'bold', marginTop: 14, marginBottom: 6 }}>
-              Focus behaviours
-            </Text>
-            <Text style={{ color: '#d1d5db', fontSize: 12 }}>
-              {digest.topBehaviours.join(' · ')}
-            </Text>
-          </>
-        )}
-
-        <TouchableOpacity
-          onPress={async () => {
-            await Share.share({
-              message: `Glucose Wars weekly proclamation (${digest.weekKey}): ${digest.missionsCompleted} missions completed. ${digest.narrative || ''}`,
-            });
-            track('weekly_digest_shared', { week: digest.weekKey });
-          }}
-          style={{ backgroundColor: '#16a34a', padding: 14, borderRadius: 12, marginTop: 24 }}
+    <View style={styles.root}>
+      <MetabolicField band="in_range" intensity={0.4} />
+      <SafeAreaView style={styles.flex}>
+        <ScrollView
+          contentContainerStyle={styles.scroll}
+          showsVerticalScrollIndicator={false}
         >
-          <Text style={{ color: '#fff', fontWeight: 'bold', textAlign: 'center' }}>Share with care team</Text>
-        </TouchableOpacity>
+          <Animated.View
+            style={{
+              opacity: enter,
+              transform: [
+                {
+                  translateY: enter.interpolate({
+                    inputRange: [0, 1],
+                    outputRange: [18, 0],
+                  }),
+                },
+              ],
+            }}
+          >
+            <Text style={styles.brand}>Glucose Wars</Text>
+            <Text style={styles.headline}>Weekly digest</Text>
+            <Text style={styles.meta}>
+              Week of {digest.weekKey} · For care team review · Not medical advice
+            </Text>
 
-        <TouchableOpacity onPress={() => router.replace('/')} style={{ padding: 14, marginTop: 8 }}>
-          <Text style={{ color: '#9ca3af', textAlign: 'center' }}>Back to Realm</Text>
-        </TouchableOpacity>
-      </ScrollView>
+            <View style={styles.heroStat}>
+              <Text style={styles.heroNumber}>
+                {digest.missionsCompleted}/{assigned}
+              </Text>
+              <Text style={styles.heroLabel}>missions completed · {rate}% of assigned</Text>
+              <Text style={styles.heroSecondary}>
+                {digest.practiceSessions} practice sessions this week
+              </Text>
+              {digest.adherence?.relapses != null && Number(digest.adherence.relapses) > 0 ? (
+                <Text style={styles.recoveryNote}>
+                  {String(digest.adherence.relapses)} recovery moments — coaching recommended, not
+                  blame
+                </Text>
+              ) : null}
+            </View>
+
+            {digest.narrative ? (
+              <Text style={styles.narrative}>{digest.narrative}</Text>
+            ) : null}
+
+            <Section title="Wins">
+              {digest.wins.map((w, i) => (
+                <Text key={i} style={styles.bullet}>
+                  {w}
+                </Text>
+              ))}
+            </Section>
+
+            {digest.concerns.length > 0 ? (
+              <Section title="Notes">
+                {digest.concerns.map((c, i) => (
+                  <Text key={i} style={styles.bullet}>
+                    {c}
+                  </Text>
+                ))}
+              </Section>
+            ) : null}
+
+            {digest.topBehaviours.length > 0 ? (
+              <Section title="Focus behaviours">
+                <Text style={styles.behaviours}>{digest.topBehaviours.join(' · ')}</Text>
+              </Section>
+            ) : null}
+
+            <PressableScale
+              onPress={async () => {
+                await Share.share({
+                  message: `Glucose Wars weekly digest (${digest.weekKey}): ${digest.missionsCompleted} missions completed. ${digest.narrative || ''}`,
+                });
+                track('weekly_digest_shared', { week: digest.weekKey });
+              }}
+              style={styles.primaryBtn}
+            >
+              <Text style={styles.primaryText}>Share with care team</Text>
+            </PressableScale>
+
+            <PressableScale onPress={() => router.replace('/')} style={styles.ghostBtn}>
+              <Text style={styles.ghostText}>Back to Realm</Text>
+            </PressableScale>
+          </Animated.View>
+        </ScrollView>
+      </SafeAreaView>
     </View>
   );
 }
+
+function Section({ title, children }: { title: string; children: React.ReactNode }) {
+  return (
+    <View style={styles.section}>
+      <Text style={styles.sectionTitle}>{title}</Text>
+      {children}
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  root: {
+    flex: 1,
+    backgroundColor: P.ink,
+  },
+  flex: { flex: 1, zIndex: 10 },
+  centered: {
+    flex: 1,
+    zIndex: 10,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 28,
+  },
+  scroll: {
+    paddingHorizontal: 28,
+    paddingTop: 36,
+    paddingBottom: 48,
+    maxWidth: 480,
+    width: '100%',
+    alignSelf: 'center',
+  },
+  brand: {
+    fontFamily: FONTS.display,
+    color: P.text,
+    fontSize: 28,
+    letterSpacing: -0.3,
+  },
+  headline: {
+    fontFamily: FONTS.display,
+    color: P.textSoft,
+    fontSize: 20,
+    marginTop: 6,
+  },
+  meta: {
+    fontFamily: FONTS.body,
+    color: P.textMuted,
+    fontSize: 12,
+    lineHeight: 18,
+    marginTop: 10,
+    marginBottom: 28,
+  },
+  heroStat: {
+    borderWidth: 1,
+    borderColor: P.line,
+    backgroundColor: P.mist,
+    borderRadius: 2,
+    paddingVertical: 22,
+    paddingHorizontal: 18,
+    marginBottom: 22,
+  },
+  heroNumber: {
+    fontFamily: FONTS.display,
+    color: P.accent,
+    fontSize: 40,
+    letterSpacing: -1,
+    lineHeight: 44,
+  },
+  heroLabel: {
+    fontFamily: FONTS.bodyMedium,
+    color: P.text,
+    fontSize: 14,
+    marginTop: 8,
+  },
+  heroSecondary: {
+    fontFamily: FONTS.body,
+    color: P.textMuted,
+    fontSize: 13,
+    marginTop: 4,
+  },
+  recoveryNote: {
+    fontFamily: FONTS.body,
+    color: P.warn,
+    fontSize: 12,
+    marginTop: 12,
+    lineHeight: 18,
+  },
+  narrative: {
+    fontFamily: FONTS.body,
+    color: P.textSoft,
+    fontSize: 15,
+    lineHeight: 24,
+    marginBottom: 24,
+  },
+  section: {
+    marginBottom: 20,
+    paddingTop: 16,
+    borderTopWidth: 1,
+    borderTopColor: P.line,
+  },
+  sectionTitle: {
+    fontFamily: FONTS.bodyMedium,
+    color: P.accent,
+    fontSize: 11,
+    letterSpacing: 1.4,
+    textTransform: 'uppercase',
+    marginBottom: 10,
+  },
+  bullet: {
+    fontFamily: FONTS.body,
+    color: P.text,
+    fontSize: 14,
+    lineHeight: 22,
+    marginBottom: 6,
+  },
+  behaviours: {
+    fontFamily: FONTS.body,
+    color: P.textSoft,
+    fontSize: 14,
+    lineHeight: 22,
+  },
+  primaryBtn: {
+    backgroundColor: P.accent,
+    paddingVertical: 16,
+    borderRadius: 2,
+    alignItems: 'center',
+    marginTop: 8,
+  },
+  primaryText: {
+    fontFamily: FONTS.bodyBold,
+    color: P.ink,
+    fontSize: 15,
+  },
+  ghostBtn: {
+    marginTop: 12,
+    paddingVertical: 14,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: P.line,
+    borderRadius: 2,
+  },
+  ghostText: {
+    fontFamily: FONTS.bodyMedium,
+    color: P.textSoft,
+    fontSize: 13,
+  },
+  errorText: {
+    fontFamily: FONTS.body,
+    color: P.danger,
+    textAlign: 'center',
+    marginBottom: 20,
+    fontSize: 14,
+    lineHeight: 20,
+  },
+  loading: {
+    fontFamily: FONTS.body,
+    color: P.textMuted,
+    marginTop: 10,
+    fontSize: 13,
+  },
+});
