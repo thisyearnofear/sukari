@@ -8,6 +8,7 @@ import type { TransferResult } from '@/domain/programme';
 import { COLORS, FONTS, ANIMATIONS } from '@/constants/designSystem';
 import { PressableScale } from '@/components/ui/PressableScale';
 import { useReducedMotion } from '@/hooks/useReducedMotion';
+import { track } from '@/utils/analytics';
 
 const P = COLORS.PROGRAMME;
 
@@ -100,7 +101,10 @@ export function TransferBeat({
             No penalty. Mark it done from home when you’ve finished the action.
           </Text>
           <PressableScale
-            onPress={onMarkDone}
+            onPress={() => {
+              track('rehearsal_to_real_world_completion', { choice: 'done_after_later' });
+              onMarkDone();
+            }}
             style={styles.primaryBtn}
             accessibilityRole="button"
             accessibilityLabel="Mark real-world mission done"
@@ -111,7 +115,10 @@ export function TransferBeat({
       ) : (
         <View style={styles.actions}>
           <PressableScale
-            onPress={onMarkDone}
+            onPress={() => {
+              track('rehearsal_to_real_world_completion', { choice: 'done' });
+              onMarkDone();
+            }}
             style={styles.primaryBtn}
             accessibilityRole="button"
             accessibilityLabel="Mark real-world mission done"
@@ -119,7 +126,10 @@ export function TransferBeat({
             <Text style={styles.primaryText}>I did it</Text>
           </PressableScale>
           <PressableScale
-            onPress={onLater}
+            onPress={() => {
+              track('rehearsal_to_real_world_completion', { choice: 'later' });
+              onLater();
+            }}
             style={styles.secondaryBtn}
             accessibilityRole="button"
             accessibilityLabel="Do mission later today"

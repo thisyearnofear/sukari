@@ -3,7 +3,7 @@
  * Extracted from useBattleGame for MODULAR / CLEAN separation of concerns.
  */
 import { useEffect, useRef } from 'react';
-import { Dimensions } from 'react-native';
+import { Dimensions, Platform } from 'react-native';
 import { GameState, FoodUnit, FoodDefinition, TimePhase, GameMode } from '@/types/game';
 import {
   GAME_DURATION,
@@ -22,7 +22,7 @@ import { usePlayerProgressContext } from '@/context/PlayerProgressContext';
 
 const { width: screenWidth, height } = Dimensions.get('window');
 const SIDE_PANEL_WIDTH = 80;
-const GAME_MAX_WIDTH = 500; // Must match BattleScreen maxWidth
+const GAME_MAX_WIDTH = Platform.OS === 'web' ? 960 : 500; // Must match BattleScreen maxWidth
 const width = Math.min(screenWidth, GAME_MAX_WIDTH);
 
 const DEFAULT_EFFECTS = { energy: 0, hydration: 0, nutrition: 0, stability: 0 };
@@ -82,7 +82,8 @@ export const createFoodUnit = (definition: FoodDefinition, timePhase?: TimePhase
     name: definition.name,
     sprite: definition.sprite,
     x: spawnX,
-    y: -60,
+    // Keep the opening field clear for the mission and controls before the choice enters play.
+    y: gameMode === 'life' ? 120 : 150,
     targetY: height - 200,
     speed: 1.2 + randomSpeed * 0.8,
     points: definition.basePoints,
@@ -124,7 +125,9 @@ export function useFoodSpawner({ gameState, setGameState, seededRandomRef }: Use
 
     const spawnFood = () => {
       setGameState(prev => {
-        if (prev.foods.length >= SPAWN_CONFIG.MAX_FOODS_ON_SCREEN || prev.isPaused) return prev;
+        // Rehearsal is a decision aid, not a reflex test. Keep the field readable.
+        const maxConcurrentChoices = prev.gameMode === 'life' ? 4 : 3;
+        if (prev.foods.length >= maxConcurrentChoices || prev.isPaused) return prev;
         const randomVal = seededRandomRef.current ? seededRandomRef.current.next() : Math.random();
         const allyChance = Math.min(
           0.75,

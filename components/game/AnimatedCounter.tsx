@@ -3,7 +3,7 @@
  * Used for score display to make every point feel earned.
  */
 import React, { useEffect, useRef, useState } from 'react';
-import { Text, TextStyle, Animated } from 'react-native';
+import { Text, TextStyle } from 'react-native';
 
 interface Props {
   value: number;

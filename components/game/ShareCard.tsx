@@ -39,7 +39,7 @@ export const ShareCard: React.FC<Props> = ({
 
   return (
     <View style={styles.card}>
-      <Text style={styles.brand}>Glucose Wars</Text>
+      <Text style={styles.brand}>Sukari</Text>
       <Text style={[styles.result, { color: isVictory ? P.accent : P.danger }]}>
         {isVictory ? 'Rehearsal complete' : 'Rehearsal interrupted'}
       </Text>

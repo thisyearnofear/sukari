@@ -11,6 +11,7 @@ import { GlucoseReading } from '@/types/health';
 
 let healthKit: any = null;
 let available = false;
+const EXPO_HEALTH_MODULE = 'expo-health';
 
 /**
  * Check if HealthKit is available (iOS only).
@@ -19,7 +20,7 @@ export async function isAvailable(): Promise<boolean> {
   if (Platform.OS !== 'ios') return false;
   try {
     // Dynamic import to avoid crash on non-iOS platforms
-    const mod = await import('expo-health');
+    const mod: any = await import(EXPO_HEALTH_MODULE);
     healthKit = mod;
     available = await mod.isAvailableAsync();
     return available;

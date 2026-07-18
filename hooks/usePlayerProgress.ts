@@ -5,7 +5,6 @@ import { PrivacySettings, PrivacyMode } from '@/types/health';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { track } from '@/utils/analytics';
 import { analyzePlayerSessions, PlayerAnalytics } from '@/utils/slowMoAnalytics';
-import { useBeam } from '@/context/BeamContext';
 import type { SignalSnapshot } from '@/domain/signals';
 import {
   AdherenceWeek,
@@ -19,8 +18,8 @@ import {
 } from '@/domain/programme';
 
 export interface SlowMoModeSession {
-  plannedMeals?: Array<{ mealType: string; name: string; glucoseImpact: number }>;
-  actualMeals?: Array<{ mealType: string; name: string; glucoseImpact: number }>;
+  plannedMeals?: { mealType: string; name: string; glucoseImpact: number }[];
+  actualMeals?: { mealType: string; name: string; glucoseImpact: number }[];
   completedAt?: number;
 }
 
@@ -137,9 +136,6 @@ function isNewCalendarDay(lastReset: number | null): boolean {
 }
 
 export function usePlayerProgress() {
-  const beamContext = useBeam();
-  const playerAccount = beamContext?.playerAccount;
-  const beam = beamContext?.beam;
   const [hydrated, setHydrated] = useState(false);
   const [progress, setProgress] = useState<PlayerProgressState>(defaultProgress);
 
@@ -219,12 +215,6 @@ export function usePlayerProgress() {
 
     loadProgress();
   }, []);
-
-  useEffect(() => {
-    if (playerAccount && beam) {
-      console.log('Syncing progress with Beam Player Account:', playerAccount.address);
-    }
-  }, [playerAccount, beam]);
 
   useEffect(() => {
     if (!hydrated) return;

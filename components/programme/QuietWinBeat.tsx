@@ -2,7 +2,7 @@
  * Quiet win — rare delight when a real-world mission is logged.
  */
 import React, { useEffect, useRef } from 'react';
-import { View, Text, StyleSheet, Animated, Easing } from 'react-native';
+import { Text, StyleSheet, Animated, Easing } from 'react-native';
 import { COLORS, FONTS, ANIMATIONS } from '@/constants/designSystem';
 
 const P = COLORS.PROGRAMME;

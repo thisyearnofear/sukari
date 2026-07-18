@@ -10,6 +10,7 @@ import {
   TextInput,
   Share,
   StyleSheet,
+  Platform,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
@@ -19,7 +20,6 @@ import { usePlayerProgressContext } from '@/context/PlayerProgressContext';
 import { USER_MODE_CONFIGS } from '@/constants/userModes';
 import { PrivacyToggle } from '@/components/PrivacyToggle';
 import { PrivacySettingsModal } from '@/components/PrivacySettings';
-import { useBeam } from '@/context/BeamContext';
 import { COLORS, FONTS, ANIMATIONS } from '@/constants/designSystem';
 import { track } from '@/utils/analytics';
 import { completionHeartbeat } from '@/utils/haptics';
@@ -47,7 +47,7 @@ import { LoopStrip } from '@/components/programme/LoopStrip';
 import { AgencyLaneTag } from '@/components/programme/AgencyLaneTag';
 import { QuietWinBeat } from '@/components/programme/QuietWinBeat';
 
-const maxWidth = 400;
+const maxWidth = Platform.OS === 'web' ? 760 : 400;
 const P = COLORS.PROGRAMME;
 const DEMO_KEY = 'glucoseWars.demoMaya';
 const DEMO_DAY_KEY = 'glucoseWars.demoMayaDay';
@@ -89,11 +89,6 @@ export const MainMenu: React.FC<MainMenuProps> = ({
   const [showQuietWin, setShowQuietWin] = useState(false);
   const cgm = useCGMConnection();
   const coach = useCoach();
-  const beamContext = useBeam();
-  const playerAccount = beamContext?.playerAccount;
-  const showSyncFeedback = beamContext?.showSyncFeedback;
-  const [showWelcome, setShowWelcome] = useState(false);
-  const welcomeAnim = useRef(new Animated.Value(-80)).current;
   const enterAnim = useRef(new Animated.Value(0)).current;
 
   const signalSnapshot = buildSignalSnapshot({
@@ -195,29 +190,6 @@ export const MainMenu: React.FC<MainMenuProps> = ({
   }, [showUserModeSelector, progress.privacyMode]);
 
   useEffect(() => {
-    if (playerAccount && !showWelcome) {
-      setShowWelcome(true);
-      const { duration, bezier } = ANIMATIONS.MOTION.toast;
-      const ease = Easing.bezier(bezier[0], bezier[1], bezier[2], bezier[3]);
-      Animated.sequence([
-        Animated.timing(welcomeAnim, { toValue: 48, duration, easing: ease, useNativeDriver: true }),
-        Animated.delay(2800),
-        Animated.timing(welcomeAnim, {
-          toValue: -80,
-          duration: ANIMATIONS.MOTION.exit.duration,
-          easing: Easing.bezier(
-            ANIMATIONS.MOTION.exit.bezier[0],
-            ANIMATIONS.MOTION.exit.bezier[1],
-            ANIMATIONS.MOTION.exit.bezier[2],
-            ANIMATIONS.MOTION.exit.bezier[3],
-          ),
-          useNativeDriver: true,
-        }),
-      ]).start(() => setShowWelcome(false));
-    }
-  }, [playerAccount, showWelcome, welcomeAnim]);
-
-  useEffect(() => {
     if (showUserModeSelector) return;
     const { duration, bezier } = ANIMATIONS.MOTION.enter;
     Animated.timing(enterAnim, {
@@ -283,10 +255,10 @@ export const MainMenu: React.FC<MainMenuProps> = ({
           contentContainerStyle={styles.roleScroll}
           showsVerticalScrollIndicator={false}
         >
-          <Text style={styles.brandMark}>Glucose Wars</Text>
-          <Text style={styles.roleHeadline}>Who is this programme for?</Text>
+          <Text style={styles.brandMark}>Sukari</Text>
+          <Text style={styles.roleHeadline}>Let’s make the next decision easier.</Text>
           <Text style={styles.roleSub}>
-            One choice. Changes how missions and coaching are framed — you can change it later.
+            One small experiment today. Better evidence for tomorrow. First, tell us how Sukari should frame it.
           </Text>
 
           <View style={styles.roleList}>
@@ -295,10 +267,11 @@ export const MainMenu: React.FC<MainMenuProps> = ({
               return (
                 <PressableScale
                   key={mode}
-                  onPress={() => {
-                    setUserMode(mode);
-                    setShowUserModeSelector(false);
-                    track('user_mode_selected', { user_mode: mode, privacy_mode: progress.privacyMode });
+              onPress={() => {
+                setUserMode(mode);
+                setShowUserModeSelector(false);
+                track('user_mode_selected', { user_mode: mode, privacy_mode: progress.privacyMode });
+                track('role_selected', { user_mode: mode, privacy_mode: progress.privacyMode });
                     onUserModeSelected?.(mode);
                   }}
                   accessibilityLabel={`${config.name}. ${config.description}`}
@@ -338,19 +311,11 @@ export const MainMenu: React.FC<MainMenuProps> = ({
     <View style={styles.root}>
       <MetabolicField band={homeBand} intensity={homeIntensity} />
 
-      {showWelcome && (
-        <Animated.View style={[styles.toast, { transform: [{ translateY: welcomeAnim }] }]}>
-          <Text style={styles.toastTitle}>Signed in</Text>
-          <Text style={styles.toastBody}>Progress sync is available.</Text>
-        </Animated.View>
-      )}
-
       <View style={styles.topBar}>
         <View>
           <Text style={styles.topEyebrow}>Metabolic programme</Text>
           <Text style={styles.topMeta}>
             {demoMode ? 'Demo timeline' : 'One mission a day'}
-            {showSyncFeedback ? ' · synced' : ''}
           </Text>
         </View>
         <View style={styles.topBarActions}>
@@ -396,7 +361,7 @@ export const MainMenu: React.FC<MainMenuProps> = ({
             ],
           }}
         >
-          <Text style={styles.brandMark}>Glucose Wars</Text>
+          <Text style={styles.brandMark}>Sukari</Text>
           <Text style={styles.tagline}>One mission today. Better evidence for tomorrow.</Text>
           <Text style={styles.signalLine}>{signalLine}</Text>
 
@@ -499,18 +464,21 @@ export const MainMenu: React.FC<MainMenuProps> = ({
                 setMissionDeferred(false);
                 assignFromPattern(pattern.suggestedBehaviour);
                 track('mission_accepted', { template: pattern.suggestedBehaviour, demo: demoMode });
+                track('role_to_mission_accepted', { template: pattern.suggestedBehaviour, demo: demoMode });
               }}
               onMakeEasier={() => {
                 setMissionChoice('easier');
                 setMissionDeferred(false);
                 assignFromPattern(pattern.suggestedBehaviour);
                 track('mission_made_easier', { template: pattern.suggestedBehaviour });
+                track('role_to_mission_accepted', { template: pattern.suggestedBehaviour, variant: 'easier' });
               }}
               onChooseAnother={() => {
                 setMissionChoice('another');
                 setMissionDeferred(false);
                 assignFromPattern('protein_first');
                 track('mission_choose_another', { from: pattern.suggestedBehaviour });
+                track('role_to_mission_accepted', { template: 'protein_first', variant: 'another' });
               }}
               onNotPractical={() => {
                 setMissionChoice('not_practical');
@@ -523,6 +491,7 @@ export const MainMenu: React.FC<MainMenuProps> = ({
                 AsyncStorage.removeItem(DEFERRED_KEY);
                 setShowQuietWin(true);
                 track('mission_marked_done', { from: 'home_pattern_card', demo: demoMode });
+                track('completion_to_measured_response', { from: 'home_pattern_card', demo: demoMode });
               }}
             />
           </View>
@@ -576,6 +545,10 @@ export const MainMenu: React.FC<MainMenuProps> = ({
                 assignFromPattern(template);
               }
               onStartGame(selectedMode);
+              track('mission_accepted_to_rehearsal_started', {
+                template: displayMission?.templateId || pattern.suggestedBehaviour,
+                demo: demoMode,
+              });
             }}
             accessibilityLabel="Rehearse today’s mission in a short battle"
             accessibilityRole="button"
@@ -608,13 +581,13 @@ export const MainMenu: React.FC<MainMenuProps> = ({
               <Text style={styles.link}>Invite support</Text>
             </TouchableOpacity>
             <Text style={styles.dot}>·</Text>
-            <TouchableOpacity onPress={openCareTeamSummary} accessibilityRole="button">
+            <TouchableOpacity onPress={() => router.push('/care' as any)} accessibilityRole="button">
               <Text style={styles.link}>Care team summary</Text>
             </TouchableOpacity>
           </View>
 
           <Text style={styles.footerHint}>
-            Habits only — never dosing or diagnosis. The game is rehearsal; the product is adherence.
+            Habits only — never dosing or diagnosis. Practice is rehearsal; the product is follow-through.
           </Text>
         </Animated.View>
       </ScrollView>

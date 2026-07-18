@@ -82,7 +82,7 @@ export const BattleTutorialModal: React.FC<BattleTutorialModalProps> = ({
             },
           ]}
         >
-          <Text style={styles.brand}>Glucose Wars</Text>
+          <Text style={styles.brand}>Sukari</Text>
           <Text style={styles.sprite}>{food.sprite}</Text>
           <Text style={[styles.foodName, { color: accent }]}>{food.name}</Text>
 

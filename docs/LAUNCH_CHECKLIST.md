@@ -1,32 +1,44 @@
-### 🚀 GlucoseWars Launch Checklist
+# Sukari Launch Checklist
 
-#### 🛠️ Technical Readiness
-- [x] **TypeScript Compliance**: Run `npx tsc --noEmit` and ensure zero errors.
-- [x] **Core Principles Audit**: Verify all components follow ENHANCEMENT FIRST, CONSOLIDATION, and DRY.
-- [x] **Performance Check**: Verify 60 FPS on both Mobile (iOS/Android) and Web environments.
-- [x] **Asset Optimization**: Ensure all SVGs and images are optimized for fast loading.
-- [ ] **Analytics (Web)**: Set `EXPO_PUBLIC_POSTHOG_KEY` and verify the core funnel events are flowing (see `docs/DEVELOPMENT.md`).
+## Product
 
-#### 🎮 Gameplay & Narrative
-- [x] **Kingdom Lore Alignment**: Verify all clinical terms (Stability, Energy, etc.) are replaced with Kingdom Lore (Harmony, Vigor) for immersion.
-- [x] **Onboarding Flow**: Confirm new users are correctly guided from Role Selection to Tutorial.
-- [x] **Tier Progression**: Test the flow from Tier 1 (Controls) to Tier 3 (Full Simulation).
-- [x] **Weekly Challenge (Alchemist's Lab)**: Verify seeded RNG and global leaderboard functionality.
+- [x] User-facing name changed to Sukari.
+- [x] Value proposition leads first run.
+- [x] Role selection follows value screen.
+- [x] First mission card appears before rehearsal.
+- [x] Demo pattern is clearly labelled.
+- [x] Mission ribbon appears in rehearsal.
+- [x] Transfer beat supports done now and later today.
+- [x] Measured response copy avoids causal overclaiming.
+- [x] Desktop care panel shows exceptions, rationale, and outcomes.
+- [x] Demo cohort is explicit, not disguised as real panel data.
+- [x] Legacy Web3/NFT/leaderboard/challenge surfaces removed or redirected.
 
-#### 💎 Web3 & Identity
-- [x] **Beam SDK Integration**: Verify Social Login (Web2) and Wallet (Web3) onboarding flows.
-- [x] **Asset Syncing**: Ensure Kingdom Renown and Deeds of Valor are correctly reported to the Beam network.
-- [x] **Gasless Sessions**: Confirm background signing is working for high-speed gameplay results.
+## Instrumentation
 
-#### ♿ Accessibility & UX
-- [x] **Screen Reader Support**: Audit `useAccessibility.ts` and verify labels for food cards, HUD, and results.
-- [x] **Responsive Design**: Test layout on mobile portrait, tablet, and desktop ultra-wide resolutions.
-- [x] **Input Cohesion**: Verify both Touch (Mobile) and Keyboard (Web) controls feel intuitive.
+- [x] Value screen -> role selection.
+- [x] Role -> mission accepted.
+- [x] Mission accepted -> rehearsal started.
+- [x] Rehearsal -> real-world completion/later.
+- [x] Completion -> measurable response.
+- [x] Care-team exception/outreach.
 
-#### 📝 Documentation
-- [x] **Architecture Guide**: Update `ARCHITECTURE.md` with Beam SDK and Kingdom Lore systems.
-- [x] **Roadmap**: Ensure `ROADMAP.md` reflects current completion and future phases.
-- [x] **Developer Guide**: Update `DEVELOPMENT.md` with environment setup and SDK usage.
+## Engineering
 
----
-**Status**: Ready for Production Deployment 🏰⚔️🧪
+- [x] Jest AsyncStorage mock.
+- [x] AnimatedBackground hook-order fix.
+- [x] TypeScript cleanup.
+- [x] Lint passes.
+- [x] Jest passes.
+- [x] TypeScript check passes.
+- [x] Web export passes.
+
+## Before External Pilot
+
+- [ ] Provider authentication.
+- [ ] Patient consent and enrollment model.
+- [ ] Role-based care-team access.
+- [ ] Audit logs for digest views and outreach actions.
+- [ ] HIPAA-ready storage and retention policy.
+- [ ] Clinician-reviewed mission library.
+- [ ] Pilot protocol and outcomes measurement plan.

@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, Animated } from 'react-native';
+import { View, Text, Animated, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { MainMenu } from '@/components/game/MainMenu';
@@ -43,16 +43,16 @@ export default function MenuScreen() {
 
   if (showIntro) {
     return (
-      <HeroIntro onComplete={() => {
+      <HeroIntro onComplete={(source) => {
         setShowIntro(false);
-        track('hero_intro_completed');
+        track('value_proposition_completed', { source, privacy_mode: progress.privacyMode });
       }} />
     );
   }
 
   return (
     <View style={{ flex: 1, backgroundColor: ambientBg, alignItems: 'center' }}>
-    <SafeAreaView style={{ flex: 1, width: '100%', maxWidth: 500 }}>
+    <SafeAreaView style={{ flex: 1, width: '100%', maxWidth: Platform.OS === 'web' ? 960 : 500 }}>
       <MainMenu
         onStartGame={(controlMode: ControlMode) => {
           track('start_game_clicked', { from: 'main_menu', control_mode: controlMode, privacy_mode: progress.privacyMode });
@@ -62,8 +62,7 @@ export default function MenuScreen() {
           });
         }}
         onUserModeSelected={() => {
-          track('user_mode_selected_navigate', { to: 'onboarding', privacy_mode: progress.privacyMode });
-          router.push('/(game)/onboarding');
+          track('value_to_role_completed', { privacy_mode: progress.privacyMode });
         }}
         userModeSelected={progress.userMode !== null}
       />
@@ -92,7 +91,7 @@ function QuietLoader() {
           letterSpacing: -0.3,
         }}
       >
-        Glucose Wars
+        Sukari
       </Text>
       <Text
         style={{

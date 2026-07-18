@@ -3,7 +3,7 @@
  * Contains: ExplosionParticle, ShockwaveRing, SwipeTrail, ElectricArc
  */
 import React, { useRef, useEffect } from 'react';
-import { View, Text, Animated } from 'react-native';
+import { Text, Animated } from 'react-native';
 import { SwipeDirection } from '@/types/game';
 
 export const ExplosionParticle: React.FC<{

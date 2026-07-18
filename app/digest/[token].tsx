@@ -14,10 +14,11 @@ import {
 import { router, useLocalSearchParams } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { fetchWeeklyDigest, WeeklyDigestPayload } from '@/domain/digest';
+import { fetchWeeklyDigest, listLocalWeeklyDigests, WeeklyDigestPayload } from '@/domain/digest';
 import { track } from '@/utils/analytics';
 import { COLORS, FONTS, ANIMATIONS } from '@/constants/designSystem';
 import { PressableScale } from '@/components/ui/PressableScale';
+import { buildMayaClinicianDigest, MAYA_DEMO } from '@/domain/demo';
 
 const LOCAL_DIGEST_KEY = 'glucoseWars.lastDigest';
 const P = COLORS.PROGRAMME;
@@ -35,6 +36,10 @@ export default function WeeklyDigestScreen() {
         setError('Missing digest token');
         return;
       }
+      if (token === 'local-maya-outreach') {
+        setDigest(buildMayaClinicianDigest(MAYA_DEMO.scenes.outreach));
+        return;
+      }
       const remote = await fetchWeeklyDigest(token);
       if (remote?.ok && remote.digest) {
         setDigest(remote.digest);
@@ -47,6 +52,12 @@ export default function WeeklyDigestScreen() {
           setDigest(parsed);
           return;
         }
+      }
+      const localHistory = await listLocalWeeklyDigests();
+      const historic = localHistory.find((item) => item.token === token);
+      if (historic) {
+        setDigest(historic);
+        return;
       }
       setError('Summary not found or expired');
     };
@@ -63,6 +74,15 @@ export default function WeeklyDigestScreen() {
       useNativeDriver: true,
     }).start();
   }, [digest, enter]);
+
+  useEffect(() => {
+    if (!digest) return;
+    track('measured_response_to_care_team_exception', {
+      outreach_recommended: digest.outreachRecommended === true,
+      safety_flags: digest.safetyFlags?.length ?? 0,
+      week: digest.weekKey,
+    });
+  }, [digest]);
 
   if (error) {
     return (
@@ -81,7 +101,7 @@ export default function WeeklyDigestScreen() {
     return (
       <View style={styles.root}>
         <SafeAreaView style={styles.centered}>
-          <Text style={styles.brand}>Glucose Wars</Text>
+          <Text style={styles.brand}>Sukari</Text>
           <Text style={styles.loading}>Opening care-team summary…</Text>
         </SafeAreaView>
       </View>
@@ -92,6 +112,7 @@ export default function WeeklyDigestScreen() {
   const rate = Math.round((digest.missionsCompleted / assigned) * 100);
   const outreach = digest.outreachRecommended === true;
   const safety = digest.safetyFlags?.length ?? 0;
+
 
   return (
     <View style={styles.root}>
@@ -114,7 +135,7 @@ export default function WeeklyDigestScreen() {
             }}
           >
             <Text style={styles.kicker}>Care team · exception summary</Text>
-            <Text style={styles.brand}>Glucose Wars</Text>
+            <Text style={styles.brand}>Sukari</Text>
             <Text style={styles.headline}>Weekly intelligence</Text>
             <Text style={styles.meta}>
               Week of {digest.weekKey}
@@ -243,7 +264,7 @@ export default function WeeklyDigestScreen() {
             <PressableScale
               onPress={async () => {
                 await Share.share({
-                  message: `Glucose Wars care-team summary (${digest.weekKey}): ${digest.missionsCompleted}/${assigned} missions. Outreach: ${outreach ? 'suggested' : 'not required'}. ${digest.narrative || ''}`,
+                  message: `Sukari care-team summary (${digest.weekKey}): ${digest.missionsCompleted}/${assigned} missions. Outreach: ${outreach ? 'suggested' : 'not required'}. ${digest.narrative || ''}`,
                 });
                 track('weekly_digest_shared', { week: digest.weekKey });
               }}

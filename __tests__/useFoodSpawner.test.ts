@@ -45,7 +45,7 @@ describe('useFoodSpawner helpers', () => {
       expect(unit.faction).toBe(def.faction);
       expect(unit.name).toBe(def.name);
       expect(unit.sprite).toBeTruthy();
-      expect(unit.y).toBe(-60); // spawns above screen
+      expect(unit.y).toBe(150); // enters below the protected mission area
       expect(unit.speed).toBeGreaterThan(0);
       expect(unit.opacity).toBe(1);
     });
@@ -58,7 +58,7 @@ describe('useFoodSpawner helpers', () => {
         glucoseImpact: -2, basePoints: 8, spawnWeight: 10,
         effects: { energy: 18, hydration: -8, nutrition: 0, stability: -3 },
         timeModifiers: { morning: 1.5, midday: 1.0, afternoon: 0.5, evening: -1.0 },
-      };
+      } as const;
 
       const morningCoffee = createFoodUnit(coffeeDef, 'morning');
       expect(morningCoffee.isContextuallyGood).toBe(true);

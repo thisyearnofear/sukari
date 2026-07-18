@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { View, Text, StyleSheet, Animated, Easing } from 'react-native';
+import { View, Text, StyleSheet, Animated, Easing, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { ControlMode, GameMode, UserMode } from '@/types/game';
 import { HealthProfile } from '@/types/health';
@@ -29,56 +29,28 @@ interface OnboardingStep {
 function getModeIntroStep(userMode: UserMode | undefined): OnboardingStep {
   if (!userMode) {
     return {
-      title: 'A short rehearsal',
-      subtitle: 'Warm up before today’s real-world mission',
+      title: 'Practice the decision, then leave the app',
+      subtitle: 'A focused 45-second rehearsal for today’s experiment',
       content:
-        'Foods move toward your field. Rally steadying choices up. Send spikes away down. Stay in range — then take the habit into real life.',
+        'Use the practice to make the real-world choice feel easier. Sukari is here for the moment before action, not to keep you scrolling.',
+      isControlSelect: true,
     };
   }
 
   const modeConfig = USER_MODE_CONFIGS[userMode];
   const introTexts: Record<UserMode, string> = {
-    personal: 'This practice rehearses today’s mission — each choice is a small decision you’ll make between appointments.',
-    caregiver: 'Step into the decisions they face daily. Empathy through a short rehearsal tied to a real support ask.',
-    curious: 'See how pattern → mission → practice → action feels. The game is the engagement layer, not the whole product.',
+    personal: 'Rehearse one small decision you can make between appointments. Then take the experiment into real life.',
+    caregiver: 'Try the decision they face daily, then take one concrete support action without monitoring or nagging.',
+    curious: 'See the loop: pattern, one experiment, brief rehearsal, real-world action, then a measured response.',
   };
 
   return {
     title: modeConfig.name,
     subtitle: modeConfig.subtitle,
     content: introTexts[userMode],
+    isControlSelect: true,
   };
 }
-
-const CLASSIC_STEPS: OnboardingStep[] = [
-  {
-    title: 'How rehearsal works',
-    subtitle: 'Two gestures. One goal.',
-    content:
-      'Swipe up on allies that steady you.\nSwipe down on enemies that spike or crash.\nKeep the bar in range — then do the mission in real life.',
-  },
-  {
-    title: 'Choose controls',
-    subtitle: 'How do you want to practice?',
-    content: '',
-    isControlSelect: true,
-  },
-];
-
-const LIFE_MODE_STEPS: OnboardingStep[] = [
-  {
-    title: 'A day in the field',
-    subtitle: 'Dawn to dusk, one decision at a time',
-    content:
-      'Up: take allies · Down: refuse enemies\nLeft: save for later · Right: share\nKeep harmony balanced through the day.',
-  },
-  {
-    title: 'Choose controls',
-    subtitle: 'How do you want to practice?',
-    content: '',
-    isControlSelect: true,
-  },
-];
 
 export const Onboarding: React.FC<OnboardingProps> = ({
   onComplete,
@@ -87,8 +59,9 @@ export const Onboarding: React.FC<OnboardingProps> = ({
   gameMode,
   userMode,
 }) => {
-  const baseSteps = gameMode === 'life' ? LIFE_MODE_STEPS : CLASSIC_STEPS;
-  const steps = userMode ? [getModeIntroStep(userMode), ...baseSteps] : baseSteps;
+  const steps = [getModeIntroStep(userMode)];
+  const isDesktop = Platform.OS === 'web';
+  const controlOptions: ControlMode[] = isDesktop ? ['tap', 'swipe'] : ['swipe', 'tap'];
 
   const [currentStep, setCurrentStep] = useState(0);
   const [selectedControlMode] = useState<ControlMode>(defaultControlMode);
@@ -185,7 +158,7 @@ export const Onboarding: React.FC<OnboardingProps> = ({
             },
           ]}
         >
-          <Text style={styles.brand}>Glucose Wars</Text>
+          <Text style={styles.brand}>Sukari</Text>
           <Text style={styles.title}>{step.title}</Text>
           <Text style={styles.subtitle}>{step.subtitle}</Text>
 
@@ -193,29 +166,28 @@ export const Onboarding: React.FC<OnboardingProps> = ({
 
           {step.isControlSelect ? (
             <View style={styles.controls}>
-              <PressableScale
-                onPress={() => handleSelectControl('swipe')}
-                accessibilityLabel={`Swipe controls. ${gameMode === 'life' ? 'Four directions' : 'Best for mobile'}`}
-                accessibilityRole="button"
-                style={styles.controlPrimary}
-              >
-                <Text style={styles.controlPrimaryTitle}>Swipe</Text>
-                <Text style={styles.controlPrimarySub}>
-                  {gameMode === 'life' ? 'Four directions' : 'Best for mobile'}
-                </Text>
-              </PressableScale>
-
-              <PressableScale
-                onPress={() => handleSelectControl('tap')}
-                accessibilityLabel={`Tap controls. ${gameMode === 'life' ? 'Button controls' : 'Best for web'}`}
-                accessibilityRole="button"
-                style={styles.controlSecondary}
-              >
-                <Text style={styles.controlSecondaryTitle}>Tap</Text>
-                <Text style={styles.controlSecondarySub}>
-                  {gameMode === 'life' ? 'Button controls' : 'Best for web'}
-                </Text>
-              </PressableScale>
+              {controlOptions.map((mode, index) => {
+                const recommended = index === 0;
+                const detail = mode === 'swipe'
+                  ? gameMode === 'life' ? 'Four directions' : 'Best on touch screens'
+                  : gameMode === 'life' ? 'Button controls' : 'Best with a mouse or trackpad';
+                return (
+                  <PressableScale
+                    key={mode}
+                    onPress={() => handleSelectControl(mode)}
+                    accessibilityLabel={`Start practice with ${mode} controls. ${detail}`}
+                    accessibilityRole="button"
+                    style={recommended ? styles.controlPrimary : styles.controlSecondary}
+                  >
+                    <Text style={recommended ? styles.controlPrimaryTitle : styles.controlSecondaryTitle}>
+                      Start with {mode}
+                    </Text>
+                    <Text style={recommended ? styles.controlPrimarySub : styles.controlSecondarySub}>
+                      {detail}
+                    </Text>
+                  </PressableScale>
+                );
+              })}
             </View>
           ) : null}
 

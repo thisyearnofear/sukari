@@ -1,6 +1,6 @@
 import React, { useRef, useEffect } from 'react';
-import { View, Text, TouchableOpacity, Animated, Easing, useWindowDimensions } from 'react-native';
-import { BodyMetrics, TimePhase, MorningCondition, PlotTwist, SavedFoodSlot, SocialStats } from '@/types/game';
+import { View, Text, TouchableOpacity, Animated, Easing } from 'react-native';
+import { BodyMetrics, TimePhase, MorningCondition, PlotTwist, SavedFoodSlot } from '@/types/game';
 import { TIME_PHASES, MORNING_CONDITIONS, METRIC_LABELS } from '@/constants/gameConfig';
 
 const SIDE_PANEL_WIDTH = 80;

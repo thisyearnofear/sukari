@@ -55,7 +55,7 @@ export const AGENCY_CHARTER = {
     },
   ],
   safety:
-    'Glucose Wars coaches habits only — never insulin, dosing, or diagnosis. If something feels urgent, contact your care team or emergency services.',
+    'Sukari coaches habits only — never insulin, dosing, or diagnosis. If something feels urgent, contact your care team or emergency services.',
 } as const;
 
 export type AgencyLaneId = (typeof AGENCY_CHARTER.lanes)[number]['id'];

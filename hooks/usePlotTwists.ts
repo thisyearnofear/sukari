@@ -1,12 +1,11 @@
 /**
- * usePlotTwists — Schedules and triggers plot twists with VRF support.
+ * usePlotTwists — Schedules and triggers deterministic local plot twists.
  * Extracted from useBattleGame for MODULAR / CLEAN separation of concerns.
  */
 import { useEffect, useRef, useCallback } from 'react';
 import * as Haptics from 'expo-haptics';
 import { GameState, PlotTwist, UserMode } from '@/types/game';
 import { PLOT_TWISTS, MODE_PLOT_TWISTS } from '@/constants/gameConfig';
-import { useVRFService } from './useVRFService';
 
 interface UsePlotTwistsArgs {
   gameState: GameState;
@@ -24,10 +23,7 @@ export function usePlotTwists({
   triggerScreenShake,
 }: UsePlotTwistsArgs) {
   const plotTwistRef = useRef<number | null>(null);
-  const { generateFairPlotTwist } = useVRFService();
-  const [vrfEnabled, setVrfEnabled] = [false, (_: boolean) => {}]; // Controlled externally
-
-  const applyTwist = useCallback((twist: PlotTwist, isVerifiable: boolean) => {
+  const applyTwist = useCallback((twist: PlotTwist) => {
     setGameState(prev => {
       if (prev.gameMode !== 'life' || prev.activePlotTwist || prev.plotTwistsTriggered >= 2) return prev;
 
@@ -46,24 +42,17 @@ export function usePlotTwists({
       };
     });
 
-    const label = isVerifiable ? `${twist.icon} ${twist.name} ⚖️ FAIR` : `${twist.icon} ${twist.name}`;
-    showAnnouncement(label, 'plot_twist', twist.bonusCondition || undefined);
+    showAnnouncement(`${twist.icon} ${twist.name}`, 'plot_twist', twist.bonusCondition || undefined);
     triggerScreenShake(12);
     try { Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning); } catch {}
   }, [setGameState, showAnnouncement, triggerScreenShake]);
 
-  const triggerPlotTwist = useCallback(async () => {
-    try {
-      const result = await generateFairPlotTwist(gameState.gameMode, Date.now());
-      applyTwist(result.plotTwist, result.isVerifiable);
-    } catch {
-      // Fallback to local random
-      const pool = userMode ? MODE_PLOT_TWISTS[userMode] : PLOT_TWISTS;
-      const available = pool.filter(() => Math.random() > 0.3);
-      if (available.length === 0) return;
-      applyTwist(available[Math.floor(Math.random() * available.length)], false);
-    }
-  }, [generateFairPlotTwist, gameState.gameMode, userMode, applyTwist]);
+  const triggerPlotTwist = useCallback(() => {
+    const pool = userMode ? MODE_PLOT_TWISTS[userMode] : PLOT_TWISTS;
+    const available = pool.filter(() => Math.random() > 0.3);
+    if (available.length === 0) return;
+    applyTwist(available[Math.floor(Math.random() * available.length)]);
+  }, [userMode, applyTwist]);
 
   // Schedule plot twists at random intervals (Life Mode only)
   useEffect(() => {

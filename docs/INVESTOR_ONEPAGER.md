@@ -1,65 +1,74 @@
-# GlucoseWars — Investor one-pager
+# Sukari Investor One-Pager
 
 **The adherence layer for continuous metabolic care.**
 
 One mission today. Better evidence for tomorrow.
 
----
-
 ## Problem
 
-Chronic metabolic care still centers on clinic visits. Between appointments, patients make hundreds of decisions with confusing data and fading motivation. Programmes lose engagement; clinicians cannot review every CGM stream continuously.
+Metabolic programmes know what patients should do, but adherence fails between appointments. Patients face repeated decision moments without timely support, and clinicians cannot continuously review every CGM stream.
 
 ## Solution
 
-GlucoseWars is an **AI adherence engine** — not a chatbot or AI doctor.
+Sukari turns signal into action:
 
-1. Detect one actionable pattern from CGM / programme signals  
-2. Propose **one** collaborative daily experiment  
-3. Rehearse the decision in ~45 seconds of play  
-4. Patient acts at home and marks completion  
-5. Observe associated response; adapt  
-6. Send the care team an **exception summary** when human attention helps  
+1. Detect one actionable pattern.
+2. Propose one daily habit experiment.
+3. Let the patient accept, ease, swap, or decline.
+4. Rehearse the decision in under a minute.
+5. Record real-world completion.
+6. Measure the associated response.
+7. Surface exceptions to the care team with outreach rationale.
 
-The game is the engagement mechanism. The product is closed-loop adherence.
+The game is the rehearsal layer. The product is adherence evidence.
 
-## Buyer & model
+## Buyer
 
-**Beachhead:** Adults with T2D / prediabetes in CGM-supported metabolic programmes (virtual clinics, GLP-1 lifestyle arms, employer metabolic cohorts).
+Sell to programme operators who already have patients:
 
-**Sell to:** Programme operators who already acquire patients — not consumers, not solo endo practices first.
+- virtual diabetes clinics;
+- GLP-1 lifestyle programmes;
+- employer metabolic programmes;
+- CGM-supported nutrition services.
 
-**Pricing (initial):** PEPM software fee + optional implementation. Later outcomes upside.
+Initial model: PEPM software fee plus implementation. Later outcomes upside may be possible after validated pilots.
 
-**Value:** Retention, mission completion, fewer manual outreach minutes, larger panels per clinician, visibility into between-visit behaviour.
+## Why Now
 
-## Why now
+CGM adoption, virtual metabolic programmes, GLP-1 care models, and capable AI make between-visit adherence measurable and actionable. The gap is not another dashboard. It is converting signal into one small action and proving whether follow-through happened.
 
-Ubiquitous CGMs + wearables, multimodal AI for longitudinal reasoning, and metabolic programmes that already own the patient relationship but lack an adherence layer that patients will actually use for months.
+## Moat
 
-## Moat (compounding)
+- Longitudinal mapping from context to mission to adherence to response.
+- Clinically governed mission library and safety boundaries.
+- Programme workflow embed through exception-based care views.
+- Engagement mechanics tuned for real-world completion, not time-in-app.
 
-Not the game art. Not “we use GPT.”
+## Current Progress
 
-- Longitudinal **intervention → adherence → response** mapping by patient context  
-- Constrained, clinically governed mission library + escalation rules  
-- Workflow embed in how programmes manage panels  
-- Engagement IP: which rehearsal mechanics drive real-world completion  
+Working prototype includes:
 
-## Traction / ask
+- Sukari brand and value-first entry.
+- Signal/demo pattern to mission card before rehearsal.
+- Mission-bound rehearsal battle.
+- Transfer beat with done/later.
+- Measured response language.
+- Local-first weekly digest history.
+- Desktop care-team panel with exceptions, rationale, and outcomes.
+- Habit-only coach boundary.
+- Agency Charter for agent permissions.
+- Instrumented funnel through care-team outreach.
+- Retired Web3/NFT/leaderboard/challenge surfaces.
+- Passing engineering gates.
 
-**Working prototype:** Dexcom path, pattern → mission, rehearsal battle, transfer to real life, Maya synthetic 14-day demo, clinician exception digest, habit-only coach, **Agency Charter** (published autonomy contract with lane markers on agent-initiated cards), **home field bound to live pattern state** (the field melts to steady on completion), **asks-first support proposal** on mission decline, **coach providers inverted** (OpenAI reasoning primary, Runware media reserved, deterministic templates offline).
+## Ask
 
-**Ask:** Design partner + clinical advisor + 8–12 week pilot (50–100 people).
+Design partner, clinical advisor, and 8-12 week pilot with 50-100 adults with T2D or prediabetes in one CGM-supported programme.
 
-**Pilot metrics:** Weekly Adherent Patients (WAP), mission accept/complete, D7/D30 engagement, digest usefulness, staff minutes per enrolled patient. Health outcomes exploratory only until study design exists.
+Primary pilot metric: Weekly Adherent Patients.
+
+Health outcomes are exploratory until a formal study design exists.
 
 ## Safety
 
-Habits only — never insulin/medication dosing or diagnosis. Patient can reject every mission. Urgent language escalates out of the coach. Prototype ≠ production HIPAA stack.
-
-## Contact
-
-Glucose Wars · metabolic adherence for programmes that already have the patients.
-
-Demo: enable **Maya demo** on home → scenes Pattern / Measure / Outreach → Care team summary.
+Sukari is habits-only and never diagnoses or recommends insulin/medication doses. Production care-team deployment requires provider authentication, patient consent, audit logs, and HIPAA-ready infrastructure.

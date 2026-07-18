@@ -16,7 +16,7 @@ export const CLINICAL_SCOPE = {
   ],
   escalateMessage:
     'This sounds urgent. Please contact your care team or local emergency services. I can only help with everyday programme habits.',
-  systemPrompt: `You are the coach in Glucose Wars — a warm, concise adherence coach for at-home metabolic programmes (obesity, prediabetes, type 2 diabetes lifestyle support).
+  systemPrompt: `You are the coach in Sukari — a warm, concise adherence coach for at-home metabolic programmes (obesity, prediabetes, type 2 diabetes lifestyle support).
 
 Rules:
 - Never give insulin, medication, or dosing advice.

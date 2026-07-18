@@ -1,8 +1,8 @@
 /**
- * HeroIntro — short first-open beat. Rare delight; skippable.
- * Communicates programme premise, not castle fantasy.
+ * HeroIntro — value-first first-open screen.
+ * Establishes the real-world problem before asking for any personalisation.
  */
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { View, Text, Animated, Easing, StyleSheet } from 'react-native';
 import { useReducedMotion } from '@/hooks/useReducedMotion';
 import { COLORS, FONTS, ANIMATIONS } from '@/constants/designSystem';
@@ -11,67 +11,23 @@ import { PressableScale } from '@/components/ui/PressableScale';
 
 const P = COLORS.PROGRAMME;
 
-const SCENES = [
-  {
-    title: 'Care happens every day — not just at appointments',
-    sub: 'Glucose Wars is an adherence engine for at-home metabolic care.',
-    duration: 2400,
-    band: 'in_range' as const,
-  },
-  {
-    title: 'One personalized mission',
-    sub: 'AI finds a pattern in your signals, then proposes one achievable experiment.',
-    duration: 2400,
-    band: 'high' as const,
-  },
-  {
-    title: 'Rehearse, act, measure, adapt',
-    sub: 'Practice the decision in 45 seconds. Do it in real life. Learn what helped.',
-    duration: 2600,
-    band: 'in_range' as const,
-  },
-  {
-    title: 'An agent whose powers you can read',
-    sub: 'It acts on habits, asks before involving anyone, and never touches medication. The charter is always one tap away.',
-    duration: 2600,
-    band: 'in_range' as const,
-  },
-  {
-    title: 'Your care team stays informed — without another dashboard',
-    sub: 'Exception-oriented summaries when human attention can help.',
-    duration: 2400,
-    band: 'in_range' as const,
-  },
-];
-
 interface HeroIntroProps {
-  onComplete: () => void;
+  onComplete: (source: 'cta' | 'skip') => void;
 }
 
 export const HeroIntro: React.FC<HeroIntroProps> = ({ onComplete }) => {
   const reducedMotion = useReducedMotion();
-  const [sceneIndex, setSceneIndex] = useState(0);
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const slideAnim = useRef(new Animated.Value(12)).current;
 
   useEffect(() => {
     if (reducedMotion) {
-      onComplete();
-    }
-  }, [reducedMotion, onComplete]);
-
-  useEffect(() => {
-    if (reducedMotion) return;
-    if (sceneIndex >= SCENES.length) {
-      onComplete();
+      fadeAnim.setValue(1);
+      slideAnim.setValue(0);
       return;
     }
-
-    const scene = SCENES[sceneIndex];
     const enter = ANIMATIONS.MOTION.enter;
-    const exit = ANIMATIONS.MOTION.exit;
     const easeIn = Easing.bezier(enter.bezier[0], enter.bezier[1], enter.bezier[2], enter.bezier[3]);
-    const easeOut = Easing.bezier(exit.bezier[0], exit.bezier[1], exit.bezier[2], exit.bezier[3]);
 
     fadeAnim.setValue(0);
     slideAnim.setValue(14);
@@ -90,34 +46,11 @@ export const HeroIntro: React.FC<HeroIntroProps> = ({ onComplete }) => {
         useNativeDriver: true,
       }),
     ]).start();
-
-    const timer = setTimeout(() => {
-      Animated.parallel([
-        Animated.timing(fadeAnim, {
-          toValue: 0,
-          duration: exit.duration,
-          easing: easeOut,
-          useNativeDriver: true,
-        }),
-        Animated.timing(slideAnim, {
-          toValue: -8,
-          duration: exit.duration,
-          easing: easeOut,
-          useNativeDriver: true,
-        }),
-      ]).start(() => setSceneIndex((i) => i + 1));
-    }, scene.duration);
-
-    return () => clearTimeout(timer);
-  }, [sceneIndex, fadeAnim, slideAnim, onComplete, reducedMotion]);
-
-  if (reducedMotion || sceneIndex >= SCENES.length) return null;
-
-  const scene = SCENES[sceneIndex];
+  }, [fadeAnim, slideAnim, reducedMotion]);
 
   return (
     <View style={styles.root}>
-      <MetabolicField band={scene.band} intensity={0.5} />
+      <MetabolicField band="in_range" intensity={0.5} />
 
       <Animated.View
         style={[
@@ -128,32 +61,35 @@ export const HeroIntro: React.FC<HeroIntroProps> = ({ onComplete }) => {
           },
         ]}
       >
-        <Text style={styles.brand}>Glucose Wars</Text>
-        <Text style={styles.title}>{scene.title}</Text>
-        {scene.sub ? <Text style={styles.sub}>{scene.sub}</Text> : null}
+        <Text style={styles.brand}>Sukari</Text>
+        <Text style={styles.eyebrow}>Metabolic care, between appointments</Text>
+        <Text style={styles.title}>You know what helps. The hard part is doing it at the moment it matters.</Text>
+        <Text style={styles.sub}>
+          Sukari turns a pattern into one small experiment for today, then helps you carry it into real life.
+        </Text>
+        <View style={styles.example}>
+          <Text style={styles.exampleLabel}>Tonight&apos;s example</Text>
+          <Text style={styles.exampleAction}>Take a 10-minute walk after dinner.</Text>
+          <Text style={styles.exampleReason}>A small way to test whether your evenings run steadier.</Text>
+        </View>
+        <PressableScale
+          onPress={() => onComplete('cta')}
+          accessibilityLabel="See how Sukari works"
+          accessibilityRole="button"
+          style={styles.primary}
+        >
+          <Text style={styles.primaryText}>See how it works</Text>
+        </PressableScale>
+        <Text style={styles.scope}>Habits only. Never medication, dosing, or diagnosis.</Text>
+        <PressableScale
+          onPress={() => onComplete('skip')}
+          accessibilityLabel="Skip introduction"
+          accessibilityRole="button"
+          style={styles.skip}
+        >
+          <Text style={styles.skipText}>I already know the flow</Text>
+        </PressableScale>
       </Animated.View>
-
-      <View style={styles.dots}>
-        {SCENES.map((_, i) => (
-          <View
-            key={i}
-            style={[
-              styles.dot,
-              i === sceneIndex && styles.dotActive,
-              i < sceneIndex && styles.dotDone,
-            ]}
-          />
-        ))}
-      </View>
-
-      <PressableScale
-        onPress={onComplete}
-        accessibilityLabel="Skip intro"
-        accessibilityRole="button"
-        style={styles.skip}
-      >
-        <Text style={styles.skipText}>Skip</Text>
-      </PressableScale>
     </View>
   );
 };
@@ -169,20 +105,28 @@ const styles = StyleSheet.create({
     zIndex: 10,
     alignItems: 'center',
     paddingHorizontal: 36,
-    maxWidth: 420,
+    maxWidth: 460,
   },
   brand: {
     fontFamily: FONTS.display,
     color: P.text,
-    fontSize: 22,
+    fontSize: 26,
     letterSpacing: -0.3,
-    marginBottom: 28,
+    marginBottom: 12,
+  },
+  eyebrow: {
+    fontFamily: FONTS.bodyMedium,
+    color: P.accent,
+    fontSize: 11,
+    letterSpacing: 1.1,
+    textTransform: 'uppercase',
+    marginBottom: 20,
   },
   title: {
     fontFamily: FONTS.display,
     color: P.textSoft,
-    fontSize: 26,
-    lineHeight: 32,
+    fontSize: 30,
+    lineHeight: 37,
     textAlign: 'center',
     letterSpacing: -0.2,
   },
@@ -194,32 +138,60 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginTop: 14,
   },
-  dots: {
-    position: 'absolute',
-    bottom: 88,
-    flexDirection: 'row',
-    gap: 8,
-    zIndex: 10,
+  example: {
+    width: '100%',
+    marginTop: 26,
+    borderLeftWidth: 2,
+    borderLeftColor: P.accent,
+    backgroundColor: P.mist,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
   },
-  dot: {
-    width: 8,
-    height: 3,
-    borderRadius: 1,
-    backgroundColor: P.line,
+  exampleLabel: {
+    fontFamily: FONTS.bodyMedium,
+    color: P.textMuted,
+    fontSize: 10,
+    letterSpacing: 1.2,
+    textTransform: 'uppercase',
   },
-  dotActive: {
-    width: 22,
+  exampleAction: {
+    fontFamily: FONTS.display,
+    color: P.text,
+    fontSize: 18,
+    lineHeight: 24,
+    marginTop: 6,
+  },
+  exampleReason: {
+    fontFamily: FONTS.body,
+    color: P.textSoft,
+    fontSize: 13,
+    lineHeight: 19,
+    marginTop: 5,
+  },
+  primary: {
+    width: '100%',
+    marginTop: 16,
     backgroundColor: P.accent,
+    paddingVertical: 15,
+    alignItems: 'center',
   },
-  dotDone: {
-    backgroundColor: 'rgba(61, 155, 122, 0.45)',
+  primaryText: {
+    fontFamily: FONTS.bodyBold,
+    color: P.ink,
+    fontSize: 15,
+  },
+  scope: {
+    fontFamily: FONTS.body,
+    color: P.textMuted,
+    fontSize: 11,
+    lineHeight: 16,
+    textAlign: 'center',
+    marginTop: 12,
   },
   skip: {
-    position: 'absolute',
-    bottom: 40,
-    zIndex: 10,
     paddingVertical: 8,
     paddingHorizontal: 16,
+    marginTop: 2,
   },
   skipText: {
     fontFamily: FONTS.bodyMedium,

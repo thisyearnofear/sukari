@@ -17,7 +17,7 @@ export const MedicalDisclaimer: React.FC<Props> = ({ onAccept, onDecline }) => (
 
     <View style={styles.body}>
       <Text style={styles.text}>
-        GlucoseWars is an <Text style={styles.bold}>educational game</Text>, not a medical device.
+        Sukari includes a <Text style={styles.bold}>practice experience</Text> and is not a medical device.
       </Text>
       <Text style={styles.text}>
         • This app does NOT provide medical advice{'\n'}

@@ -46,7 +46,7 @@ export const GatesOpen: React.FC<{ onComplete?: () => void; tier?: string }> = (
           paddingHorizontal: 32,
         }}
       >
-        <Text style={styles.brand}>Glucose Wars</Text>
+        <Text style={styles.brand}>Sukari</Text>
         <Text style={styles.gatesTitle}>{copy.title}</Text>
         <Text style={styles.gatesSub}>{copy.sub}</Text>
       </Animated.View>

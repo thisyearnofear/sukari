@@ -44,6 +44,11 @@ export interface DigestGetResponse {
   error?: string;
 }
 
+/** A locally retained summary that can be surfaced in the operator view. */
+export interface StoredWeeklyDigest extends WeeklyDigestPayload {
+  token: string;
+}
+
 export function buildLocalDigest(input: {
   adherence: AdherenceWeek;
   missionHistory: ProgrammeMission[];

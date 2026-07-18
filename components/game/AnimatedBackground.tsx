@@ -81,14 +81,9 @@ export const AnimatedBackground: React.FC<AnimatedBackgroundProps> = ({
   const waveAnim = useRef(new Animated.Value(0)).current;
   const glowAnim = useRef(new Animated.Value(0)).current;
 
-  // Skip non-essential animations when user prefers reduced motion
-  if (reducedMotion) {
-    const tierBg = tier === 'tier1' ? '#0a140a' : tier === 'tier2' ? '#140a0a' : '#0a0a1a';
-    return <View style={[StyleSheet.absoluteFill, { backgroundColor: tierBg }]} />;
-  }
-
   // Continuous background animation
   useEffect(() => {
+    if (reducedMotion) return;
     const pulseLoop = Animated.loop(
       Animated.sequence([
         Animated.timing(pulseAnim, { toValue: 1, duration: 3000, useNativeDriver: true }),
@@ -120,20 +115,22 @@ export const AnimatedBackground: React.FC<AnimatedBackgroundProps> = ({
       rotateLoop.stop();
       waveLoop.stop();
     };
-  }, [pulseAnim, rotateAnim, waveAnim]);
+  }, [pulseAnim, rotateAnim, waveAnim, reducedMotion]);
 
   // Combo-triggered glow effect
   useEffect(() => {
+    if (reducedMotion) return;
     if (comboCount >= 3) {
       Animated.sequence([
         Animated.timing(glowAnim, { toValue: 1, duration: 200, useNativeDriver: true }),
         Animated.timing(glowAnim, { toValue: 0.3, duration: 500, useNativeDriver: true }),
       ]).start();
     }
-  }, [comboCount, glowAnim]);
+  }, [comboCount, glowAnim, reducedMotion]);
 
   // Scale pulse on low timer
   useEffect(() => {
+    if (reducedMotion) return;
     if (timer <= 10) {
       const scaleLoop = Animated.loop(
         Animated.sequence([
@@ -144,7 +141,13 @@ export const AnimatedBackground: React.FC<AnimatedBackgroundProps> = ({
       scaleLoop.start();
       return () => scaleLoop.stop();
     }
-  }, [timer, scaleAnim]);
+  }, [timer, scaleAnim, reducedMotion]);
+
+  // Skip non-essential visual complexity after all hooks have run.
+  if (reducedMotion) {
+    const tierBg = tier === 'tier1' ? '#0a140a' : tier === 'tier2' ? '#140a0a' : '#0a0a1a';
+    return <View style={[StyleSheet.absoluteFill, { backgroundColor: tierBg }]} />;
+  }
 
   // Tier-specific atmosphere tints
   const tierTint = tier === 'tier1' ? { r: 0, g: 20, b: 0 }   // Garden green

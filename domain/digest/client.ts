@@ -1,14 +1,58 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { getWorkerBaseUrl } from '@/domain/config/workerUrl';
-import type { DigestCreateResponse, DigestGetResponse, WeeklyDigestPayload } from './types';
+import type {
+  DigestCreateResponse,
+  DigestGetResponse,
+  StoredWeeklyDigest,
+  WeeklyDigestPayload,
+} from './types';
 
 const LOCAL_DIGEST_KEY = 'glucoseWars.lastDigest';
+const LOCAL_DIGEST_HISTORY_KEY = 'glucoseWars.digestHistory';
+const LOCAL_DIGEST_HISTORY_LIMIT = 12;
 
 async function persistLocal(token: string, digest: WeeklyDigestPayload) {
   try {
-    await AsyncStorage.setItem(LOCAL_DIGEST_KEY, JSON.stringify({ ...digest, token }));
+    const stored: StoredWeeklyDigest = { ...digest, token };
+    await AsyncStorage.setItem(LOCAL_DIGEST_KEY, JSON.stringify(stored));
+    const history = await listLocalWeeklyDigests();
+    const next = [stored, ...history.filter((item) => item.token !== token)]
+      .sort((a, b) => b.createdAt - a.createdAt)
+      .slice(0, LOCAL_DIGEST_HISTORY_LIMIT);
+    await AsyncStorage.setItem(LOCAL_DIGEST_HISTORY_KEY, JSON.stringify(next));
   } catch {
     /* ignore */
+  }
+}
+
+export async function listLocalWeeklyDigests(): Promise<StoredWeeklyDigest[]> {
+  try {
+    const raw = await AsyncStorage.getItem(LOCAL_DIGEST_HISTORY_KEY);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed)) {
+        return parsed.filter(
+          (item): item is StoredWeeklyDigest =>
+            item && typeof item.token === 'string' && typeof item.weekKey === 'string' && typeof item.createdAt === 'number',
+        );
+      }
+    }
+
+    // Preserve access to summaries created before the history collection existed.
+    const legacyRaw = await AsyncStorage.getItem(LOCAL_DIGEST_KEY);
+    if (!legacyRaw) return [];
+    const legacy = JSON.parse(legacyRaw);
+    if (
+      legacy &&
+      typeof legacy.token === 'string' &&
+      typeof legacy.weekKey === 'string' &&
+      typeof legacy.createdAt === 'number'
+    ) {
+      return [legacy as StoredWeeklyDigest];
+    }
+    return [];
+  } catch {
+    return [];
   }
 }
 

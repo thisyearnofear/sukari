@@ -3,13 +3,11 @@
  * Falls back silently if audio is unavailable.
  * Sounds are lazy-loaded on first use to avoid blocking app startup.
  */
-import { Audio } from 'expo-av';
 import { Platform } from 'react-native';
 
 type SoundName = 'swipe' | 'combo' | 'miss' | 'victory' | 'defeat' | 'powerup';
 
 let enabled = true;
-const cache: Partial<Record<SoundName, Audio.Sound>> = {};
 
 // Synthesize simple sounds using oscillator-like patterns via expo-av
 // For a real app, replace these with actual .wav/.mp3 assets
@@ -63,7 +61,5 @@ export async function playSound(name: SoundName) {
 }
 
 export async function cleanup() {
-  for (const sound of Object.values(cache)) {
-    await sound?.unloadAsync();
-  }
+  // Native sound assets are intentionally not loaded in the adherence experience.
 }

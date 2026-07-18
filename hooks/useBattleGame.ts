@@ -35,7 +35,6 @@ import {
 import { usePlayerProgressContext } from '@/context/PlayerProgressContext';
 import { getReflectionMessage } from '@/constants/userModes';
 import { SeededRandom, getWeeklySeed } from '@/utils/random';
-import { useBeam } from '@/context/BeamContext';
 import { ChallengeModifier } from '@/types/challenge';
 import { getStabilityZone } from '@/utils/gameLogic';
 import { useGameTimer, getTimePhase, getMorningConditionConfig, getRandomAnnouncement } from './useGameTimer';
@@ -122,9 +121,6 @@ export const useBattleGame = (
   challenge?: { id: string; seed: string; modifiers: ChallengeModifier[] },
   mechanicsUnlocked?: string[],
 ) => {
-  const beamContext = useBeam();
-  const playerAccount = beamContext?.playerAccount;
-  const reportGameResult = beamContext?.reportGameResult;
   const { discoverLore, progress } = usePlayerProgressContext();
   const [gameState, setGameState] = useState<GameState>(initialGameState);
 
@@ -136,12 +132,13 @@ export const useBattleGame = (
   const powerupsDisabledRef = useRef<boolean>(false);
   const challengeIdRef = useRef<string | null>(null);
 
-  const showAnnouncement = useCallback((text: string, type: 'info' | 'success' | 'warning' | 'error' | 'plot_twist' | 'joke' | 'fact' | 'special_mode' | 'reflection' = 'info', science?: string) => {
-    setGameState(prev => ({ ...prev, announcement: text, announcementType: type, announcementScience: science || null }));
+  const showAnnouncement = useCallback((text: string, type: string = 'info', science?: string) => {
+    const announcementType = type as GameState['announcementType'];
+    setGameState(prev => ({ ...prev, announcement: text, announcementType, announcementScience: science || null }));
 
     if (announcementRef.current) clearTimeout(announcementRef.current);
     // Longer duration for educational messages
-    const duration = science ? 2500 : (type === 'plot_twist' ? 2500 : 1500);
+    const duration = science ? 2500 : (announcementType === 'plot_twist' ? 2500 : 1500);
     announcementRef.current = setTimeout(() => {
       setGameState(prev => ({ ...prev, announcement: null, announcementScience: null }));
     }, duration);
@@ -244,17 +241,6 @@ export const useBattleGame = (
 
   const endGame = useCallback(async (result: 'victory' | 'defeat') => {
     setGameState(prev => {
-      // Capture final state inside the updater to avoid stale closures
-      if (playerAccount && reportGameResult) {
-        reportGameResult(prev.score, result, {
-          correctSwipes: prev.correctSwipes,
-          incorrectSwipes: prev.incorrectSwipes,
-          comboMax: prev.comboCount,
-          timeInBalanced: prev.timeInBalanced,
-          finalHarmony: prev.stability,
-        });
-      }
-
       return {
         ...prev,
         isGameActive: false,
@@ -276,7 +262,7 @@ export const useBattleGame = (
     } catch {
       // Haptics may not be available on web/simulators
     }
-  }, [playerAccount, reportGameResult]);
+  }, []);
 
   // ═══════════════════════════════════════════════════════════════
   // Delegated hooks — timer, spawning, movement, plot twists

@@ -8,12 +8,13 @@ import { LifeModeHeader, LifeModeFooter, LeftSidePanel, RightSidePanel, SIDE_PAN
 import { AnimatedBackground } from './AnimatedBackground';
 import { InsulinControl } from './InsulinControl';
 import { GameState, StabilityZone, ControlMode, SwipeDirection, SwipeAction } from '@/types/game';
+import type { GameMechanic } from '@/hooks/usePlayerProgress';
 import { HealthProfile } from '@/types/health';
 import { COMBO_TIERS } from '@/constants/gameConfig';
 import { getGlucoseZone } from '@/constants/healthScenarios';
 import { TierConfig } from '@/constants/gameTiers';
 import { getStabilityZone } from '@/utils/gameLogic';
-import { GatesOpen, KingdomTrembles, StormApproaches, KingdomRallies, KingdomFalls, NewPowerGlow } from './DramaticMoments';
+import { GatesOpen, KingdomTrembles, StormApproaches, KingdomRallies, KingdomFalls } from './DramaticMoments';
 import { MetabolicField, type MetabolicBand } from '@/components/atmosphere/MetabolicField';
 import { COLORS, FONTS } from '@/constants/designSystem';
 
@@ -182,7 +183,7 @@ interface BattleScreenProps {
   onAdministerInsulin?: (units: number, insulinType?: string) => void;
   tierConfig?: TierConfig;
   onToggleControlMode?: () => void;
-  hasMechanic?: (m: string) => boolean;
+  hasMechanic?: (m: GameMechanic) => boolean;
   /** Real-world mission being rehearsed */
   missionAction?: string | null;
 }
@@ -278,7 +279,6 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({
    const [showComboRally, setShowComboRally] = useState<string | null>(null); // #2: color
    const [showStorm, setShowStorm] = useState<{ name: string; icon: string } | null>(null); // #4
    const [showDefeatCrack, setShowDefeatCrack] = useState(false); // #6
-   const [showNewPower, setShowNewPower] = useState(false); // #7
    const prevPlotTwistRef = useRef(gameState.activePlotTwist);
    const prevGameResultRef = useRef(gameState.gameResult);
    const isCritical = zone === 'critical-low' || zone === 'critical-high';
@@ -419,7 +419,13 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({
   return (
     <Animated.View 
       style={[
-        { flex: 1, backgroundColor: P.ink, alignSelf: 'center', width: '100%', maxWidth: 500 },
+        {
+          flex: 1,
+          backgroundColor: P.ink,
+          alignSelf: 'center',
+          width: '100%',
+          maxWidth: Platform.OS === 'web' ? 960 : 500,
+        },
         { transform: [{ translateX: shakeAnim }] }
       ]}
     >
@@ -459,7 +465,6 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({
       {showComboRally && <KingdomRallies color={showComboRally} />}
       {showStorm && <StormApproaches name={showStorm.name} icon={showStorm.icon} onComplete={() => setShowStorm(null)} />}
       {showDefeatCrack && <KingdomFalls />}
-      {showNewPower && <NewPowerGlow />}
 
       {/* Screen flash effect */}
       <ScreenFlash type={flashType} trigger={flashTrigger} />
@@ -485,7 +490,7 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({
 
        {/* Contextual food tooltip */}
        {shownContextualTip && gameState.foods.some(f => f.faction === 'contextual') && (
-         <View style={{ position: 'absolute', top: 130, left: 20, right: 20, zIndex: 60, alignItems: 'center' }}>
+         <View style={{ position: 'absolute', top: 180, left: 20, right: 20, zIndex: 60, alignItems: 'center' }}>
            <View
              style={{
                backgroundColor: 'rgba(11,18,16,0.92)',
@@ -504,7 +509,7 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({
 
        {/* Life Mode 4-direction hint */}
        {shownLifeModeTip && (
-         <View style={{ position: 'absolute', top: 130, left: 20, right: 20, zIndex: 60, alignItems: 'center' }}>
+         <View style={{ position: 'absolute', top: 180, left: 20, right: 20, zIndex: 60, alignItems: 'center' }}>
            <View
              style={{
                backgroundColor: 'rgba(11,18,16,0.92)',

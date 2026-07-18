@@ -3,7 +3,7 @@
  * Field stability is the hero; score/timer/actions stay quiet.
  */
 import React, { useEffect, useRef, useState } from 'react';
-import { View, Text, Animated, Easing, StyleSheet } from 'react-native';
+import { View, Text, Animated, Easing, StyleSheet, useWindowDimensions } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { StabilityZone } from '@/types/game';
 import { COMBO_TIERS } from '@/constants/gameConfig';
@@ -105,6 +105,8 @@ const BattleHUDComponent: React.FC<BattleHUDProps> = React.memo(
     const isLowTimer = timer <= 10;
     const isCritical = zone === 'critical-low' || zone === 'critical-high';
     const insets = useSafeAreaInsets();
+    const { width, height } = useWindowDimensions();
+    const compactViewport = width < 430 || height < 760;
 
     const scoreFlashAnim = useRef(new Animated.Value(0)).current;
     const timerShakeAnim = useRef(new Animated.Value(0)).current;
@@ -240,7 +242,7 @@ const BattleHUDComponent: React.FC<BattleHUDProps> = React.memo(
             </View>
           </View>
 
-          {missionAction ? <MissionRibbon action={missionAction} compact /> : null}
+          {missionAction ? <MissionRibbon action={missionAction} compact={compactViewport} /> : null}
 
           {!minimal ? (
             <View
@@ -281,7 +283,7 @@ const BattleHUDComponent: React.FC<BattleHUDProps> = React.memo(
         {isPaused ? (
           <View style={styles.pauseOverlay}>
             <View style={styles.pauseSheet}>
-              <Text style={styles.pauseBrand}>Glucose Wars</Text>
+              <Text style={styles.pauseBrand}>Sukari</Text>
               <Text style={styles.pauseTitle}>Paused</Text>
               <Text style={styles.pauseSub}>{timer}s remaining</Text>
 
@@ -423,7 +425,7 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     zIndex: 50,
-    paddingHorizontal: 12,
+    paddingHorizontal: 16,
   },
   topStrip: {
     flexDirection: 'row',

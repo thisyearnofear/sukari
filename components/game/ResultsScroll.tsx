@@ -165,7 +165,7 @@ export const ResultsScroll: React.FC<ResultsScrollProps> = ({
           },
         ]}
       >
-        <Text style={styles.brand}>Glucose Wars</Text>
+        <Text style={styles.brand}>Sukari</Text>
         <Text style={[styles.status, { color: isVictory ? P.accent : P.danger }]}>
           {isVictory ? 'Rehearsal complete' : 'Rehearsal interrupted'}
         </Text>
@@ -252,11 +252,11 @@ export const ResultsScroll: React.FC<ResultsScrollProps> = ({
             onPress={async () => {
               const missionLine = transfer
                 ? `Today’s mission: ${transfer.realWorldAction}`
-                : 'Practicing metabolic decisions in Glucose Wars.';
+                : 'Practicing metabolic decisions in Sukari.';
               const url = process.env.EXPO_PUBLIC_APP_URL || 'https://glucosewars.app';
               await Share.share({
                 message: `${missionLine}\nRehearsal: ${score} pts · ${accuracy}%.\nHabits only — never dosing.\n${url}`,
-                title: 'Glucose Wars',
+                title: 'Sukari',
               });
               track('share_action', { from: 'results', privacy_mode: progress.privacyMode });
             }}

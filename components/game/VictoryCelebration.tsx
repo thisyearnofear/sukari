@@ -75,7 +75,7 @@ export const VictoryCelebration: React.FC<Props> = ({ result, onComplete, isPers
           },
         ]}
       >
-        <Text style={styles.brand}>Glucose Wars</Text>
+        <Text style={styles.brand}>Sukari</Text>
         <Text style={[styles.title, { color: isVictory ? P.accent : P.danger }]}>
           {isVictory ? 'Field steadied' : 'Field collapsed'}
         </Text>

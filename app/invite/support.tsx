@@ -58,7 +58,7 @@ export default function CaregiverSupportInvite() {
             },
           ]}
         >
-          <Text style={styles.brand}>Glucose Wars</Text>
+          <Text style={styles.brand}>Sukari</Text>
           <Text style={styles.headline}>You’ve been invited to support</Text>
           <Text style={styles.body}>
             Someone asked you to help with their metabolic programme tonight. No clinical data is

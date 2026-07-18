@@ -1,7 +1,7 @@
 export type FoodFaction = 'ally' | 'enemy' | 'contextual'; // contextual = depends on time/needs
 export type FoodType = 
   | 'vegetable' | 'protein' | 'whole_grain' | 'fruit' | 'water' | 'dairy' | 'nuts' | 'coffee' | 'tea'  // Generally Allies
-  | 'sugar' | 'processed' | 'soda' | 'candy' | 'fast_food' | 'alcohol' | 'energy_drink';       // Generally Enemies
+  | 'sugar' | 'processed' | 'soda' | 'candy' | 'fast_food' | 'alcohol' | 'energy_drink' | 'snack';       // Generally Enemies
 
 // 4-direction swipe system
 export type SwipeDirection = 'up' | 'down' | 'left' | 'right';
@@ -87,6 +87,8 @@ export type PlotTwistType =
   | 'sugar_crash'
   | 'workout_opportunity'
   | 'dehydration_warning'
+  | 'dehydration_alert'
+  | 'fiber_first'
   | 'stressful_call'
   | 'social_lunch'
   | 'afternoon_slump'

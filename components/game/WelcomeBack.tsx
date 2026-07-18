@@ -64,7 +64,7 @@ export const WelcomeBack: React.FC<WelcomeBackProps> = ({
             ],
           }}
         >
-          <Text style={styles.brand}>Glucose Wars</Text>
+          <Text style={styles.brand}>Sukari</Text>
           <Text style={styles.headline}>Welcome back</Text>
           <Text style={styles.sub}>
             Continue your programme rehearsal — resume where you left off, or pick a length.

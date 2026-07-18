@@ -2,7 +2,7 @@
  * Mission ribbon — keeps rehearsal tied to the real-world ask.
  */
 import React, { useEffect, useRef } from 'react';
-import { View, Text, StyleSheet, Animated, Easing } from 'react-native';
+import { Text, StyleSheet, Animated, Easing } from 'react-native';
 import { COLORS, FONTS, ANIMATIONS } from '@/constants/designSystem';
 
 const P = COLORS.PROGRAMME;
@@ -46,7 +46,7 @@ export function MissionRibbon({ action, compact }: MissionRibbonProps) {
       accessibilityLabel={`Rehearsing mission: ${action}`}
     >
       <Text style={styles.eyebrow}>Rehearsing</Text>
-      <Text style={styles.action} numberOfLines={compact ? 1 : 2}>
+      <Text style={styles.action} numberOfLines={2}>
         {action}
       </Text>
     </Animated.View>

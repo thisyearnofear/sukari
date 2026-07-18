@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useCallback, useState } from 'react';
-import { View, Text, Animated as RNAnimated } from 'react-native';
+import { View, Text } from 'react-native';
 import { router } from 'expo-router';
 import { BattleScreen } from '@/components/game/BattleScreen';
 import { VictoryCelebration } from '@/components/game/VictoryCelebration';
@@ -69,7 +69,7 @@ export default function BattleScreenRoute() {
     }
   }, [gameState.isGameActive, selectedTier, gameState.gameMode, controlMode, progress.privacyMode]);
 
-  // Transition to results when game ends — show celebration first
+  // Transition to results when game ends — show celebration first.
   useEffect(() => {
     if (!gameState.isGameActive && gameState.gameResult && !hasTransitionedToResults.current) {
       hasTransitionedToResults.current = true;
@@ -105,7 +105,18 @@ export default function BattleScreenRoute() {
     updateBestScore, 
     unlockNextTier, 
     selectedTier, 
-    tierConfig.requiresWin
+    tierConfig.requiresWin,
+    controlMode,
+    gameState.comboCount,
+    gameState.correctSwipes,
+    gameState.gameMode,
+    gameState.incorrectSwipes,
+    gameState.plotTwistsTriggered,
+    gameState.score,
+    gameState.timeInBalanced,
+    gameState.timeInCritical,
+    gameState.timeInWarning,
+    progress.privacyMode,
   ]);
 
   // Reset transition flag when game becomes active
