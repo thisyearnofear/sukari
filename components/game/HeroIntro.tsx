@@ -1,16 +1,41 @@
 /**
- * HeroIntro — Cinematic intro montage shown on first app open.
- * Quick animated sequence that communicates the game's premise and aesthetic.
+ * HeroIntro — short first-open beat. Rare delight; skippable.
+ * Communicates programme premise, not castle fantasy.
  */
 import React, { useEffect, useRef, useState } from 'react';
-import { View, Text, Animated, useWindowDimensions, TouchableOpacity } from 'react-native';
+import { View, Text, Animated, Easing, StyleSheet } from 'react-native';
 import { useReducedMotion } from '@/hooks/useReducedMotion';
+import { COLORS, FONTS, ANIMATIONS } from '@/constants/designSystem';
+import { MetabolicField } from '@/components/atmosphere/MetabolicField';
+import { PressableScale } from '@/components/ui/PressableScale';
+
+const P = COLORS.PROGRAMME;
 
 const SCENES = [
-  { emoji: '🏰', title: 'YOUR BODY IS YOUR KINGDOM', sub: 'Defend it.', duration: 1600 },
-  { emoji: '🥦⚔️🍩', title: 'SWIPE TO SURVIVE', sub: 'Rally allies UP. Banish enemies DOWN.', duration: 2200 },
-  { emoji: '💚', title: 'KEEP YOUR HARMONY', sub: 'Too much sugar? Kingdom falls. Too little? You crash.', duration: 2200 },
-  { emoji: '👑', title: 'READY?', sub: '', duration: 1000 },
+  {
+    title: 'Practice that becomes the day',
+    sub: 'Glucose Wars is a short practice loop inside a metabolic programme.',
+    duration: 2200,
+    band: 'in_range' as const,
+  },
+  {
+    title: 'One mission. Then real life.',
+    sub: 'Train the decision in a battle — mark the habit when you’ve done it.',
+    duration: 2400,
+    band: 'in_range' as const,
+  },
+  {
+    title: 'Keep harmony',
+    sub: 'Allies steady you. Enemies spike or crash the field. Stay in range.',
+    duration: 2400,
+    band: 'high' as const,
+  },
+  {
+    title: 'Ready when you are',
+    sub: '',
+    duration: 1400,
+    band: 'in_range' as const,
+  },
 ];
 
 interface HeroIntroProps {
@@ -18,103 +43,181 @@ interface HeroIntroProps {
 }
 
 export const HeroIntro: React.FC<HeroIntroProps> = ({ onComplete }) => {
-  const { width, height } = useWindowDimensions();
   const reducedMotion = useReducedMotion();
   const [sceneIndex, setSceneIndex] = useState(0);
   const fadeAnim = useRef(new Animated.Value(0)).current;
-  const scaleAnim = useRef(new Animated.Value(0.7)).current;
-  const emojiAnim = useRef(new Animated.Value(0)).current;
+  const slideAnim = useRef(new Animated.Value(12)).current;
 
-  // Skip animation entirely for reduced motion
   useEffect(() => {
-    if (reducedMotion) { onComplete(); return; }
+    if (reducedMotion) {
+      onComplete();
+    }
   }, [reducedMotion, onComplete]);
 
   useEffect(() => {
-    if (sceneIndex >= SCENES.length) { onComplete(); return; }
+    if (reducedMotion) return;
+    if (sceneIndex >= SCENES.length) {
+      onComplete();
+      return;
+    }
 
     const scene = SCENES[sceneIndex];
+    const enter = ANIMATIONS.MOTION.enter;
+    const exit = ANIMATIONS.MOTION.exit;
+    const easeIn = Easing.bezier(enter.bezier[0], enter.bezier[1], enter.bezier[2], enter.bezier[3]);
+    const easeOut = Easing.bezier(exit.bezier[0], exit.bezier[1], exit.bezier[2], exit.bezier[3]);
 
-    // Reset
     fadeAnim.setValue(0);
-    scaleAnim.setValue(0.7);
-    emojiAnim.setValue(0);
+    slideAnim.setValue(14);
 
-    // Animate in
     Animated.parallel([
-      Animated.timing(fadeAnim, { toValue: 1, duration: 400, useNativeDriver: true }),
-      Animated.spring(scaleAnim, { toValue: 1, friction: 6, tension: 80, useNativeDriver: true }),
-      Animated.spring(emojiAnim, { toValue: 1, friction: 5, tension: 60, useNativeDriver: true }),
+      Animated.timing(fadeAnim, {
+        toValue: 1,
+        duration: enter.duration,
+        easing: easeIn,
+        useNativeDriver: true,
+      }),
+      Animated.timing(slideAnim, {
+        toValue: 0,
+        duration: enter.duration,
+        easing: easeIn,
+        useNativeDriver: true,
+      }),
     ]).start();
 
-    // Advance to next scene
     const timer = setTimeout(() => {
-      Animated.timing(fadeAnim, { toValue: 0, duration: 300, useNativeDriver: true })
-        .start(() => setSceneIndex(i => i + 1));
+      Animated.parallel([
+        Animated.timing(fadeAnim, {
+          toValue: 0,
+          duration: exit.duration,
+          easing: easeOut,
+          useNativeDriver: true,
+        }),
+        Animated.timing(slideAnim, {
+          toValue: -8,
+          duration: exit.duration,
+          easing: easeOut,
+          useNativeDriver: true,
+        }),
+      ]).start(() => setSceneIndex((i) => i + 1));
     }, scene.duration);
 
     return () => clearTimeout(timer);
-  }, [sceneIndex, fadeAnim, scaleAnim, emojiAnim, onComplete]);
+  }, [sceneIndex, fadeAnim, slideAnim, onComplete, reducedMotion]);
 
-  if (sceneIndex >= SCENES.length) return null;
+  if (reducedMotion || sceneIndex >= SCENES.length) return null;
+
   const scene = SCENES[sceneIndex];
 
   return (
-    <View style={{ flex: 1, backgroundColor: '#0a0a12', justifyContent: 'center', alignItems: 'center' }}>
-      {/* Radial glow */}
-      <View style={{
-        position: 'absolute', width: 300, height: 300, borderRadius: 150,
-        backgroundColor: sceneIndex === 0 ? 'rgba(251,191,36,0.15)' :
-          sceneIndex === 1 ? 'rgba(239,68,68,0.12)' :
-          sceneIndex === 2 ? 'rgba(34,197,94,0.12)' : 'rgba(168,85,247,0.15)',
-      }} />
+    <View style={styles.root}>
+      <MetabolicField band={scene.band} intensity={0.5} />
 
-      <Animated.View style={{
-        alignItems: 'center', opacity: fadeAnim,
-        transform: [{ scale: scaleAnim }],
-      }}>
-        <Animated.Text style={{
-          fontSize: sceneIndex === 1 ? 48 : 72, marginBottom: 20,
-          transform: [{ scale: emojiAnim.interpolate({ inputRange: [0, 1], outputRange: [0.3, 1] }) }],
-        }}>
-          {scene.emoji}
-        </Animated.Text>
-
-        <Text style={{
-          color: '#fbbf24', fontSize: 22, fontWeight: 'bold',
-          textAlign: 'center', letterSpacing: 2, paddingHorizontal: 32,
-        }}>
-          {scene.title}
-        </Text>
-
-        {scene.sub ? (
-          <Text style={{
-            color: '#9ca3af', fontSize: 14, textAlign: 'center',
-            marginTop: 8, paddingHorizontal: 40,
-          }}>
-            {scene.sub}
-          </Text>
-        ) : null}
+      <Animated.View
+        style={[
+          styles.scene,
+          {
+            opacity: fadeAnim,
+            transform: [{ translateY: slideAnim }],
+          },
+        ]}
+      >
+        <Text style={styles.brand}>Glucose Wars</Text>
+        <Text style={styles.title}>{scene.title}</Text>
+        {scene.sub ? <Text style={styles.sub}>{scene.sub}</Text> : null}
       </Animated.View>
 
-      {/* Progress dots */}
-      <View style={{ position: 'absolute', bottom: 80, flexDirection: 'row', gap: 8 }}>
+      <View style={styles.dots}>
         {SCENES.map((_, i) => (
-          <View key={i} style={{
-            width: i === sceneIndex ? 24 : 8, height: 8, borderRadius: 4,
-            backgroundColor: i === sceneIndex ? '#fbbf24' : i < sceneIndex ? '#fbbf2480' : '#374151',
-          }} />
+          <View
+            key={i}
+            style={[
+              styles.dot,
+              i === sceneIndex && styles.dotActive,
+              i < sceneIndex && styles.dotDone,
+            ]}
+          />
         ))}
       </View>
 
-      {/* Skip */}
-      <TouchableOpacity
+      <PressableScale
         onPress={onComplete}
-        style={{ position: 'absolute', bottom: 40 }}
-        accessibilityLabel="Skip intro" accessibilityRole="button"
+        accessibilityLabel="Skip intro"
+        accessibilityRole="button"
+        style={styles.skip}
       >
-        <Text style={{ color: '#6b7280', fontSize: 13 }}>Skip →</Text>
-      </TouchableOpacity>
+        <Text style={styles.skipText}>Skip</Text>
+      </PressableScale>
     </View>
   );
 };
+
+const styles = StyleSheet.create({
+  root: {
+    flex: 1,
+    backgroundColor: P.ink,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  scene: {
+    zIndex: 10,
+    alignItems: 'center',
+    paddingHorizontal: 36,
+    maxWidth: 420,
+  },
+  brand: {
+    fontFamily: FONTS.display,
+    color: P.text,
+    fontSize: 22,
+    letterSpacing: -0.3,
+    marginBottom: 28,
+  },
+  title: {
+    fontFamily: FONTS.display,
+    color: P.textSoft,
+    fontSize: 26,
+    lineHeight: 32,
+    textAlign: 'center',
+    letterSpacing: -0.2,
+  },
+  sub: {
+    fontFamily: FONTS.body,
+    color: P.textMuted,
+    fontSize: 15,
+    lineHeight: 23,
+    textAlign: 'center',
+    marginTop: 14,
+  },
+  dots: {
+    position: 'absolute',
+    bottom: 88,
+    flexDirection: 'row',
+    gap: 8,
+    zIndex: 10,
+  },
+  dot: {
+    width: 8,
+    height: 3,
+    borderRadius: 1,
+    backgroundColor: P.line,
+  },
+  dotActive: {
+    width: 22,
+    backgroundColor: P.accent,
+  },
+  dotDone: {
+    backgroundColor: 'rgba(61, 155, 122, 0.45)',
+  },
+  skip: {
+    position: 'absolute',
+    bottom: 40,
+    zIndex: 10,
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+  },
+  skipText: {
+    fontFamily: FONTS.bodyMedium,
+    color: P.textMuted,
+    fontSize: 13,
+  },
+});
