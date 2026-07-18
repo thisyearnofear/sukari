@@ -74,7 +74,7 @@ export const ShareCard: React.FC<Props> = ({
         </View>
       ) : null}
 
-      <Text style={styles.footer}>glucosewars.netlify.app</Text>
+      <Text style={styles.footer}>sukari.famile.xyz</Text>
     </View>
   );
 };

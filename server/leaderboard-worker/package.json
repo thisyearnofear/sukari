@@ -1,5 +1,5 @@
 {
-  "name": "glucosewars-leaderboard-worker",
+  "name": "sukari-leaderboard-worker",
   "private": true,
   "type": "module",
   "scripts": {

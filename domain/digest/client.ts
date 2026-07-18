@@ -7,8 +7,8 @@ import type {
   WeeklyDigestPayload,
 } from './types';
 
-const LOCAL_DIGEST_KEY = 'glucoseWars.lastDigest';
-const LOCAL_DIGEST_HISTORY_KEY = 'glucoseWars.digestHistory';
+const LOCAL_DIGEST_KEY = 'sukari.lastDigest';
+const LOCAL_DIGEST_HISTORY_KEY = 'sukari.digestHistory';
 const LOCAL_DIGEST_HISTORY_LIMIT = 12;
 
 async function persistLocal(token: string, digest: WeeklyDigestPayload) {

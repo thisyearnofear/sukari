@@ -5,7 +5,7 @@ import Constants from 'expo-constants';
 
 type Properties = Record<string, any>;
 
-const ANON_ID_KEY = 'glucoseWars.analytics.anonymousId';
+const ANON_ID_KEY = 'sukari.analytics.anonymousId';
 
 let posthog: any | null = null;
 let initialized = false;
@@ -103,7 +103,7 @@ async function ensureInitialized() {
             api_key: this._key,
             event,
             distinct_id: this._distinctId,
-            properties: { ...props, $lib: 'glucosewars' },
+            properties: { ...props, $lib: 'sukari' },
             timestamp: new Date().toISOString(),
           }),
         }).catch(() => { /* fire-and-forget */ });
@@ -138,7 +138,7 @@ export async function track(event: string, properties?: Properties & { privacy_m
   if (!posthog) {
     // Dev-friendly fallback.
     if (__DEV__) {
-      // eslint-disable-next-line no-console
+       
       console.log(`[analytics] ${event}`, safeProps);
     }
     return;

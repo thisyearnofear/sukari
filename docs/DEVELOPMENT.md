@@ -67,24 +67,23 @@ Keep event names stable for funnel continuity. Current key events are documented
 
 ## Worker
 
-The existing Cloudflare worker under `server/leaderboard-worker` retains its directory name for deployment compatibility. In Sukari it is used for optional coach, digest, and mission-media endpoints where configured through `EXPO_PUBLIC_SUKARI_API_URL` or the legacy worker URL environment variable.
+The Cloudflare worker under `server/leaderboard-worker` is named `sukari-leaderboard` (see `wrangler.toml`). In Sukari it is used for optional coach, digest, and mission-media endpoints where configured through `EXPO_PUBLIC_SUKARI_API_URL` or the legacy worker URL environment variable.
 
 Do not add unauthenticated provider cohort access to this worker. A real care-team backend needs authenticated providers, patient consent, role-based access, and audit logging.
 
 ## Compatibility
 
-Some technical identifiers intentionally remain `glucosewars`:
+Technical identifiers now use the `sukari` namespace end-to-end:
 
-- Expo slug and scheme.
-- package name.
-- AsyncStorage keys.
-- existing worker URL naming.
-
-Changing these requires a migration plan because they affect installed app behaviour, OAuth redirects, local data, and deployed infrastructure.
+- Expo slug and scheme: `sukari`.
+- package name: `sukari`.
+- AsyncStorage keys: `sukari.*` (legacy `glucoseWars.*` keys are migrated on first launch by `utils/storageMigration.ts`).
+- worker name: `sukari-leaderboard`.
+- public app URL: `https://sukari.famile.xyz` (Netlify site `sukariapp.netlify.com` redirects here).
+- Dexcom OAuth redirect URI: `sukari://auth/dexcom` (register this in the Dexcom developer portal).
 
 ## Commit Hygiene
 
 - Keep docs aligned with shipped product, not aspirational surfaces.
 - Prefer deleting dead product paths over burying them behind CTAs.
-- Preserve local compatibility keys unless a migration is part of the change.
 - Run the gates before staging broad changes.

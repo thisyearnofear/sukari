@@ -1,11 +1,11 @@
 {
   "expo": {
     "name": "Sukari",
-    "slug": "glucosewars",
+    "slug": "sukari",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "glucosewars",
+    "scheme": "sukari",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {

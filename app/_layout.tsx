@@ -15,7 +15,7 @@ import {
 import { Stack } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import { StatusBar } from "expo-status-bar";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import "react-native-reanimated";
 import "../global.css";
 import { SafeAreaProvider } from "react-native-safe-area-context";
@@ -24,6 +24,7 @@ import { PlayerProgressProvider } from "@/context/PlayerProgressContext";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { initAnalytics, track } from "@/utils/analytics";
 import { initErrorMonitoring } from "@/utils/errorMonitoring";
+import { migrateLegacyStorageKeys } from "@/utils/storageMigration";
 // Prevent the splash screen from auto-hiding before asset loading is complete.
 SplashScreen.preventAutoHideAsync();
 
@@ -36,20 +37,32 @@ export default function RootLayout() {
     DMSans_500Medium,
     DMSans_700Bold,
   });
+  // Migration from the legacy `glucoseWars.*` AsyncStorage keys to `sukari.*`
+  // must finish before any provider reads the new keys, so the provider tree
+  // is gated on this flag.
+  const [migrationDone, setMigrationDone] = useState(false);
 
   useEffect(() => {
-    if (loaded) {
+    if (loaded && migrationDone) {
       SplashScreen.hideAsync();
     }
-  }, [loaded]);
+  }, [loaded, migrationDone]);
 
   useEffect(() => {
     if (!loaded) return;
-    initErrorMonitoring();
-    initAnalytics().then(() => track('app_open'));
+    let cancelled = false;
+    migrateLegacyStorageKeys().finally(() => {
+      if (cancelled) return;
+      setMigrationDone(true);
+      initErrorMonitoring();
+      initAnalytics().then(() => track('app_open'));
+    });
+    return () => {
+      cancelled = true;
+    };
   }, [loaded]);
 
-  if (!loaded) {
+  if (!loaded || !migrationDone) {
     return null;
   }
 

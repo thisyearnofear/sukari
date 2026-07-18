@@ -29,7 +29,7 @@ import { COLORS, FONTS, ANIMATIONS } from '@/constants/designSystem';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const P = COLORS.PROGRAMME;
-const DEFERRED_KEY = 'glucoseWars.missionDeferred';
+const DEFERRED_KEY = 'sukari.missionDeferred';
 
 interface ResultsScrollProps {
   result: 'victory' | 'defeat';
@@ -258,7 +258,7 @@ export const ResultsScroll: React.FC<ResultsScrollProps> = ({
               const missionLine = transfer
                 ? `Today’s mission: ${transfer.realWorldAction}`
                 : 'Practicing metabolic decisions in Sukari.';
-              const url = process.env.EXPO_PUBLIC_APP_URL || 'https://glucosewars.netlify.app';
+              const url = process.env.EXPO_PUBLIC_APP_URL || 'https://sukari.famile.xyz';
               await Share.share({
                 message: `${missionLine}\nRehearsal: ${score} pts · ${accuracy}%.\nHabits only — never dosing.\n${url}`,
                 title: 'Sukari',

@@ -76,7 +76,7 @@ export interface PlayerProgressState {
   worldState: PersonalisedWorldState | null;
 }
 
-const STORAGE_KEY = 'glucoseWars.playerProgress';
+const STORAGE_KEY = 'sukari.playerProgress';
 const MISSION_HISTORY_CAP = 60;
 
 export interface KingdomMilestone {

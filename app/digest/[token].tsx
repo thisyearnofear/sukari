@@ -20,7 +20,7 @@ import { COLORS, FONTS, ANIMATIONS } from '@/constants/designSystem';
 import { PressableScale } from '@/components/ui/PressableScale';
 import { buildAminaClinicianDigest, AMINA_DEMO } from '@/domain/demo';
 
-const LOCAL_DIGEST_KEY = 'glucoseWars.lastDigest';
+const LOCAL_DIGEST_KEY = 'sukari.lastDigest';
 const P = COLORS.PROGRAMME;
 
 export default function WeeklyDigestScreen() {

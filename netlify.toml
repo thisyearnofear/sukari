@@ -30,5 +30,5 @@
   status = 200
 
 # Required EXPO_PUBLIC_* build env (set in Netlify UI → Site settings → Environment variables):
-#   EXPO_PUBLIC_APP_URL=https://glucosewars.netlify.app
+#   EXPO_PUBLIC_APP_URL=https://sukari.famile.xyz
 #   EXPO_PUBLIC_SUKARI_API_URL=https://your-sukari-api.example

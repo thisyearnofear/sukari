@@ -148,4 +148,4 @@ Recent fixes include the Jest AsyncStorage mock, the `AnimatedBackground` hook-o
 
 ## Compatibility Notes
 
-The user-facing product name is Sukari. The Expo slug, package name, storage keys, and deep-link scheme may still contain `glucosewars` where changing them would break installed clients, OAuth redirects, or local data migration.
+The app was rebranded from `glucosewars` to `sukari` across the Expo slug and scheme, package name, AsyncStorage keys, deep-link scheme, share URLs, and worker naming. A one-time storage migration (`utils/storageMigration.ts`, run from `app/_layout.tsx` before the provider tree mounts) copies any legacy `glucoseWars.*` AsyncStorage keys into the `sukari.*` namespace and removes the old keys, so existing installs keep their progress, Dexcom tokens, digest history, and analytics identity.

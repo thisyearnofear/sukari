@@ -64,9 +64,9 @@ import { QuietWinBeat } from '@/components/programme/QuietWinBeat';
 const maxWidth = Platform.OS === 'web' ? 760 : 400;
 const P = COLORS.PROGRAMME;
 // Preserve existing demo settings through the patient-fixture rename.
-const DEMO_KEY = 'glucoseWars.demoMaya';
-const DEMO_DAY_KEY = 'glucoseWars.demoMayaDay';
-const DEFERRED_KEY = 'glucoseWars.missionDeferred';
+const DEMO_KEY = 'sukari.demoMaya';
+const DEMO_DAY_KEY = 'sukari.demoMayaDay';
+const DEFERRED_KEY = 'sukari.missionDeferred';
 const SIGNAL_PATH_KEY = 'sukari.signalPathChosen';
 
 const PATIENT_MANUAL_MOMENTS = SELF_REPORTED_MOMENTS.filter(

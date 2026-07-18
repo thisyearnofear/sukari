@@ -12,5 +12,5 @@ export function getWorkerBaseUrl(): string {
 }
 
 export function getAppBaseUrl(): string {
-  return (process.env.EXPO_PUBLIC_APP_URL || 'https://glucosewars.netlify.app').replace(/\/$/, '');
+  return (process.env.EXPO_PUBLIC_APP_URL || 'https://sukari.famile.xyz').replace(/\/$/, '');
 }

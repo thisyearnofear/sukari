@@ -1,6 +1,6 @@
 /**
  * Dexcom OAuth callback handler.
- * Redirect URI: glucosewars://auth/dexcom
+ * Redirect URI: sukari://auth/dexcom
  * Web: /auth/dexcom?code=...
  */
 import React, { useEffect } from 'react';
