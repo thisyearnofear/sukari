@@ -54,13 +54,13 @@ const DEMO_DAY_KEY = 'glucoseWars.demoMayaDay';
 const DEFERRED_KEY = 'glucoseWars.missionDeferred';
 
 interface MainMenuProps {
-  onStartGame: (controlMode: ControlMode) => void;
+  onStartPractice: (controlMode: ControlMode) => void;
   onUserModeSelected?: (mode: string) => void;
   userModeSelected?: boolean;
 }
 
 export const MainMenu: React.FC<MainMenuProps> = ({
-  onStartGame,
+  onStartPractice,
   onUserModeSelected,
   userModeSelected,
 }) => {
@@ -512,6 +512,13 @@ export const MainMenu: React.FC<MainMenuProps> = ({
                 track('completion_to_measured_response', { from: 'home_pattern_card', demo: demoMode });
               }}
               onLater={deferMission}
+              onWhy={() =>
+                track('agent_trace_opened', {
+                  template: displayMission?.templateId || pattern.suggestedBehaviour,
+                  signal_source: pattern.source,
+                  demo: demoMode,
+                })
+              }
             />
           </View>
 
@@ -554,7 +561,7 @@ export const MainMenu: React.FC<MainMenuProps> = ({
           {rehearsalAvailable ? (
             <PressableScale
               onPress={() => {
-                onStartGame(selectedMode);
+                onStartPractice(selectedMode);
                 track('mission_accepted_to_rehearsal_started', {
                   template: displayMission?.templateId || pattern.suggestedBehaviour,
                   demo: demoMode,
@@ -565,8 +572,8 @@ export const MainMenu: React.FC<MainMenuProps> = ({
               accessibilityRole="button"
               style={styles.practiceCta}
             >
-              <Text style={styles.practiceCtaText}>Practice the choice (optional)</Text>
-              <Text style={styles.practiceCtaSub}>A 45-second rehearsal before you act in real life</Text>
+              <Text style={styles.practiceCtaText}>Rehearse this choice (optional)</Text>
+              <Text style={styles.practiceCtaSub}>A 45-second nudge before you act in real life</Text>
             </PressableScale>
           ) : null}
 

@@ -1,59 +1,50 @@
 # Sukari
 
-Sukari is the adherence layer for continuous metabolic care.
+**One mission today. Better evidence for tomorrow.**
 
-It turns a metabolic pattern into one daily mission, records the real-world follow-through, offers an optional short practice for people who want it, measures the associated response, and gives the care team an exception-oriented view when human outreach is useful.
+Sukari is an AI adherence layer for continuous metabolic care. It turns an observed pattern into one patient-controlled habit experiment, helps the person follow through in real life, and gives the care team evidence only when human attention may help.
 
-> One mission today. Better evidence for tomorrow.
+It is built for the gap between appointments in type 2 diabetes, prediabetes, GLP-1-supported lifestyle care, and adjacent metabolic programmes.
 
-Sukari is not an AI doctor, dosing tool, NFT product, leaderboard game, or symptom chatbot. It is a habits-only product for the between-visit gap in type 2 diabetes, prediabetes, GLP-1-supported lifestyle care, and adjacent metabolic programmes.
+## The Loop
 
-## Product Loop
+```text
+signal or labelled demo
+  -> one mission
+  -> act now, later today, or optional rehearsal
+  -> real-world follow-through
+  -> measured response
+  -> care-team exception when useful
+```
 
-1. Detect a signal or use a clearly labelled demo pattern.
-2. Propose one mission with patient controls: accept, make easier, swap, or decline.
-3. Act in real life, save it for later today, or choose an optional 45-second rehearsal.
-4. Record the real-world follow-through.
-5. Measure the associated response without causal overclaiming.
-6. Surface care-team exceptions with outreach rationale and weekly outcomes.
+The rehearsal is a short behavioural nudge, not the product. It is optional, personalised to the accepted mission, and designed to make a real-world choice easier.
 
-Rehearsal is an optional learning mechanism. The product is closed-loop adherence.
+## How the Agent Works
 
-## Current Progress
+Sukari does not give free-form medical advice. A deterministic pattern layer identifies a bounded observation from a connected signal or a clearly labelled demo. The agent can select from approved habit templates, personalise supportive wording, and summarise the decision.
 
-- Brand changed from GlucoseWars to Sukari in the shipped app display and active product docs.
-- First-run experience now leads with the value proposition and user pain before role selection.
-- First mission flow now shows a connect/import or labelled demo pattern, then a mission card before rehearsal.
-- Patients can now act on a mission without entering rehearsal; practice appears only after a mission is accepted.
-- The rehearsal surface now uses a stable compact HUD across phone and desktop rather than changing full-screen themes and legacy side panels.
-- Mission cards show the agent decision trace: observed evidence, proposal, and the next patient-controlled step.
-- Desktop now exposes a programme-operator care surface with exceptions, outreach rationale, weekly outcomes, and local-first digest history.
-- Legacy Web3, NFT, leaderboard, Beam, and challenge-era shipped surfaces were removed or redirected out of the primary experience.
-- Funnel instrumentation now covers value screen, role selection, mission acceptance, rehearsal, real-world completion, measured response, and care-team exception/outreach.
-- Engineering gates are green: lint, TypeScript, Jest, and web export.
+Every recommendation has a visible decision trace:
 
-## Key Docs
+- what Sukari observed;
+- the one action it proposed;
+- what it will measure next;
+- the limits of the evidence and safety boundary.
 
-- [Product Design](docs/PRODUCT_DESIGN.md)
-- [Architecture](docs/ARCHITECTURE.md)
-- [Roadmap](docs/ROADMAP.md)
-- [Development](docs/DEVELOPMENT.md)
-- [Hackathon Pitch](docs/HACKATHON.md)
-- [Investor One-Pager](docs/INVESTOR_ONEPAGER.md)
-- [KPI Experiment Plan](docs/KPI_EXPERIMENT_PLAN.md)
-- [Launch Checklist](docs/LAUNCH_CHECKLIST.md)
+Sukari never diagnoses, recommends medication or insulin doses, claims causality from a single action, contacts another person without consent, or hides why a mission was proposed.
 
-Historical challenge and VRF material is excluded from the shipped application and should not be used to describe Sukari.
+## Personalised Media
 
-## Quick Start
+The optional worker endpoint `POST /media/mission-image` uses Runware to create a mission illustration from an approved template and visual intent. It never sends raw glucose readings, patient names, or free-form health notes to a media prompt. When media generation is unavailable, Sukari uses a local visual cue and the mission flow continues normally.
+
+Runware supports image, video, audio, and 3D tasks through the same task API, making this adapter the safe starting point for future voice prompts and interactive rehearsal scenes. [Runware platform documentation](https://runware.ai/docs/platform/introduction)
+
+## Run Locally
 
 ```bash
 cp .env.example .env
 npm install
 npx expo start
 ```
-
-Useful checks:
 
 ```bash
 npm run lint
@@ -62,19 +53,11 @@ npm test -- --runInBand
 npm run build:web
 ```
 
-## Configuration
+`EXPO_PUBLIC_SUKARI_API_URL` enables optional coach, digest, and mission-media endpoints. The public submission URL remains `https://glucosewars.netlify.app`; the visible product name is Sukari. The legacy Expo slug and deep-link scheme remain for compatibility.
 
-Optional environment variables:
+## More Detail
 
-- `EXPO_PUBLIC_POSTHOG_KEY`: enables PostHog analytics.
-- `EXPO_PUBLIC_POSTHOG_HOST`: optional PostHog host override.
-- `EXPO_PUBLIC_SUKARI_API_URL`: optional coach and published-digest API URL.
-- `EXPO_PUBLIC_APP_URL`: public app URL for generated digest/share links; keep it as `https://glucosewars.netlify.app` through submission.
-
-The Expo slug and deep-link scheme remain `glucosewars` for compatibility with existing installs and OAuth redirect configuration. The user-facing product name is Sukari.
-
-## Safety Boundary
-
-Sukari can propose habit experiments, remember patient choices, and summarize adherence evidence. It must not diagnose, recommend insulin or medication doses, shame missed actions, contact another person without consent, or hide why a mission was proposed.
-
-The care-team surface is currently local-first. A production multi-patient cohort view requires authenticated provider identity, patient consent, audit logging, and a HIPAA-ready backend before external pilots.
+- [Product design](docs/PRODUCT_DESIGN.md)
+- [Architecture](docs/ARCHITECTURE.md)
+- [Hackathon pitch](docs/HACKATHON.md)
+- [Pilot and launch checklist](docs/LAUNCH_CHECKLIST.md)

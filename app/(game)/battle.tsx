@@ -9,6 +9,7 @@ import { usePlayerProgressContext } from '@/context/PlayerProgressContext';
 import { SwipeDirection, SwipeAction } from '@/types/game';
 import { track } from '@/utils/analytics';
 import { MECHANIC_DISCOVERY_MESSAGES } from '@/constants/mechanicMessages';
+import { COLORS } from '@/constants/designSystem';
 
 export default function BattleScreenRoute() {
   const {
@@ -143,7 +144,7 @@ export default function BattleScreenRoute() {
   }, []);
 
   return (
-    <View style={{ flex: 1, backgroundColor: '#0a0a12' }}>
+    <View style={{ flex: 1, backgroundColor: COLORS.PROGRAMME.ink }}>
       <BattleScreen
         gameState={gameState}
         onSwipe={handleSwipe}

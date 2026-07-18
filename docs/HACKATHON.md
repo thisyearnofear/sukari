@@ -4,7 +4,7 @@
 
 Sukari is an AI adherence engine for continuous metabolic care.
 
-Optional rehearsal is a learning mechanism, not the product. The product is the closed loop from signal to mission to real-world adherence evidence.
+Optional rehearsal is a gamified learning mechanism, not the product. The product is the closed loop from signal to mission to real-world adherence evidence.
 
 > Continuous metabolic care fails between appointments. Sukari gives each patient one personalized action at a time, lets them act directly or rehearse the decision, learns from the response, and tells the care team when human attention is useful.
 
@@ -19,9 +19,12 @@ Optional rehearsal is a learning mechanism, not the product. The product is the 
 3. Connect/import a signal or use the labelled demo pattern.
 4. Show the mission card before rehearsal.
 5. Accept the mission and show the visible agent decision trace.
-6. Complete now or choose later today; show optional practice only after acceptance.
-7. Show measured response language.
-8. Open the care-team panel to show exception rationale and weekly outcomes.
+6. Complete now or choose later today; show optional rehearsal only after acceptance.
+7. Open “Why this?” to show the structured signal → mission trace and the mission visual cue.
+8. Explain that the LLM can personalise approved mission copy, while pattern detection and safety boundaries stay deterministic.
+9. Mention the optional Runware adapter: fixed-prompt image generation from an approved mission brief, with no raw readings or identifying data in the prompt.
+10. Show measured response language.
+11. Open the care-team panel to show exception rationale and weekly outcomes.
 
 The Maya demo remains deterministic for judging. Live signal paths are technical proof, but demos should not depend on OAuth success.
 
@@ -35,6 +38,8 @@ The Maya demo remains deterministic for judging. Live signal paths are technical
 | Direct-action path without rehearsal | Done |
 | Compact responsive rehearsal surface | Done |
 | Agent decision trace | Done |
+| Progressive disclosure: “Why this?” context | Done |
+| Mission-specific visual cue with Runware adapter | Done |
 | Labelled demo pattern | Done |
 | Mission ribbon in battle | Done |
 | Transfer beat and later-today state | Done |

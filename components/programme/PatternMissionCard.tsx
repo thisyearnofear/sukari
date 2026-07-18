@@ -8,6 +8,8 @@ import type { ProgrammeMission } from '@/domain/programme';
 import { COLORS, FONTS } from '@/constants/designSystem';
 import { PressableScale } from '@/components/ui/PressableScale';
 import { AgencyLaneTag } from '@/components/programme/AgencyLaneTag';
+import { buildAgentDecisionTrace, buildMissionMediaBrief } from '@/domain/agent';
+import { MissionVisual } from '@/components/programme/MissionVisual';
 
 const P = COLORS.PROGRAMME;
 
@@ -52,6 +54,9 @@ export function PatternMissionCard({
   const practiced = mission?.status === 'practiced' || done;
   const accepted = !!missionChoice && missionChoice !== 'not_practical';
   const canLogRealWorldAction = (accepted || practiced || deferred) && !done;
+  const decisionState = done ? 'completed' : deferred ? 'deferred' : accepted || practiced ? 'accepted' : 'unselected';
+  const trace = buildAgentDecisionTrace(pattern, mission, decisionState);
+  const mediaBrief = buildMissionMediaBrief(pattern, mission);
 
   const experimentText =
     missionChoice === 'easier'
@@ -77,24 +82,11 @@ export function PatternMissionCard({
       ) : null}
 
       <View style={styles.cardHeader}>
-        <Text style={[styles.eyebrow, styles.cardHeaderEyebrow]}>Tonight’s mission</Text>
+        <Text style={[styles.eyebrow, styles.cardHeaderEyebrow]}>Today&apos;s mission</Text>
         <AgencyLaneTag lane="always" />
       </View>
+      <MissionVisual brief={mediaBrief} requestPersonalisation={showDetails} />
       <Text style={styles.missionAction}>{experimentText}</Text>
-      <Text style={styles.patternOneLiner} numberOfLines={showDetails ? 4 : 2}>
-        {pattern.headline}
-      </Text>
-
-      <View style={styles.trace} accessibilityRole="summary">
-        <Text style={styles.traceLabel}>Sukari&apos;s decision trace</Text>
-        <Text style={styles.traceLine}>
-          Observed: {pattern.source === 'cgm' ? 'your connected signal' : 'your programme context'}
-        </Text>
-        <Text style={styles.traceLine}>Proposed: one achievable action for today</Text>
-        <Text style={styles.traceLine}>
-          Next: {done ? 'measure the response tomorrow' : deferred ? 'wait for your update' : 'you choose what happens'}
-        </Text>
-      </View>
 
       <PressableScale
         onPress={() => {
@@ -105,12 +97,20 @@ export function PatternMissionCard({
         accessibilityLabel="Toggle pattern details"
         style={styles.linkBtn}
       >
-        <Text style={styles.linkText}>{showDetails ? 'Hide details' : 'Why this?'}</Text>
+        <Text style={styles.linkText}>{showDetails ? 'Hide context' : 'Why this?'}</Text>
       </PressableScale>
 
       {showDetails ? (
         <View style={styles.details}>
+          <Text style={styles.patternOneLiner}>{pattern.headline}</Text>
           <Text style={styles.detailBody}>{pattern.explanation}</Text>
+          <View style={styles.trace} accessibilityRole="summary">
+            <Text style={styles.traceLabel}>Sukari&apos;s decision trace</Text>
+            <Text style={styles.traceLine}>Observed: {trace.observed}</Text>
+            <Text style={styles.traceLine}>Proposed: {trace.proposed}</Text>
+            <Text style={styles.traceLine}>Next: {trace.next}</Text>
+            <Text style={styles.traceMeta}>{trace.confidenceLabel} · {trace.inputSummary}</Text>
+          </View>
           <Text style={styles.detailMeta}>
             Coverage {Math.round(pattern.dataCoverage * 100)}% ·{' '}
             {pattern.source === 'demo'
@@ -125,24 +125,26 @@ export function PatternMissionCard({
             </Text>
           ))}
           <Text style={styles.whyExperiment}>{pattern.whyThisExperiment}</Text>
-          <Text style={styles.safety}>{pattern.safetyBoundary}</Text>
+          <Text style={styles.safety}>{trace.safetyBoundary}</Text>
         </View>
       ) : null}
 
       {!missionChoice && !done && !deferred ? (
-        <View style={styles.choiceRow}>
+        <View style={styles.choiceSection}>
           <PressableScale onPress={onAccept} style={styles.acceptBtn} accessibilityRole="button">
             <Text style={styles.acceptText}>I&apos;ll do this</Text>
           </PressableScale>
-          <PressableScale onPress={onMakeEasier} style={styles.ghostBtn} accessibilityRole="button">
-            <Text style={styles.ghostText}>Easier</Text>
-          </PressableScale>
-          <PressableScale onPress={onChooseAnother} style={styles.ghostBtn} accessibilityRole="button">
-            <Text style={styles.ghostText}>Another</Text>
-          </PressableScale>
-          <PressableScale onPress={onNotPractical} style={styles.ghostBtn} accessibilityRole="button">
-            <Text style={styles.ghostText}>Not now</Text>
-          </PressableScale>
+          <View style={styles.choiceRow}>
+            <PressableScale onPress={onMakeEasier} style={styles.ghostBtn} accessibilityRole="button">
+              <Text style={styles.ghostText}>Make it easier</Text>
+            </PressableScale>
+            <PressableScale onPress={onChooseAnother} style={styles.ghostBtn} accessibilityRole="button">
+              <Text style={styles.ghostText}>Choose another</Text>
+            </PressableScale>
+            <PressableScale onPress={onNotPractical} style={styles.textBtn} accessibilityRole="button">
+              <Text style={styles.textBtnLabel}>Not practical today</Text>
+            </PressableScale>
+          </View>
         </View>
       ) : (
         <Text style={styles.choiceAck}>
@@ -261,7 +263,7 @@ const styles = StyleSheet.create({
     fontSize: 20,
     lineHeight: 26,
     letterSpacing: -0.2,
-    marginBottom: 8,
+    marginBottom: 2,
   },
   patternOneLiner: {
     fontFamily: FONTS.body,
@@ -270,7 +272,7 @@ const styles = StyleSheet.create({
     lineHeight: 19,
   },
   trace: {
-    marginTop: 14,
+    marginTop: 4,
     paddingTop: 12,
     borderTopWidth: 1,
     borderTopColor: P.line,
@@ -289,6 +291,13 @@ const styles = StyleSheet.create({
     color: P.textMuted,
     fontSize: 11,
     lineHeight: 16,
+  },
+  traceMeta: {
+    fontFamily: FONTS.body,
+    color: P.textMuted,
+    fontSize: 10,
+    lineHeight: 15,
+    marginTop: 3,
   },
   linkBtn: {
     alignSelf: 'flex-start',
@@ -339,17 +348,21 @@ const styles = StyleSheet.create({
     lineHeight: 16,
     marginTop: 6,
   },
+  choiceSection: {
+    marginTop: 16,
+  },
   choiceRow: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: 8,
-    marginTop: 14,
+    marginTop: 8,
   },
   acceptBtn: {
     backgroundColor: P.accent,
-    paddingHorizontal: 14,
-    paddingVertical: 11,
+    paddingHorizontal: 16,
+    paddingVertical: 13,
     borderRadius: 2,
+    alignItems: 'center',
   },
   acceptText: {
     fontFamily: FONTS.bodyBold,
@@ -362,6 +375,16 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 11,
     borderRadius: 2,
+  },
+  textBtn: {
+    justifyContent: 'center',
+    paddingHorizontal: 4,
+    paddingVertical: 10,
+  },
+  textBtnLabel: {
+    fontFamily: FONTS.bodyMedium,
+    color: P.textMuted,
+    fontSize: 12,
   },
   ghostText: {
     fontFamily: FONTS.bodyMedium,

@@ -54,8 +54,8 @@ export default function MenuScreen() {
     <View style={{ flex: 1, backgroundColor: ambientBg, alignItems: 'center' }}>
     <SafeAreaView style={{ flex: 1, width: '100%', maxWidth: Platform.OS === 'web' ? 960 : 500 }}>
       <MainMenu
-        onStartGame={(controlMode: ControlMode) => {
-          track('start_game_clicked', { from: 'main_menu', control_mode: controlMode, privacy_mode: progress.privacyMode });
+        onStartPractice={(controlMode: ControlMode) => {
+          track('practice_started', { from: 'mission_home', control_mode: controlMode, privacy_mode: progress.privacyMode });
           router.push({
             pathname: '/(game)/onboarding',
             params: { controlMode },

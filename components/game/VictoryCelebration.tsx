@@ -1,5 +1,5 @@
 /**
- * Brief bridge between battle and transfer — same world, not arcade fanfare.
+ * Brief bridge from rehearsal to real-world action — informative, never punitive.
  */
 import React, { useEffect, useRef } from 'react';
 import { View, Text, Animated, StyleSheet, Easing } from 'react-native';
@@ -76,15 +76,15 @@ export const VictoryCelebration: React.FC<Props> = ({ result, onComplete, isPers
         ]}
       >
         <Text style={styles.brand}>Sukari</Text>
-        <Text style={[styles.title, { color: isVictory ? P.accent : P.danger }]}>
-          {isVictory ? 'Field steadied' : 'Field collapsed'}
+        <Text style={[styles.title, { color: isVictory ? P.accent : P.cool }]}>
+          Practice complete
         </Text>
         <Text style={styles.sub}>
           {isPersonalBest
-            ? 'Strongest rehearsal yet — now the real mission.'
+            ? 'A clear practice run. Now make the choice in real life.'
             : isVictory
               ? 'Rehearsal complete. Take it into real life.'
-              : 'Tough round — the real-world ask still stands.'}
+              : 'No penalty. The real-world ask still stands whenever you are ready.'}
         </Text>
       </Animated.View>
     </View>

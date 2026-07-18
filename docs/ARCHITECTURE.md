@@ -5,7 +5,7 @@ Sukari is a React Native Expo app with a local-first adherence loop and optional
 ```text
 signal or demo pattern
   -> programme mission
-  -> rehearsal battle
+  -> optional mission-specific rehearsal
   -> transfer / completion
   -> measured response
   -> care-team exception view
@@ -19,6 +19,8 @@ signal or demo pattern
 - `app/(game)/battle.tsx`: rehearsal route.
 - `components/programme/MissionRibbon.tsx`: keeps the real-world mission visible during practice.
 - `components/programme/TransferBeat.tsx`: done/later handoff from practice to real life.
+- `domain/agent/`: patient-visible decision trace and vetted media brief contracts.
+- `components/programme/MissionVisual.tsx`: local visual cue with optional Runware-generated mission illustration.
 - `app/digest/[token].tsx`: patient/care-team digest view.
 - `app/care.tsx`: desktop-first programme-operator surface.
 
@@ -29,10 +31,12 @@ Retired routes such as `game-selection` and `slowmo` redirect out of the shipped
 ```text
 domain/
   coach/       habit-scope coach and clinical safety boundary
+  agent/       explainable decision trace and non-sensitive media briefs
   config/      worker and app URL helpers
   demo/        deterministic Maya demo data
   digest/      weekly summary payloads, publishing, and local history
   invite/      supporter invite flows
+  media/       optional mission-media client
   patterns/    observational pattern types and field state mapping
   programme/   mission templates, mission selection, transfer logic
   signals/     CGM or snapshot abstractions
@@ -67,6 +71,8 @@ Analytics are wrapped through the app's tracking utility and should remain optio
 - `care_panel_opened`
 - `care_outreach_reviewed`
 
+Supporting events include `agent_trace_opened` and `practice_started`. They measure progressive disclosure and optional rehearsal use; they do not replace the core completion funnel.
+
 Do not add new funnel names casually. Prefer extending properties on these events unless a new product boundary is introduced.
 
 ## Care-Team Architecture
@@ -83,6 +89,10 @@ A production cohort product needs:
 - clear separation between raw glucose data and derived adherence evidence.
 
 Do not expose multi-patient care data through public `EXPO_PUBLIC_*` client secrets or unauthenticated worker routes.
+
+## Mission Media
+
+`POST /media/mission-image` is an optional worker route backed by Runware. It accepts only an approved mission `templateId` and a small `visualIntent` enum. The server maps those values to fixed prompts, so it never transmits raw readings, patient identifiers, or free-form health notes to the media provider. The app always has a local visual fallback.
 
 ## Legacy Removals
 

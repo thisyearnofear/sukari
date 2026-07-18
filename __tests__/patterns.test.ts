@@ -7,6 +7,7 @@ import {
 } from '@/domain/demo';
 import { buildLocalDigest } from '@/domain/digest/types';
 import { emptyAdherenceWeek } from '@/domain/programme';
+import { buildAgentDecisionTrace, buildMissionMediaBrief } from '@/domain/agent';
 
 describe('patterns domain', () => {
   it('returns Maya evening pattern in demo mode', () => {
@@ -28,6 +29,17 @@ describe('patterns domain', () => {
     const pattern = detectPatternFromReadings(day.readings);
     expect(pattern).not.toBeNull();
     expect(pattern?.kind).toBe('evening_excursion');
+  });
+
+  it('creates an explainable bounded decision trace and non-sensitive media brief', () => {
+    const pattern = resolvePattern({ useDemo: true, demoDayIndex: 10 });
+    const trace = buildAgentDecisionTrace(pattern, null, 'unselected');
+    const media = buildMissionMediaBrief(pattern, null);
+
+    expect(trace.observed).toBeTruthy();
+    expect(trace.proposed).toContain('walk');
+    expect(trace.safetyBoundary.toLowerCase()).toContain('never insulin');
+    expect(media).toEqual({ templateId: 'post_meal_walk', visualIntent: 'movement' });
   });
 });
 

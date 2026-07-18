@@ -20,8 +20,9 @@ id = "272db1c3055a45998b183df6cb2b0077"
 # Comma-separated list of allowed origins for CORS (set to your deployed web origin).
 ALLOWED_ORIGINS = "*"
 RUNWARE_MODEL = "deepseek:v4@flash"
+# Optional mission-image model used only by POST /media/mission-image.
+RUNWARE_IMAGE_MODEL = "runware:101@1"
 OPENAI_MODEL = "gpt-4o-mini"
 # Secrets:
 #   npx wrangler secret put RUNWARE_API_KEY   # primary LLM
 #   npx wrangler secret put OPENAI_API_KEY    # fallback LLM
-

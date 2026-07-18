@@ -1,5 +1,6 @@
 import { handleCoachChat, handleCoachMission } from './coach';
 import { handleDigestCreate, handleDigestGet } from './digest';
+import { handleMissionImage } from './media';
 
 export interface Env {
   LEADERBOARD: DurableObjectNamespace;
@@ -8,6 +9,7 @@ export interface Env {
   API_SECRET?: string;
   RUNWARE_API_KEY?: string;
   RUNWARE_MODEL?: string;
+  RUNWARE_IMAGE_MODEL?: string;
   OPENAI_API_KEY?: string;
   OPENAI_MODEL?: string;
 }
@@ -211,6 +213,10 @@ export default {
       const res = await handleCoachChat(req, env);
       return withCors(req, env, res);
     }
+    if (req.method === "POST" && url.pathname === "/media/mission-image") {
+      const res = await handleMissionImage(req, env);
+      return withCors(req, env, res);
+    }
     if (req.method === "POST" && url.pathname === "/digest/weekly") {
       const res = await handleDigestCreate(req, env);
       return withCors(req, env, res);
@@ -224,4 +230,3 @@ export default {
     return withCors(req, env, jsonResponse({ ok: false, error: "Not found" }, { status: 404 }));
   },
 };
-
