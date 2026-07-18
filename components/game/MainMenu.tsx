@@ -588,6 +588,7 @@ export const MainMenu: React.FC<MainMenuProps> = ({
                 AsyncStorage.removeItem(DEFERRED_KEY);
                 setShowQuietWin(true);
                 track('mission_marked_done', { from: 'home_pattern_card', demo: demoMode });
+                track('rehearsal_to_real_world_completion', { choice: 'done_direct', demo: demoMode });
                 track('completion_to_measured_response', { from: 'home_pattern_card', demo: demoMode });
               }}
               onLater={deferMission}

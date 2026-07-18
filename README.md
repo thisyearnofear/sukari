@@ -42,9 +42,6 @@ npm run build:web
 
 ## Learn More
 
-- [Product design](docs/PRODUCT_DESIGN.md)
+- [Sukari docs](docs/README.md)
 - [Hackathon pitch](docs/HACKATHON.md)
-- [Architecture](docs/ARCHITECTURE.md)
-- [KPI experiment plan](docs/KPI_EXPERIMENT_PLAN.md)
-- [Launch checklist](docs/LAUNCH_CHECKLIST.md)
-- [Roadmap](docs/ROADMAP.md)
+- [Product design](docs/PRODUCT_DESIGN.md)

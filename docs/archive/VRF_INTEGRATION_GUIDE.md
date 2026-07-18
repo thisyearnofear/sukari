@@ -1,3 +1,9 @@
+# Archived: VRF Integration Guide
+
+This is historical prototype material from the GlucoseWars blockchain/fairness era. It is not active Sukari product direction.
+
+---
+
 # VRF Integration Guide
 
 This document outlines how to connect the mocked VRF (Verifiable Random Function) implementation to real Scroll blockchain services.

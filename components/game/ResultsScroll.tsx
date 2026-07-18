@@ -127,6 +127,11 @@ export const ResultsScroll: React.FC<ResultsScrollProps> = ({
       template_id: transfer?.mission.templateId,
       privacy_mode: progress.privacyMode,
     });
+    track('completion_to_measured_response', {
+      from: 'results',
+      template_id: transfer?.mission.templateId,
+      privacy_mode: progress.privacyMode,
+    });
   };
 
   const deferMission = async () => {

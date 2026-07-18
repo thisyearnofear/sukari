@@ -1,4 +1,10 @@
-# GlucoseWars — UGC‑Lite Spec (Seeded Challenges + Share Links)
+# Archived: GlucoseWars UGC-Lite Spec
+
+This is historical prototype material from the GlucoseWars challenge/leaderboard era. It is not active Sukari product direction.
+
+---
+
+# GlucoseWars — UGC-Lite Spec (Seeded Challenges + Share Links)
 Date: 2026-04-17
 
 ## 0) Objective
@@ -230,4 +236,3 @@ Attribution:
 3) Two users opening the same link get the same run behavior (seeded determinism).
 4) On completion, the user sees a share CTA and can share the same challenge link.
 5) Core analytics events appear in PostHog for the challenge flow.
-

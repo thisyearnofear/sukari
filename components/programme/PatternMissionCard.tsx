@@ -18,7 +18,7 @@ import { MissionVisual } from '@/components/programme/MissionVisual';
 
 const P = COLORS.PROGRAMME;
 
-export type MissionEase = 'accept' | 'easier' | 'another' | 'not_practical';
+export type MissionEase = 'accept' | 'easier' | 'not_practical';
 
 interface PatternMissionCardProps {
   pattern: MetabolicPattern;
@@ -64,7 +64,7 @@ export function PatternMissionCard({
   const mediaBrief = buildMissionMediaBrief(pattern, mission);
 
   const experimentText =
-    ((missionChoice === 'easier' || missionChoice === 'another') && adaptation?.action) ||
+    (missionChoice === 'easier' && adaptation?.action) ||
     (missionChoice === 'easier'
       ? buildMissionAdaptation(mission?.templateId || pattern.suggestedBehaviour, 'easier').action
       : mission?.realWorldAction || pattern.suggestedExperiment);
@@ -175,11 +175,9 @@ export function PatternMissionCard({
                 ? 'Rehearsed — mark when done in life'
                 : missionChoice === 'easier'
                   ? 'Easier variant accepted'
-                  : missionChoice === 'another'
-                    ? 'Alternate mission selected'
-                    : missionChoice === 'not_practical'
-                      ? 'Flagged — coach will adapt'
-                      : 'Mission accepted'}
+                  : missionChoice === 'not_practical'
+                    ? 'Flagged — coach will adapt'
+                    : 'Mission accepted'}
         </Text>
       )}
 

@@ -14,9 +14,9 @@ Sukari turns signal into action:
 
 1. Detect one actionable pattern.
 2. Propose one daily habit experiment.
-3. Let the patient accept, ease, swap, or decline.
-4. Rehearse the decision in under a minute.
-5. Record real-world completion.
+3. Let the patient do it now, make it easier, save it for later, or decline.
+4. Offer an optional mission-bound rehearsal in under a minute.
+5. Record real-world completion without requiring rehearsal.
 6. Measure the associated response.
 7. Surface exceptions to the care team with outreach rationale.
 
@@ -50,7 +50,7 @@ Working prototype includes:
 
 - Sukari brand and value-first entry.
 - Signal/demo pattern to mission card before rehearsal.
-- Mission-bound rehearsal battle.
+- Do now, make easier, later today, and optional mission-bound rehearsal.
 - Transfer beat with done/later.
 - Measured response language.
 - Local-first weekly digest history.
