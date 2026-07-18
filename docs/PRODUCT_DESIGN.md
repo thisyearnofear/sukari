@@ -36,7 +36,8 @@ The first mission flow now prioritizes evidence:
 2. Ask who the product is helping: patient, supporter, or care team.
 3. Connect/import a signal or use a clearly labelled demo pattern.
 4. Show the mission card before any rehearsal.
-5. The patient can act now, save it for later, make it easier, or choose a short optional practice.
+5. The patient can act now, make it easier, save it for later, or choose a short optional practice.
+6. If the patient says the mission is too much or poorly timed, show a concise "Adjusted for you" moment before asking for more.
 
 ## Voice
 
@@ -73,11 +74,14 @@ Sukari may autonomously detect patterns, select one in-scope mission, remember r
 
 - Name and visible brand changed to Sukari.
 - Value-first intro added before role selection.
+- First-minute signal choice added: labelled demo, read-only connection, or habit mission.
 - Mission-first flow added before rehearsal.
 - Real-world action is now the default after mission acceptance; rehearsal is elective.
+- Approved smaller mission variants now create a visible "Adjusted for you" agent moment.
 - Rehearsal now uses a single compact, responsive HUD with no full-screen flashes, shakes, or time-of-day theme changes.
 - Mission cards expose an agent decision trace: observed evidence, proposal, and next patient-controlled step.
 - Demo patterns are labelled as demo evidence.
+- Mission-specific visuals use the deployed optional Runware worker when configured, with local fallback.
 - Desktop care surface now emphasizes operator value: exceptions, rationale, outcomes.
 - Local digest history powers the care surface instead of fixture-only data.
 - Demo cohort remains available as an explicit toggle.

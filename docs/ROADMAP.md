@@ -8,8 +8,11 @@ Shipped this cycle:
 
 - Sukari name and product register.
 - Value proposition before role selection.
+- First-minute signal choice: labelled demo, read-only connection, or habit mission.
 - First mission card before rehearsal.
+- Approved "Adjusted for you" mission adaptation after easier/later choices.
 - Clearly labelled demo pattern path.
+- Deployed optional Runware mission-media worker with local fallback.
 - Local-first digest history and care-team panel.
 - Desktop programme-operator surface: exceptions, outreach rationale, weekly outcomes.
 - Legacy Beam/Web3/NFT/leaderboard/challenge shipped surfaces removed or redirected.
@@ -54,6 +57,7 @@ Funnel:
 
 - value screen -> role selection;
 - role -> mission accepted;
+- mission -> easier/later adaptation;
 - mission accepted -> rehearsal started;
 - rehearsal -> real-world completion or later;
 - completion -> measurable response;

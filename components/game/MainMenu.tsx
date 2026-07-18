@@ -36,7 +36,8 @@ import {
   mayaLoopSteps,
   buildMayaClinicianDigest,
 } from '@/domain/demo';
-import { selectMission } from '@/domain/programme';
+import { selectMission, type ProgrammeMission } from '@/domain/programme';
+import { buildMissionAdaptation, type MissionAdaptation } from '@/domain/agent';
 import { MetabolicField } from '@/components/atmosphere/MetabolicField';
 import { PressableScale } from '@/components/ui/PressableScale';
 import {
@@ -52,6 +53,7 @@ const P = COLORS.PROGRAMME;
 const DEMO_KEY = 'glucoseWars.demoMaya';
 const DEMO_DAY_KEY = 'glucoseWars.demoMayaDay';
 const DEFERRED_KEY = 'glucoseWars.missionDeferred';
+const SIGNAL_PATH_KEY = 'sukari.signalPathChosen';
 
 interface MainMenuProps {
   onStartPractice: (controlMode: ControlMode) => void;
@@ -86,6 +88,9 @@ export const MainMenu: React.FC<MainMenuProps> = ({
   const [demoDay, setDemoDay] = useState<number>(MAYA_DEMO.defaultDayIndex);
   const [missionChoice, setMissionChoice] = useState<MissionEase | null>(null);
   const [missionDeferred, setMissionDeferred] = useState(false);
+  const [signalPathChosen, setSignalPathChosen] = useState(false);
+  const [missionOverride, setMissionOverride] = useState<ProgrammeMission | null>(null);
+  const [adaptation, setAdaptation] = useState<MissionAdaptation | null>(null);
   const [showQuietWin, setShowQuietWin] = useState(false);
   const cgm = useCGMConnection();
   const coach = useCoach();
@@ -122,7 +127,7 @@ export const MainMenu: React.FC<MainMenuProps> = ({
       signalSnapshot.minimized.band,
     ],
   );
-  const displayMission = demoMode ? maya?.mission ?? null : progress.activeMission;
+  const displayMission = demoMode ? maya?.mission ?? null : missionOverride || progress.activeMission;
   const loopSteps = useMemo(() => {
     if (demoMode) return mayaLoopSteps(demoDay);
     const status = progress.activeMission?.status;
@@ -148,6 +153,7 @@ export const MainMenu: React.FC<MainMenuProps> = ({
     await AsyncStorage.setItem(DEFERRED_KEY, JSON.stringify({ dateKey: mission.dateKey }));
     setMissionDeferred(true);
     setMissionChoice('accept');
+    setAdaptation(buildMissionAdaptation(mission.templateId, 'later'));
     track('mission_deferred', { template_id: mission.templateId, from: 'home_pattern_card', demo: demoMode });
   };
 
@@ -157,10 +163,12 @@ export const MainMenu: React.FC<MainMenuProps> = ({
     displayMission?.status !== 'completed';
 
   useEffect(() => {
-    AsyncStorage.multiGet([DEMO_KEY, DEMO_DAY_KEY, DEFERRED_KEY]).then((pairs) => {
+    AsyncStorage.multiGet([DEMO_KEY, DEMO_DAY_KEY, DEFERRED_KEY, SIGNAL_PATH_KEY]).then((pairs) => {
       const demoVal = pairs[0][1];
       const dayVal = pairs[1][1];
       const deferredVal = pairs[2][1];
+      const signalPathVal = pairs[3][1];
+      if (signalPathVal === '1') setSignalPathChosen(true);
       if (demoVal === '1') setDemoMode(true);
       if (dayVal != null) {
         const n = Number(dayVal);
@@ -195,6 +203,12 @@ export const MainMenu: React.FC<MainMenuProps> = ({
   }, [displayMission?.templateId]);
 
   useEffect(() => {
+    if (missionOverride && progress.activeMission?.id === missionOverride.id) {
+      setMissionOverride(null);
+    }
+  }, [missionOverride, progress.activeMission?.id]);
+
+  useEffect(() => {
     if (cgm.connection.isConnected && !demoMode) {
       cgm.syncReadings(180).catch(() => undefined);
     }
@@ -221,6 +235,8 @@ export const MainMenu: React.FC<MainMenuProps> = ({
   const setDemo = async (on: boolean, startDay?: number) => {
     setDemoMode(on);
     setMissionChoice(null);
+    setMissionOverride(null);
+    setAdaptation(null);
     await AsyncStorage.setItem(DEMO_KEY, on ? '1' : '0');
     track('demo_maya_toggled', { on });
     if (on) {
@@ -234,13 +250,38 @@ export const MainMenu: React.FC<MainMenuProps> = ({
     const clamped = Math.max(0, Math.min(MAYA_DEMO.totalDays - 1, next));
     setDemoDay(clamped);
     setMissionChoice(null);
+    setAdaptation(null);
     await AsyncStorage.setItem(DEMO_DAY_KEY, String(clamped));
     track('demo_maya_day_jump', { day: clamped });
   };
 
   const assignFromPattern = (templateId?: string) => {
     if (demoMode) return;
-    ensureTodayMission(signalSnapshot, templateId || pattern.suggestedBehaviour);
+    const selected = selectMission({
+      userMode: progress.userMode,
+      snapshot: signalSnapshot,
+      activeMission: null,
+      missionHistory: progress.missionHistory,
+      forceTemplateId: templateId || pattern.suggestedBehaviour,
+    });
+    setMissionOverride(selected);
+    ensureTodayMission(signalSnapshot, selected.templateId);
+  };
+
+  const persistSignalPath = async (path: 'demo' | 'connect' | 'without_signal') => {
+    setSignalPathChosen(true);
+    await AsyncStorage.setItem(SIGNAL_PATH_KEY, '1');
+    track('signal_path_selected', { path, privacy_mode: progress.privacyMode });
+  };
+
+  const chooseSignalPath = async (path: 'demo' | 'connect' | 'without_signal') => {
+    if (path === 'connect') {
+      track('signal_connection_chosen', { privacy_mode: progress.privacyMode });
+      setShowCGMDisclaimer(true);
+      return;
+    }
+    await persistSignalPath(path);
+    if (path === 'demo') await setDemo(true, MAYA_DEMO.scenes.pattern);
   };
 
   const openCareTeamSummary = async () => {
@@ -285,11 +326,11 @@ export const MainMenu: React.FC<MainMenuProps> = ({
               return (
                 <PressableScale
                   key={mode}
-              onPress={() => {
-                setUserMode(mode);
-                setShowUserModeSelector(false);
-                track('user_mode_selected', { user_mode: mode, privacy_mode: progress.privacyMode });
-                track('role_selected', { user_mode: mode, privacy_mode: progress.privacyMode });
+                  onPress={() => {
+                    setUserMode(mode);
+                    setShowUserModeSelector(false);
+                    track('user_mode_selected', { user_mode: mode, privacy_mode: progress.privacyMode });
+                    track('role_selected', { user_mode: mode, privacy_mode: progress.privacyMode });
                     onUserModeSelected?.(mode);
                   }}
                   accessibilityLabel={`${config.name}. ${config.description}`}
@@ -306,6 +347,59 @@ export const MainMenu: React.FC<MainMenuProps> = ({
             })}
           </View>
         </ScrollView>
+      </View>
+    );
+  }
+
+  if (!signalPathChosen) {
+    return (
+      <View style={styles.root}>
+        <MetabolicField band="unknown" intensity={0.3} />
+        <ScrollView style={styles.zContent} contentContainerStyle={styles.signalScroll}>
+          <Text style={styles.brandMark}>Sukari</Text>
+          <Text style={styles.signalHeadline}>Start with a signal.</Text>
+          <Text style={styles.signalSub}>
+            Use a labelled example or connect your own read-only signal. Either way, you will get one small mission today.
+          </Text>
+          <View style={styles.signalOptions}>
+            <PressableScale
+              onPress={() => chooseSignalPath('demo')}
+              style={[styles.signalOption, styles.signalOptionPrimary]}
+              accessibilityRole="button"
+            >
+              <Text style={styles.signalOptionTitle}>Use Maya&apos;s example</Text>
+              <Text style={styles.signalOptionPrimaryBody}>A private, synthetic 14-day pattern. No account or data needed.</Text>
+            </PressableScale>
+            <PressableScale
+              onPress={() => chooseSignalPath('connect')}
+              style={styles.signalOption}
+              accessibilityRole="button"
+            >
+              <Text style={styles.signalOptionTitle}>Connect my signal</Text>
+              <Text style={styles.signalOptionBody}>Dexcom or Apple Health, read-only and with your permission.</Text>
+            </PressableScale>
+          </View>
+          <PressableScale
+            onPress={() => chooseSignalPath('without_signal')}
+            style={styles.continueWithoutSignal}
+            accessibilityRole="button"
+          >
+            <Text style={styles.continueWithoutSignalText}>Start with a habit mission instead</Text>
+          </PressableScale>
+          <Text style={styles.signalScope}>You can connect a signal later. Sukari never gives dosing or diagnostic advice.</Text>
+        </ScrollView>
+        <Modal visible={showCGMDisclaimer} transparent animationType="fade" onRequestClose={() => setShowCGMDisclaimer(false)}>
+          <View style={styles.modalCenter}>
+            <MedicalDisclaimer
+              onAccept={async () => {
+                setShowCGMDisclaimer(false);
+                await persistSignalPath('connect');
+                cgm.connect();
+              }}
+              onDecline={() => setShowCGMDisclaimer(false)}
+            />
+          </View>
+        </Modal>
       </View>
     );
   }
@@ -383,19 +477,7 @@ export const MainMenu: React.FC<MainMenuProps> = ({
           <Text style={styles.tagline}>One mission today. Better evidence for tomorrow.</Text>
           <Text style={styles.signalLine}>{signalLine}</Text>
 
-          {!demoMode ? (
-            <PressableScale
-              onPress={() => setDemo(true, MAYA_DEMO.scenes.pattern)}
-              style={styles.judgeBar}
-              accessibilityRole="button"
-              accessibilityLabel="Start Maya demo for judging"
-            >
-              <Text style={styles.judgeBarTitle}>Judging? Start Maya demo</Text>
-              <Text style={styles.judgeBarSub}>
-                Synthetic 14-day closed loop · no OAuth required →
-              </Text>
-            </PressableScale>
-          ) : (
+          {demoMode ? (
             <View style={styles.judgeScenes}>
               <Text style={styles.judgeScenesLabel}>Demo scenes</Text>
               <View style={styles.judgeSceneRow}>
@@ -439,7 +521,7 @@ export const MainMenu: React.FC<MainMenuProps> = ({
                 <Text style={styles.exitDemoText}>Exit demo</Text>
               </PressableScale>
             </View>
-          )}
+          ) : null}
 
           <View style={{ marginTop: demoMode ? 22 : 12 }}>
             {demoMode ? <LoopStrip steps={loopSteps} /> : null}
@@ -476,10 +558,12 @@ export const MainMenu: React.FC<MainMenuProps> = ({
               reflection={maya?.reflection}
               demoLabel={demoMode ? MAYA_DEMO.disclaimer : null}
               missionChoice={missionChoice}
+              adaptation={adaptation}
               deferred={missionDeferred && !demoMode}
               onAccept={() => {
                 setMissionChoice('accept');
                 setMissionDeferred(false);
+                setAdaptation(null);
                 assignFromPattern(pattern.suggestedBehaviour);
                 track('mission_accepted', { template: pattern.suggestedBehaviour, demo: demoMode });
                 track('role_to_mission_accepted', { template: pattern.suggestedBehaviour, demo: demoMode });
@@ -487,19 +571,14 @@ export const MainMenu: React.FC<MainMenuProps> = ({
               onMakeEasier={() => {
                 setMissionChoice('easier');
                 setMissionDeferred(false);
+                setAdaptation(buildMissionAdaptation(displayMission?.templateId || pattern.suggestedBehaviour, 'easier'));
                 assignFromPattern(pattern.suggestedBehaviour);
                 track('mission_made_easier', { template: pattern.suggestedBehaviour });
                 track('role_to_mission_accepted', { template: pattern.suggestedBehaviour, variant: 'easier' });
               }}
-              onChooseAnother={() => {
-                setMissionChoice('another');
-                setMissionDeferred(false);
-                assignFromPattern('protein_first');
-                track('mission_choose_another', { from: pattern.suggestedBehaviour });
-                track('role_to_mission_accepted', { template: 'protein_first', variant: 'another' });
-              }}
               onNotPractical={() => {
                 setMissionChoice('not_practical');
+                setAdaptation(null);
                 track('mission_not_practical', { template: pattern.suggestedBehaviour });
               }}
               onMarkDone={() => {
@@ -1000,6 +1079,81 @@ const styles = StyleSheet.create({
     color: P.textMuted,
     fontSize: 12,
     marginTop: 10,
+  },
+  signalScroll: {
+    flexGrow: 1,
+    justifyContent: 'center',
+    paddingHorizontal: 28,
+    paddingVertical: 40,
+    maxWidth,
+    alignSelf: 'center',
+    width: '100%',
+  },
+  signalHeadline: {
+    fontFamily: FONTS.display,
+    color: P.text,
+    fontSize: 30,
+    lineHeight: 37,
+    marginTop: 18,
+  },
+  signalSub: {
+    fontFamily: FONTS.body,
+    color: P.textSoft,
+    fontSize: 15,
+    lineHeight: 23,
+    marginTop: 10,
+  },
+  signalOptions: {
+    gap: 10,
+    marginTop: 26,
+  },
+  signalOption: {
+    borderWidth: 1,
+    borderColor: P.line,
+    backgroundColor: P.mist,
+    paddingHorizontal: 16,
+    paddingVertical: 16,
+    borderRadius: 2,
+  },
+  signalOptionPrimary: {
+    borderColor: P.accent,
+    backgroundColor: P.accentSoft,
+  },
+  signalOptionTitle: {
+    fontFamily: FONTS.bodyBold,
+    color: P.text,
+    fontSize: 15,
+  },
+  signalOptionBody: {
+    fontFamily: FONTS.body,
+    color: P.textSoft,
+    fontSize: 13,
+    lineHeight: 19,
+    marginTop: 5,
+  },
+  signalOptionPrimaryBody: {
+    fontFamily: FONTS.body,
+    color: P.text,
+    fontSize: 13,
+    lineHeight: 19,
+    marginTop: 5,
+  },
+  continueWithoutSignal: {
+    alignSelf: 'flex-start',
+    paddingVertical: 12,
+    marginTop: 6,
+  },
+  continueWithoutSignalText: {
+    fontFamily: FONTS.bodyMedium,
+    color: P.cool,
+    fontSize: 13,
+  },
+  signalScope: {
+    fontFamily: FONTS.body,
+    color: P.textMuted,
+    fontSize: 11,
+    lineHeight: 16,
+    marginTop: 12,
   },
   judgeBar: {
     marginTop: 16,

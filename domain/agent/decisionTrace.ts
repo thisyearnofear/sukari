@@ -20,6 +20,42 @@ export type MissionMediaBrief = {
   visualIntent: 'meal' | 'movement' | 'drink' | 'evening' | 'support';
 };
 
+export interface MissionAdaptation {
+  label: string;
+  action: string;
+}
+
+/**
+ * Approved smaller variants. The agent can select one, but cannot invent a
+ * new health intervention or change the clinical boundary of a mission.
+ */
+export function buildMissionAdaptation(
+  templateId: string,
+  choice: 'easier' | 'later',
+): MissionAdaptation {
+  if (choice === 'later') {
+    return {
+      label: 'Adjusted for your day',
+      action: 'This is saved for later today. Return when the moment is right.',
+    };
+  }
+
+  const easierActions: Record<string, string> = {
+    protein_first: 'Add one protein food before your next carb choice.',
+    post_meal_walk: 'Walk for 5 minutes after your next meal.',
+    reject_liquid_sugar: 'Choose water or an unsweetened drink for your next drink.',
+    pair_carbs: 'Add one protein, fat, or fibre item to your next carb snack.',
+    steady_evening: 'Choose one lighter evening snack tonight.',
+    ally_rally: 'Add one vegetable or high-fibre item to your next meal.',
+    caregiver_support: 'Send one judgement-free check-in today.',
+  };
+
+  return {
+    label: 'Adjusted for you',
+    action: easierActions[templateId] || 'Make the next version of this choice smaller and more doable.',
+  };
+}
+
 export function buildAgentDecisionTrace(
   pattern: MetabolicPattern,
   mission: ProgrammeMission | null,

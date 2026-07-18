@@ -18,9 +18,9 @@ Optional rehearsal is a gamified learning mechanism, not the product. The produc
 2. Select a role.
 3. Connect/import a signal or use the labelled demo pattern.
 4. Show the mission card before rehearsal.
-5. Accept the mission and show the visible agent decision trace.
-6. Complete now or choose later today; show optional rehearsal only after acceptance.
-7. Open “Why this?” to show the structured signal → mission trace and the mission visual cue.
+5. Choose "Make it easier" or "Later today" once to show the visible "Adjusted for you" agent moment.
+6. Accept the mission or complete now; show optional rehearsal only after the real-world choice is clear.
+7. Open "Why this?" to show the structured signal -> mission trace and the mission visual cue.
 8. Explain that the LLM can personalise approved mission copy, while pattern detection and safety boundaries stay deterministic.
 9. Mention the optional Runware adapter: fixed-prompt image generation from an approved mission brief, with no raw readings or identifying data in the prompt.
 10. Show measured response language.
@@ -34,12 +34,14 @@ The Maya demo remains deterministic for judging. Live signal paths are technical
 |------|--------|
 | Sukari brand and product copy | Done |
 | Value proposition before role selection | Done |
+| Signal path: demo, connect, or habit mission | Done |
 | Mission card before rehearsal | Done |
 | Direct-action path without rehearsal | Done |
+| Visible "Adjusted for you" mission adaptation | Done |
 | Compact responsive rehearsal surface | Done |
 | Agent decision trace | Done |
 | Progressive disclosure: “Why this?” context | Done |
-| Mission-specific visual cue with Runware adapter | Done |
+| Deployed mission-specific visual cue with Runware adapter | Done |
 | Labelled demo pattern | Done |
 | Mission ribbon in battle | Done |
 | Transfer beat and later-today state | Done |

@@ -8,7 +8,12 @@ import type { ProgrammeMission } from '@/domain/programme';
 import { COLORS, FONTS } from '@/constants/designSystem';
 import { PressableScale } from '@/components/ui/PressableScale';
 import { AgencyLaneTag } from '@/components/programme/AgencyLaneTag';
-import { buildAgentDecisionTrace, buildMissionMediaBrief } from '@/domain/agent';
+import {
+  buildAgentDecisionTrace,
+  buildMissionAdaptation,
+  buildMissionMediaBrief,
+  type MissionAdaptation,
+} from '@/domain/agent';
 import { MissionVisual } from '@/components/programme/MissionVisual';
 
 const P = COLORS.PROGRAMME;
@@ -23,12 +28,12 @@ interface PatternMissionCardProps {
   demoLabel?: string | null;
   onAccept?: () => void;
   onMakeEasier?: () => void;
-  onChooseAnother?: () => void;
   onNotPractical?: () => void;
   onWhy?: () => void;
   onMarkDone?: () => void;
   onLater?: () => void;
   missionChoice?: MissionEase | null;
+  adaptation?: MissionAdaptation | null;
   /** Soft home state after “Later today” */
   deferred?: boolean;
 }
@@ -41,12 +46,12 @@ export function PatternMissionCard({
   demoLabel,
   onAccept,
   onMakeEasier,
-  onChooseAnother,
   onNotPractical,
   onWhy,
   onMarkDone,
   onLater,
   missionChoice,
+  adaptation,
   deferred = false,
 }: PatternMissionCardProps) {
   const [showDetails, setShowDetails] = useState(false);
@@ -59,9 +64,10 @@ export function PatternMissionCard({
   const mediaBrief = buildMissionMediaBrief(pattern, mission);
 
   const experimentText =
-    missionChoice === 'easier'
-      ? 'Take a 5-minute walk within 30 minutes after dinner (easier variant).'
-      : mission?.realWorldAction || pattern.suggestedExperiment;
+    ((missionChoice === 'easier' || missionChoice === 'another') && adaptation?.action) ||
+    (missionChoice === 'easier'
+      ? buildMissionAdaptation(mission?.templateId || pattern.suggestedBehaviour, 'easier').action
+      : mission?.realWorldAction || pattern.suggestedExperiment);
 
   return (
     <View style={styles.root}>
@@ -87,6 +93,17 @@ export function PatternMissionCard({
       </View>
       <MissionVisual brief={mediaBrief} requestPersonalisation={showDetails} />
       <Text style={styles.missionAction}>{experimentText}</Text>
+
+      {adaptation ? (
+        <View style={styles.adaptation} accessibilityLiveRegion="polite">
+          <Text style={styles.adaptationLabel}>{adaptation.label}</Text>
+          <Text style={styles.adaptationBody}>
+            {missionChoice === 'easier'
+              ? 'A smaller version is ready. You can change it again at any time.'
+              : 'No pressure. Your mission is waiting when you are ready.'}
+          </Text>
+        </View>
+      ) : null}
 
       <PressableScale
         onPress={() => {
@@ -132,15 +149,17 @@ export function PatternMissionCard({
       {!missionChoice && !done && !deferred ? (
         <View style={styles.choiceSection}>
           <PressableScale onPress={onAccept} style={styles.acceptBtn} accessibilityRole="button">
-            <Text style={styles.acceptText}>I&apos;ll do this</Text>
+            <Text style={styles.acceptText}>Do it now</Text>
           </PressableScale>
           <View style={styles.choiceRow}>
             <PressableScale onPress={onMakeEasier} style={styles.ghostBtn} accessibilityRole="button">
               <Text style={styles.ghostText}>Make it easier</Text>
             </PressableScale>
-            <PressableScale onPress={onChooseAnother} style={styles.ghostBtn} accessibilityRole="button">
-              <Text style={styles.ghostText}>Choose another</Text>
-            </PressableScale>
+            {onLater ? (
+              <PressableScale onPress={onLater} style={styles.ghostBtn} accessibilityRole="button">
+                <Text style={styles.ghostText}>Later today</Text>
+              </PressableScale>
+            ) : null}
             <PressableScale onPress={onNotPractical} style={styles.textBtn} accessibilityRole="button">
               <Text style={styles.textBtnLabel}>Not practical today</Text>
             </PressableScale>
@@ -303,6 +322,24 @@ const styles = StyleSheet.create({
     alignSelf: 'flex-start',
     marginTop: 10,
     paddingVertical: 4,
+  },
+  adaptation: {
+    marginTop: 12,
+    paddingLeft: 12,
+    borderLeftWidth: 2,
+    borderLeftColor: P.cool,
+  },
+  adaptationLabel: {
+    fontFamily: FONTS.bodyBold,
+    color: P.cool,
+    fontSize: 12,
+  },
+  adaptationBody: {
+    fontFamily: FONTS.body,
+    color: P.textSoft,
+    fontSize: 12,
+    lineHeight: 18,
+    marginTop: 2,
   },
   linkText: {
     fontFamily: FONTS.bodyMedium,

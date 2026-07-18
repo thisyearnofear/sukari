@@ -5,7 +5,10 @@
 - [x] User-facing name changed to Sukari.
 - [x] Value proposition leads first run.
 - [x] Role selection follows value screen.
+- [x] Signal choice supports labelled demo, read-only connection, or habit mission.
 - [x] First mission card appears before rehearsal.
+- [x] Mission card supports do it now, make it easier, later today, and not practical today.
+- [x] "Adjusted for you" appears after easier/later choices.
 - [x] Demo pattern is clearly labelled.
 - [x] Mission ribbon appears in rehearsal.
 - [x] Transfer beat supports done now and later today.
@@ -17,7 +20,9 @@
 ## Instrumentation
 
 - [x] Value screen -> role selection.
+- [x] Signal path selection.
 - [x] Role -> mission accepted.
+- [x] Mission easier/later adaptation.
 - [x] Mission accepted -> rehearsal started.
 - [x] Rehearsal -> real-world completion/later.
 - [x] Completion -> measurable response.
@@ -32,6 +37,7 @@
 - [x] Jest passes.
 - [x] TypeScript check passes.
 - [x] Web export passes.
+- [x] Runware mission-media worker deployed with privacy-bounded route.
 
 ## Before External Pilot
 

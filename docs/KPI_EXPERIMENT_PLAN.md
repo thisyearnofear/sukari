@@ -2,9 +2,9 @@
 
 ## North Star
 
-**Weekly Adherent Patients (WAP):** enrolled patients who complete at least one real-world mission and at least one rehearsal in a week.
+**Weekly Adherent Patients (WAP):** enrolled patients who complete at least one real-world mission in a week.
 
-This reflects the product thesis: adherence per minute of attention should improve over time.
+This reflects the product thesis: adherence per minute of attention should improve over time. Rehearsal is a supporting nudge metric, not a requirement.
 
 ## Funnel
 
@@ -13,7 +13,10 @@ This reflects the product thesis: adherence per minute of attention should impro
 | Value screen completed | `value_proposition_completed` |
 | Role selected after value screen | `value_to_role_completed` |
 | Role captured | `role_selected` |
+| Signal path selected | `signal_path_selected` |
 | Mission accepted | `role_to_mission_accepted` |
+| Mission made easier | `mission_made_easier` |
+| Mission deferred | `mission_deferred` |
 | Rehearsal started | `mission_accepted_to_rehearsal_started` |
 | Real-world action completed or deferred | `rehearsal_to_real_world_completion` |
 | Measured response shown | `completion_to_measured_response` |
@@ -26,7 +29,7 @@ This reflects the product thesis: adherence per minute of attention should impro
 - value screen completion rate;
 - role selection distribution;
 - signal import vs labelled demo pattern use;
-- mission accept/ease/swap/decline rate;
+- mission accept/ease/defer/decline rate;
 - rehearsal start rate after mission acceptance;
 - rehearsal completion rate;
 - done-now vs later-today split;
@@ -58,7 +61,7 @@ Primary metric: role -> mission accepted.
 
 ### 3. Mission Friction
 
-Hypothesis: accept/easier/another/not practical controls increase overall mission commitment by making refusal dignified.
+Hypothesis: do it now/easier/later/not practical controls increase overall mission commitment by making refusal dignified.
 
 Primary metric: mission accepted or adapted.
 

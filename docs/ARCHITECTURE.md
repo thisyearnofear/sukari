@@ -5,7 +5,7 @@ Sukari is a React Native Expo app with a local-first adherence loop and optional
 ```text
 signal or demo pattern
   -> programme mission
-  -> optional mission-specific rehearsal
+  -> do now / make easier / later / optional mission-specific rehearsal
   -> transfer / completion
   -> measured response
   -> care-team exception view
@@ -63,7 +63,10 @@ Analytics are wrapped through the app's tracking utility and should remain optio
 - `value_proposition_completed`
 - `value_to_role_completed`
 - `role_selected`
+- `signal_path_selected`
 - `role_to_mission_accepted`
+- `mission_made_easier`
+- `mission_deferred`
 - `mission_accepted_to_rehearsal_started`
 - `rehearsal_to_real_world_completion`
 - `completion_to_measured_response`
@@ -71,7 +74,7 @@ Analytics are wrapped through the app's tracking utility and should remain optio
 - `care_panel_opened`
 - `care_outreach_reviewed`
 
-Supporting events include `agent_trace_opened` and `practice_started`. They measure progressive disclosure and optional rehearsal use; they do not replace the core completion funnel.
+Supporting events include `agent_trace_opened`, `practice_started`, and `signal_connection_chosen`. They measure progressive disclosure, optional rehearsal use, and connect intent; they do not replace the core completion funnel.
 
 Do not add new funnel names casually. Prefer extending properties on these events unless a new product boundary is introduced.
 
@@ -92,7 +95,7 @@ Do not expose multi-patient care data through public `EXPO_PUBLIC_*` client secr
 
 ## Mission Media
 
-`POST /media/mission-image` is an optional worker route backed by Runware. It accepts only an approved mission `templateId` and a small `visualIntent` enum. The server maps those values to fixed prompts, so it never transmits raw readings, patient identifiers, or free-form health notes to the media provider. The app always has a local visual fallback.
+`POST /media/mission-image` is an optional worker route backed by Runware and deployed for the submission build. It accepts only an approved mission `templateId` and a small `visualIntent` enum. The server maps those values to fixed prompts, so it never transmits raw readings, patient identifiers, or free-form health notes to the media provider. The app always has a local visual fallback.
 
 ## Legacy Removals
 
