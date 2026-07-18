@@ -1,5 +1,17 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { View, Text, TouchableOpacity, Animated, Platform, ScrollView, Modal, useWindowDimensions, TextInput, Share } from 'react-native';
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  Animated,
+  Easing,
+  Platform,
+  ScrollView,
+  Modal,
+  TextInput,
+  Share,
+  StyleSheet,
+} from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { ControlMode, UserMode } from '@/types/game';
@@ -10,8 +22,7 @@ import { PrivacySettingsModal } from '@/components/PrivacySettings';
 import { useWeb3 } from '@/context/Web3Context';
 import { useBeam } from '@/context/BeamContext';
 import { RoleBadgeModal } from '@/components/game/RoleBadgeModal';
-import { COLORS, ANIMATIONS } from '@/constants/designSystem';
-import { createPulseAnimation, createGlowAnimation, createFloatingAnimation } from '@/utils/animations';
+import { COLORS, FONTS, ANIMATIONS } from '@/constants/designSystem';
 import { ProgressIndicator } from '@/components/game/ProgressIndicator';
 import { DailyQuests } from '@/components/game/DailyQuests';
 import { GrandLibrary } from '@/components/game/GrandLibrary';
@@ -23,77 +34,28 @@ import { useCoach } from '@/hooks/useCoach';
 import { buildSignalSnapshot } from '@/domain/signals';
 import { buildLocalDigest, publishWeeklyDigest } from '@/domain/digest';
 import { buildSupportInvite, supportShareMessage } from '@/domain/invite';
+import { MetabolicField } from '@/components/atmosphere/MetabolicField';
+import { PressableScale } from '@/components/ui/PressableScale';
 
 const maxWidth = 400;
+const P = COLORS.PROGRAMME;
 
-const FloatingFood: React.FC<{ emoji: string; delay: number; isAlly: boolean }> = ({ emoji, delay, isAlly }) => {
-  const { width: screenWidth } = useWindowDimensions();
-  const translateY = useRef(new Animated.Value(0)).current;
-  const translateX = useRef(new Animated.Value(Math.random() * (screenWidth || 400))).current;
-  const opacity = useRef(new Animated.Value(0)).current;
+interface MainMenuProps {
+  onStartGame: (controlMode: ControlMode) => void;
+  onSelectGame: () => void;
+  onUserModeSelected?: (mode: string) => void;
+  userModeSelected?: boolean;
+  onViewStats?: () => void;
+}
 
-  useEffect(() => {
-    let mounted = true;
-
-    const startAnimation = () => {
-      if (!mounted) return;
-      createFloatingAnimation(translateY, {
-        duration: 8000,
-        distance: 600,
-        delay: delay,
-      }).start(() => { if (mounted) startAnimation(); });
-      
-      opacity.setValue(0);
-      Animated.sequence([
-        Animated.delay(delay),
-        Animated.timing(opacity, { toValue: 0.6, duration: 500, useNativeDriver: true }),
-        Animated.delay(7000),
-        Animated.timing(opacity, { toValue: 0, duration: 500, useNativeDriver: true }),
-      ]).start();
-      
-      translateX.setValue(40 + Math.random() * (screenWidth - 80));
-    };
-
-    startAnimation();
-
-    return () => {
-      mounted = false;
-      translateY.stopAnimation();
-      opacity.stopAnimation();
-    };
-  }, [delay, opacity, screenWidth, translateX, translateY]);
-
-  const borderColor = isAlly ? COLORS.ALLY : COLORS.ENEMY;
-  const bgColor = isAlly ? 'rgba(34, 197, 94, 0.2)' : 'rgba(239, 68, 68, 0.2)';
-
-  return (
-    <Animated.View
-      style={{
-        position: 'absolute',
-        transform: [{ translateX }, { translateY }],
-        opacity,
-      }}
-    >
-      <View 
-        className="w-12 h-12 rounded-full items-center justify-center border-2"
-        style={{
-          borderColor,
-          backgroundColor: bgColor,
-        }}
-      >
-        <Text className="text-2xl">{emoji}</Text>
-      </View>
-    </Animated.View>
-  );
-};
-
-export const MainMenu: React.FC<MainMenuProps> = ({ onStartGame, onSelectGame, onUserModeSelected, userModeSelected, onViewStats }) => {
-  /* eslint-disable @typescript-eslint/no-unused-vars */
+export const MainMenu: React.FC<MainMenuProps> = ({
+  onStartGame,
+  onSelectGame,
+  onUserModeSelected,
+  userModeSelected,
+}) => {
   const [selectedMode, setSelectedMode] = useState<ControlMode>('swipe');
   const [showPrivacySettings, setShowPrivacySettings] = useState(false);
-  const [showTutorialSettings, setShowTutorialSettings] = useState(false);
-  const pulseAnim = useRef(new Animated.Value(1)).current;
-  const glowAnim = useRef(new Animated.Value(0)).current;
   const {
     progress,
     setUserMode,
@@ -105,7 +67,6 @@ export const MainMenu: React.FC<MainMenuProps> = ({ onStartGame, onSelectGame, o
     setDigestMeta,
     ensureTodayMission,
   } = usePlayerProgressContext();
-  /* eslint-enable @typescript-eslint/no-unused-vars */
   const kingdomTitle = getKingdomTitle();
   const [showUserModeSelector, setShowUserModeSelector] = useState(userModeSelected === false);
   const [selectedRole, setSelectedRole] = useState<UserMode | null>(null);
@@ -123,7 +84,8 @@ export const MainMenu: React.FC<MainMenuProps> = ({ onStartGame, onSelectGame, o
   const playerAccount = beamContext?.playerAccount;
   const showSyncFeedback = beamContext?.showSyncFeedback;
   const [showWelcome, setShowWelcome] = useState(false);
-  const welcomeAnim = useRef(new Animated.Value(-100)).current;
+  const welcomeAnim = useRef(new Animated.Value(-80)).current;
+  const enterAnim = useRef(new Animated.Value(0)).current;
 
   const signalSnapshot = buildSignalSnapshot({
     connected: cgm.connection.isConnected,
@@ -133,6 +95,9 @@ export const MainMenu: React.FC<MainMenuProps> = ({ onStartGame, onSelectGame, o
     privacyMode: progress.privacyMode,
   });
 
+  const band = signalSnapshot.minimized.band;
+  const isNewUser = progress.gamesPlayed === 0;
+
   useEffect(() => {
     if (!showUserModeSelector) {
       ensureTodayMission(signalSnapshot);
@@ -140,7 +105,6 @@ export const MainMenu: React.FC<MainMenuProps> = ({ onStartGame, onSelectGame, o
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [showUserModeSelector, cgm.connection.isConnected, progress.userMode]);
 
-  // Keep signals fresh for mission selection (non-blocking)
   useEffect(() => {
     if (cgm.connection.isConnected) {
       cgm.syncReadings(180).catch(() => undefined);
@@ -157,118 +121,57 @@ export const MainMenu: React.FC<MainMenuProps> = ({ onStartGame, onSelectGame, o
   useEffect(() => {
     if (playerAccount && !showWelcome) {
       setShowWelcome(true);
+      const { duration, bezier } = ANIMATIONS.MOTION.toast;
+      const ease = Easing.bezier(bezier[0], bezier[1], bezier[2], bezier[3]);
       Animated.sequence([
-        Animated.timing(welcomeAnim, { toValue: 50, duration: 500, useNativeDriver: true }),
-        Animated.delay(3000),
-        Animated.timing(welcomeAnim, { toValue: -100, duration: 500, useNativeDriver: true }),
+        Animated.timing(welcomeAnim, { toValue: 48, duration, easing: ease, useNativeDriver: true }),
+        Animated.delay(2800),
+        Animated.timing(welcomeAnim, {
+          toValue: -80,
+          duration: ANIMATIONS.MOTION.exit.duration,
+          easing: Easing.bezier(
+            ANIMATIONS.MOTION.exit.bezier[0],
+            ANIMATIONS.MOTION.exit.bezier[1],
+            ANIMATIONS.MOTION.exit.bezier[2],
+            ANIMATIONS.MOTION.exit.bezier[3],
+          ),
+          useNativeDriver: true,
+        }),
       ]).start(() => setShowWelcome(false));
     }
   }, [playerAccount, showWelcome, welcomeAnim]);
 
   useEffect(() => {
-    // Pulse animation for start button
-    createPulseAnimation(pulseAnim, {
-      duration: ANIMATIONS.DURATION.SLOWER,
-      minScale: 1,
-      maxScale: 1.05,
+    if (showUserModeSelector) return;
+    const { duration, bezier } = ANIMATIONS.MOTION.enter;
+    Animated.timing(enterAnim, {
+      toValue: 1,
+      duration,
+      easing: Easing.bezier(bezier[0], bezier[1], bezier[2], bezier[3]),
+      useNativeDriver: true,
     }).start();
-
-    // Glow animation
-    createGlowAnimation(glowAnim, {
-      duration: ANIMATIONS.DURATION.SLOWEST,
-      minOpacity: 0,
-      maxOpacity: 1,
-    }).start();
-  }, [glowAnim, pulseAnim]);
-
-  const floatingFoods = [
-    { emoji: '🥦', isAlly: true },
-    { emoji: '🍩', isAlly: false },
-    { emoji: '🥕', isAlly: true },
-    { emoji: '🍬', isAlly: false },
-    { emoji: '🐟', isAlly: true },
-    { emoji: '🍔', isAlly: false },
-    { emoji: '🍎', isAlly: true },
-    { emoji: '🥤', isAlly: false },
-  ];
-
-  const getStreakStatus = () => {
-    if (progress.gamesPlayed === 0) return { streak: 0, emoji: '🔥', message: 'Start your journey' };
-    // Real streak: consecutive days played (approximate via lastPlayedAt)
-    const daysSinceLastPlay = progress.lastPlayedAt
-      ? Math.floor((Date.now() - progress.lastPlayedAt) / 86400000)
-      : 999;
-    if (daysSinceLastPlay <= 1) {
-      return { streak: progress.gamesPlayed, emoji: '🔥', message: 'On fire!' };
-    }
-    return { streak: 1, emoji: '🔥', message: 'Welcome back!' };
-  };
-
-  const isNewUser = progress.gamesPlayed === 0;
-
-  const streakStatus = getStreakStatus();
-
-  const progressInfo = (
-    <ProgressIndicator 
-      currentTier={progress.currentTier || 'tier1'}
-      unlockedTiers={[...(['tier1'] as const), ...(progress.maxTierUnlocked !== 'tier1' ? [progress.maxTierUnlocked] : [])]}
-      variant="detailed"
-      showLabel={true}
-    />
-  );
+  }, [enterAnim, showUserModeSelector]);
 
   if (showUserModeSelector) {
     return (
-      <View className="flex-1" style={{ backgroundColor: COLORS.BG_DARK }}>
-        {floatingFoods.map((food, i) => (
-          <FloatingFood 
-            key={i} 
-            emoji={food.emoji} 
-            delay={i * 1000} 
-            isAlly={food.isAlly}
-          />
-        ))}
-
-        <View className="absolute inset-0 bg-gradient-to-b from-purple-900/30 to-black/50" />
-
-        <ScrollView 
-          className="flex-1 z-10" 
-          contentContainerStyle={{ paddingVertical: 24, paddingHorizontal: 16 }}
+      <View style={styles.root}>
+        <MetabolicField band="unknown" intensity={0.35} />
+        <ScrollView
+          style={styles.zContent}
+          contentContainerStyle={styles.roleScroll}
           showsVerticalScrollIndicator={false}
         >
-          <View className="items-center mb-6">
-            <Text className="text-6xl mb-3">👑</Text>
-            <Text className="text-amber-400 text-3xl font-bold text-center">
-              HOW DO YOU PLAY?
-            </Text>
-          </View>
+          <Text style={styles.brandMark}>Glucose Wars</Text>
+          <Text style={styles.roleHeadline}>How will you use the programme?</Text>
+          <Text style={styles.roleSub}>
+            One choice. You can change it later in settings.
+          </Text>
 
-          <View style={{ gap: 12, paddingHorizontal: 16, maxWidth: 400, alignSelf: 'center', width: '100%' }}>
+          <View style={styles.roleList}>
             {(Object.keys(USER_MODE_CONFIGS) as UserMode[]).map((mode) => {
               const config = USER_MODE_CONFIGS[mode];
-              const roleData = {
-                personal: { 
-                  emblem: '🛡️', 
-                  color: 'border-amber-400', 
-                  bg: 'bg-amber-600/20',
-                  learningFocus: 'Personal mastery'
-                },
-                caregiver: { 
-                  emblem: '🏰', 
-                  color: 'border-cyan-400', 
-                  bg: 'bg-cyan-600/20',
-                  learningFocus: 'Realm-wide protection'
-                },
-                curious: { 
-                  emblem: '🧪', 
-                  color: 'border-emerald-400', 
-                  bg: 'bg-emerald-600/20',
-                  learningFocus: 'Universal wisdom'
-                }
-              }[mode];
-
               return (
-                <TouchableOpacity
+                <PressableScale
                   key={mode}
                   onPress={() => {
                     setSelectedRole(mode);
@@ -277,32 +180,18 @@ export const MainMenu: React.FC<MainMenuProps> = ({ onStartGame, onSelectGame, o
                     track('user_mode_selected', { user_mode: mode, privacy_mode: progress.privacyMode });
                     onUserModeSelected?.(mode);
                   }}
-                  accessibilityLabel={`${config.name} role. ${config.description}`}
+                  accessibilityLabel={`${config.name}. ${config.description}`}
                   accessibilityRole="button"
-                  style={{
-                    flexDirection: 'row', alignItems: 'center', padding: 16,
-                    borderRadius: 16, borderWidth: 2,
-                    borderColor: mode === 'personal' ? '#f59e0b' : mode === 'caregiver' ? '#22d3ee' : '#34d399',
-                    backgroundColor: mode === 'personal' ? 'rgba(245,158,11,0.1)' : mode === 'caregiver' ? 'rgba(34,211,238,0.1)' : 'rgba(52,211,153,0.1)',
-                  }}
+                  style={styles.roleRow}
                 >
-                  <Text style={{ fontSize: 36, marginRight: 14 }}>{roleData.emblem}</Text>
                   <View style={{ flex: 1 }}>
-                    <Text style={{ fontSize: 18, fontWeight: 'bold', color: mode === 'personal' ? '#fcd34d' : mode === 'caregiver' ? '#67e8f9' : '#6ee7b7' }}>
-                      {config.name}
-                    </Text>
-                    <Text style={{ color: '#9ca3af', fontSize: 12, marginTop: 2 }}>{config.subtitle}</Text>
+                    <Text style={styles.roleName}>{config.name}</Text>
+                    <Text style={styles.roleDesc}>{config.subtitle}</Text>
                   </View>
-                  <Text style={{ color: '#6b7280', fontSize: 18 }}>→</Text>
-                </TouchableOpacity>
+                  <Text style={styles.roleArrow}>→</Text>
+                </PressableScale>
               );
             })}
-          </View>
-
-          <View className="items-center">
-            <Text style={{ width: maxWidth }} className="text-gray-500 text-xs text-center mb-4">
-              🔧 You can change your role anytime
-            </Text>
           </View>
         </ScrollView>
 
@@ -317,388 +206,315 @@ export const MainMenu: React.FC<MainMenuProps> = ({ onStartGame, onSelectGame, o
     );
   }
 
+  const signalLine = signalSnapshot.connected
+    ? `CGM · ${band.replace('_', ' ')}${signalSnapshot.trend ? ` · ${signalSnapshot.trend}` : ''}`
+    : 'No CGM · missions use programme defaults';
+
   return (
-    <View className="flex-1 items-center justify-center" style={{ backgroundColor: COLORS.BG_DARK }}>
-      {/* Welcome Toast */}
+    <View style={styles.root}>
+      <MetabolicField band={band} intensity={band === 'unknown' ? 0.4 : 0.65} />
+
       {showWelcome && (
-        <Animated.View
-          style={{
-            position: 'absolute',
-            top: 0,
-            left: 20,
-            right: 20,
-            backgroundColor: 'rgba(88, 28, 135, 0.95)',
-            padding: 16,
-            borderRadius: 12,
-            borderWidth: 1,
-            borderColor: '#a78bfa',
-            zIndex: 100,
-            flexDirection: 'row',
-            alignItems: 'center',
-            transform: [{ translateY: welcomeAnim }],
-            shadowColor: '#a78bfa',
-            shadowOffset: { width: 0, height: 4 },
-            shadowOpacity: 0.5,
-            shadowRadius: 10,
-          }}
-        >
-          <Text style={{ fontSize: 24, marginRight: 12 }}>👑</Text>
-          <View>
-            <Text style={{ color: 'white', fontWeight: 'bold' }}>Welcome back, Hero!</Text>
-            <Text style={{ color: '#c4b5fd', fontSize: 12 }}>Your Kingdom progress is secured.</Text>
-          </View>
+        <Animated.View style={[styles.toast, { transform: [{ translateY: welcomeAnim }] }]}>
+          <Text style={styles.toastTitle}>Signed in</Text>
+          <Text style={styles.toastBody}>Progress sync is available.</Text>
         </Animated.View>
       )}
 
-      {/* Kingdom Renown Header */}
-      <View style={{ width: '100%', paddingTop: 48, paddingHorizontal: 24, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', zIndex: 20 }}>
-        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-          <View 
-            style={{ 
-              backgroundColor: 'rgba(217, 119, 6, 0.2)', 
-              padding: 8, 
-              borderRadius: 20, 
-              borderWidth: 1, 
-              borderColor: showSyncFeedback ? '#a78bfa' : 'rgba(245, 158, 11, 0.3)', 
-              marginRight: 12,
-              shadowColor: '#a78bfa',
-              shadowRadius: showSyncFeedback ? 15 : 0,
-              shadowOpacity: showSyncFeedback ? 1 : 0,
-            }}
-          >
-            <Text style={{ fontSize: 20 }}>{kingdomTitle.icon}</Text>
-            {showSyncFeedback && (
-              <View 
-                style={{ 
-                  position: 'absolute', 
-                  top: -2, 
-                  right: -2, 
-                  width: 8, 
-                  height: 8, 
-                  borderRadius: 4, 
-                  backgroundColor: '#a78bfa' 
-                }} 
-              />
-            )}
-          </View>
-          <View>
-            <Text style={{ color: '#f59e0b', fontSize: 10, fontWeight: 'bold', letterSpacing: 1, textTransform: 'uppercase' }}>{kingdomTitle.title}</Text>
-            <Text style={{ color: 'white', fontSize: 18, fontWeight: 'bold' }}>{progress.kingdomRenown} RENOWN</Text>
-          </View>
+      <View style={styles.topBar}>
+        <View>
+          <Text style={styles.topEyebrow}>{kingdomTitle.title}</Text>
+          <Text style={styles.topMeta}>
+            {progress.kingdomRenown} renown
+            {showSyncFeedback ? ' · synced' : ''}
+          </Text>
         </View>
-        <TouchableOpacity 
+        <TouchableOpacity
           onPress={() => setShowSettings(true)}
           accessibilityLabel="Open settings"
           accessibilityRole="button"
-          style={{ backgroundColor: 'rgba(55, 65, 81, 0.5)', padding: 10, borderRadius: 12, borderWidth: 1, borderColor: 'rgba(107, 114, 128, 0.4)' }}
+          style={styles.iconBtn}
         >
-          <Ionicons name="settings-outline" size={20} color="#9ca3af" />
+          <Ionicons name="settings-outline" size={20} color={P.textMuted} />
         </TouchableOpacity>
       </View>
 
-      {floatingFoods.map((food, i) => (
-        <FloatingFood 
-          key={i} 
-          emoji={food.emoji} 
-          delay={i * 1000} 
-          isAlly={food.isAlly}
-        />
-      ))}
-
-      <View className="absolute inset-0 bg-gradient-to-b from-purple-900/30 to-black/50" />
-
-      <ScrollView 
-        className="flex-1 z-10 w-full" 
-        contentContainerStyle={{ alignItems: 'center', paddingVertical: 48 }}
+      <ScrollView
+        style={styles.zContent}
+        contentContainerStyle={styles.homeScroll}
+        showsVerticalScrollIndicator={false}
       >
-         <View className="items-center mb-4">
-           <Text className="text-5xl mb-1">🏰</Text>
-           <Text className="text-amber-400 text-3xl font-bold text-center tracking-wider">GLUCOSE WARS</Text>
-           <Text className="text-purple-300 text-sm text-center italic mt-1">Your programme Realm</Text>
-         </View>
-
-         {/* Signal strip */}
-         <View style={{ width: maxWidth, marginBottom: 10, padding: 10, borderRadius: 12, backgroundColor: 'rgba(0,0,0,0.45)', borderWidth: 1, borderColor: 'rgba(96,165,250,0.35)' }}>
-           <Text style={{ color: '#60a5fa', fontSize: 10, fontWeight: 'bold', marginBottom: 4 }}>SIGNALS</Text>
-           <Text style={{ color: '#d1d5db', fontSize: 12 }}>
-             {signalSnapshot.connected
-               ? `CGM connected · ${signalSnapshot.minimized.band.replace('_', ' ')}${signalSnapshot.trend ? ` · ${signalSnapshot.trend}` : ''}`
-               : 'No CGM — missions use programme defaults (connect in Settings)'}
-           </Text>
-         </View>
-
-         {/* Today’s mission first */}
-         <View style={{ width: maxWidth }} className="mb-4">
-           <DailyQuests
-             mission={progress.activeMission}
-             adherenceWeek={progress.adherenceWeek}
-             renown={progress.kingdomRenown}
-             onPractice={() => onStartGame(selectedMode)}
-             onMarkDone={() => completeActiveMission()}
-             onAskCoach={() => {
-               setShowCoach(true);
-               coach.refreshMission(signalSnapshot);
-             }}
-           />
-         </View>
-
-        {/* Primary practice CTA */}
-        <View style={{ width: maxWidth }} className="space-y-3 mb-4">
-          <Animated.View style={{ transform: [{ scale: pulseAnim }] }}>
-            <TouchableOpacity
-              onPress={() => onStartGame(selectedMode)}
-              activeOpacity={0.7}
-              accessibilityLabel="Practice today’s mission"
-              accessibilityRole="button"
-              style={{
-                backgroundColor: '#16a34a', borderWidth: 3, borderColor: '#22c55e',
-                paddingVertical: 18, borderRadius: 16, width: '100%',
-                shadowColor: '#22c55e', shadowOffset: { width: 0, height: 0 },
-                shadowOpacity: 0.9, shadowRadius: 25, elevation: 15,
-              }}
-            >
-              <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center' }}>
-                <Text style={{ fontSize: 22, marginRight: 8 }}>⚡</Text>
-                <Text style={{ color: 'white', fontSize: 18, fontWeight: 'bold' }}>PRACTICE MISSION</Text>
-              </View>
-            </TouchableOpacity>
-          </Animated.View>
-
-          <View style={{ flexDirection: 'row', gap: 8, marginTop: 8 }}>
-            <TouchableOpacity
-              onPress={() => router.push('/slowmo' as any)}
-              accessibilityLabel="Open Slow Mo lab" accessibilityRole="button"
-              style={{ flex: 1, backgroundColor: 'rgba(6,182,212,0.2)', borderWidth: 2, borderColor: '#22d3ee', paddingVertical: 12, borderRadius: 12, alignItems: 'center' }}
-            >
-              <Text style={{ fontSize: 16 }}>🧪</Text>
-              <Text style={{ color: '#a5f3fc', fontSize: 10, fontWeight: 'bold', marginTop: 2 }}>SLOW MO</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              onPress={() => setShowCoach(true)}
-              accessibilityLabel="Ask the Alchemist" accessibilityRole="button"
-              style={{ flex: 1, backgroundColor: 'rgba(139,92,246,0.2)', borderWidth: 2, borderColor: '#a78bfa', paddingVertical: 12, borderRadius: 12, alignItems: 'center' }}
-            >
-              <Text style={{ fontSize: 16 }}>🧙</Text>
-              <Text style={{ color: '#c4b5fd', fontSize: 10, fontWeight: 'bold', marginTop: 2 }}>ALCHEMIST</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              onPress={() => setShowLibrary(true)}
-              accessibilityLabel="Open Grand Library" accessibilityRole="button"
-              style={{ flex: 1, backgroundColor: 'rgba(59,130,246,0.2)', borderWidth: 2, borderColor: '#3b82f6', paddingVertical: 12, borderRadius: 12, alignItems: 'center' }}
-            >
-              <Text style={{ fontSize: 16 }}>📜</Text>
-              <Text style={{ color: '#93c5fd', fontSize: 10, fontWeight: 'bold', marginTop: 2 }}>LIBRARY</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-
-        {!isNewUser && (
-          <>
-            {progress.gamesPlayed > 0 && (
-              <View style={{ width: maxWidth }} className="bg-gradient-to-r from-orange-600/20 to-red-600/10 p-3 rounded-xl border border-orange-500/50 mb-3 items-center">
-                <Text className="text-orange-200 text-xs">
-                  {streakStatus.emoji} {streakStatus.message} · {progress.adherenceWeek.completed} missions this week
-                </Text>
-              </View>
-            )}
-            {progressInfo}
-          </>
-        )}
-
-        {/* ═══ COLLAPSIBLE SETTINGS (Beam / wallet / extras demoted here) ═══ */}
-        {<>
-        <TouchableOpacity
-          onPress={() => setShowSettings(!showSettings)}
-          style={{ width: maxWidth, marginTop: 12, marginBottom: 4 }}
-          accessibilityLabel={`${showSettings ? 'Hide' : 'Show'} settings`}
-          accessibilityRole="button"
+        <Animated.View
+          style={{
+            width: '100%',
+            maxWidth,
+            opacity: enterAnim,
+            transform: [
+              {
+                translateY: enterAnim.interpolate({
+                  inputRange: [0, 1],
+                  outputRange: [16, 0],
+                }),
+              },
+            ],
+          }}
         >
-          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center' }}>
-            <Text style={{ color: '#6b7280', fontSize: 12 }}>⚙️ More & settings {showSettings ? '▲' : '▼'}</Text>
-          </View>
-        </TouchableOpacity>
+          <Text style={styles.brandMark}>Glucose Wars</Text>
+          <Text style={styles.tagline}>Practice that becomes the day.</Text>
+          <Text style={styles.signalLine}>{signalLine}</Text>
 
-        {showSettings && (
-          <>
-        <View style={{ width: maxWidth }} className="bg-black/60 p-3 rounded-xl border border-amber-700 mb-3">
-          <Text className="text-amber-400 text-xs font-bold mb-2">CARE TEAM & GROWTH</Text>
-          <TouchableOpacity
-            onPress={async () => {
-              if (!progress.activeMission) return;
-              const invite = buildSupportInvite(progress.activeMission);
-              track('caregiver_invite_shared', { from: 'home', template_id: invite.templateId });
-              await Share.share({ message: supportShareMessage(invite) });
-            }}
-            style={{ backgroundColor: 'rgba(59,130,246,0.2)', padding: 10, borderRadius: 8, marginBottom: 8, borderWidth: 1, borderColor: '#3b82f6' }}
+          <View style={{ marginTop: 28, marginBottom: 20 }}>
+            <DailyQuests
+              mission={progress.activeMission}
+              adherenceWeek={progress.adherenceWeek}
+              renown={progress.kingdomRenown}
+              compact
+              onMarkDone={() => completeActiveMission()}
+              onAskCoach={() => {
+                setShowCoach(true);
+                coach.refreshMission(signalSnapshot);
+              }}
+            />
+          </View>
+
+          <PressableScale
+            onPress={() => onStartGame(selectedMode)}
+            accessibilityLabel="Practice today’s mission"
+            accessibilityRole="button"
+            style={styles.primaryCta}
           >
-            <Text style={{ color: '#93c5fd', fontWeight: 'bold', fontSize: 11, textAlign: 'center' }}>Invite caregiver support</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            onPress={async () => {
-              const digest = buildLocalDigest({
-                adherence: progress.adherenceWeek,
-                missionHistory: progress.missionHistory,
-                gamesPlayedThisWeekApprox: Math.min(progress.gamesPlayed, 14),
-              });
-              const published = await publishWeeklyDigest(digest);
-              if (published?.token) {
-                setDigestMeta(published.token);
-                track('weekly_digest_created', { week: digest.weekKey });
-                router.push({ pathname: '/digest/[token]' as any, params: { token: published.token } });
-              }
-            }}
-            style={{ backgroundColor: 'rgba(34,197,94,0.15)', padding: 10, borderRadius: 8, marginBottom: 8, borderWidth: 1, borderColor: '#22c55e' }}
-          >
-            <Text style={{ color: '#86efac', fontWeight: 'bold', fontSize: 11, textAlign: 'center' }}>Weekly care-team proclamation</Text>
-          </TouchableOpacity>
-          <View style={{ flexDirection: 'row', gap: 8 }}>
+            <Text style={styles.primaryCtaText}>Practice</Text>
+          </PressableScale>
+
+          <View style={styles.secondaryRow}>
+            <TouchableOpacity onPress={() => setShowCoach(true)} accessibilityRole="button">
+              <Text style={styles.link}>Coach</Text>
+            </TouchableOpacity>
+            <Text style={styles.dot}>·</Text>
             <TouchableOpacity
-              onPress={() => onSelectGame?.()}
-              style={{ flex: 1, backgroundColor: 'rgba(217,119,6,0.2)', padding: 8, borderRadius: 8, borderWidth: 1, borderColor: '#f59e0b' }}
+              onPress={async () => {
+                if (!progress.activeMission) return;
+                const invite = buildSupportInvite(progress.activeMission);
+                track('caregiver_invite_shared', { from: 'home', template_id: invite.templateId });
+                await Share.share({ message: supportShareMessage(invite) });
+              }}
+              accessibilityRole="button"
             >
-              <Text style={{ color: '#fde68a', fontSize: 10, fontWeight: 'bold', textAlign: 'center' }}>Customize</Text>
+              <Text style={styles.link}>Invite support</Text>
             </TouchableOpacity>
+            <Text style={styles.dot}>·</Text>
             <TouchableOpacity
-              onPress={() => { track('challenge_hub_viewed', { source: 'settings' }); router.push('/challenge' as any); }}
-              style={{ flex: 1, backgroundColor: 'rgba(139,92,246,0.2)', padding: 8, borderRadius: 8, borderWidth: 1, borderColor: '#a78bfa' }}
+              onPress={async () => {
+                const digest = buildLocalDigest({
+                  adherence: progress.adherenceWeek,
+                  missionHistory: progress.missionHistory,
+                  gamesPlayedThisWeekApprox: Math.min(progress.gamesPlayed, 14),
+                });
+                const published = await publishWeeklyDigest(digest);
+                if (published?.token) {
+                  setDigestMeta(published.token);
+                  track('weekly_digest_created', { week: digest.weekKey });
+                  router.push({ pathname: '/digest/[token]' as any, params: { token: published.token } });
+                }
+              }}
+              accessibilityRole="button"
             >
-              <Text style={{ color: '#c4b5fd', fontSize: 10, fontWeight: 'bold', textAlign: 'center' }}>Challenges</Text>
+              <Text style={styles.link}>Weekly digest</Text>
             </TouchableOpacity>
           </View>
-        </View>
 
-        <View style={{ width: maxWidth }} className="bg-black/60 p-3 rounded-xl border border-cyan-700 mb-3">
-          <View className="flex-row justify-between items-center">
-            <View className="flex-1">
-              <Text className="text-cyan-400 text-xs font-bold mb-1">🔐 PRIVACY</Text>
-              <PrivacyToggle currentMode={progress.privacyMode} onToggle={(mode) => setPrivacyMode(mode)} />
-            </View>
-            <TouchableOpacity className="p-2 ml-2" onPress={() => setShowPrivacySettings(true)} accessibilityLabel="Open privacy settings" accessibilityRole="button">
-              <Text className="text-cyan-400 text-2xl">⚙️</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-
-        <View style={{ width: maxWidth }} className="bg-black/60 p-3 rounded-xl border border-purple-700 mb-3">
-          <View className="flex-row justify-between items-center">
-            <View className="flex-1">
-              <Text className="text-purple-400 text-xs font-bold mb-1">📚 TUTORIAL</Text>
-              <TouchableOpacity
-                onPress={() => setSkipOnboarding(!progress.skipOnboarding)}
-                accessibilityLabel={`Tutorial ${progress.skipOnboarding ? 'disabled' : 'enabled'}`}
-                accessibilityRole="switch"
-                className="flex-row items-center gap-2"
-              >
-                <View className={`w-10 h-5 rounded-full p-1 ${progress.skipOnboarding ? 'bg-red-600' : 'bg-green-600'}`}>
-                  <View className={`w-3 h-3 rounded-full bg-white ${progress.skipOnboarding ? 'ml-5' : 'ml-0'}`} />
-                </View>
-                <Text className="text-white text-xs">{progress.skipOnboarding ? 'Skip Tutorial' : 'Show Tutorial'}</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </View>
-
-        <View style={{ width: maxWidth }} className="bg-black/60 p-3 rounded-xl border border-purple-700 mb-3">
-          <Text className="text-amber-400 text-xs font-bold text-center mb-2">🎮 CONTROLS</Text>
-          <View className="flex-row gap-2">
-            <TouchableOpacity onPress={() => setSelectedMode('swipe')} accessibilityLabel={`Swipe controls${selectedMode === 'swipe' ? ', selected' : ''}`} accessibilityRole="radio" accessibilityState={{ selected: selectedMode === 'swipe' }} className={`flex-1 p-2 rounded-lg border ${selectedMode === 'swipe' ? 'bg-green-600/30 border-green-500' : 'bg-gray-800/50 border-gray-600'}`}>
-              <Text className="text-xl text-center">👆</Text>
-              <Text className={`text-center font-bold text-xs ${selectedMode === 'swipe' ? 'text-green-400' : 'text-gray-400'}`}>SWIPE</Text>
-            </TouchableOpacity>
-            <TouchableOpacity onPress={() => setSelectedMode('tap')} accessibilityLabel={`Tap controls${selectedMode === 'tap' ? ', selected' : ''}`} accessibilityRole="radio" accessibilityState={{ selected: selectedMode === 'tap' }} className={`flex-1 p-2 rounded-lg border ${selectedMode === 'tap' ? 'bg-blue-600/30 border-blue-500' : 'bg-gray-800/50 border-gray-600'}`}>
-              <Text className="text-xl text-center">🖱️</Text>
-              <Text className={`text-center font-bold text-xs ${selectedMode === 'tap' ? 'text-blue-400' : 'text-gray-400'}`}>TAP</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-
-        {/* CGM Connection */}
-        <View style={{ width: maxWidth }} className="bg-black/60 p-3 rounded-xl border border-blue-700 mb-3">
-          <Text style={{ color: '#60a5fa', fontSize: 11, fontWeight: 'bold', marginBottom: 6 }}>📡 CGM DEVICE</Text>
-          {cgm.connection.isConnected ? (
-            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-              <View>
-                <Text style={{ color: '#22c55e', fontSize: 12, fontWeight: 'bold' }}>
-                  ✓ {cgm.connection.provider === 'libre' ? 'Apple Health' : 'Dexcom'} Connected
-                </Text>
-                {cgm.latestReading && (
-                  <Text style={{ color: '#9ca3af', fontSize: 10 }}>Latest: {cgm.latestReading.value} mg/dL {cgm.latestReading.trendArrow}</Text>
-                )}
-              </View>
-              <TouchableOpacity onPress={cgm.disconnect} accessibilityLabel="Disconnect CGM" accessibilityRole="button">
-                <Text style={{ color: '#ef4444', fontSize: 11 }}>Disconnect</Text>
-              </TouchableOpacity>
-            </View>
-          ) : (
-            <View style={{ gap: 6 }}>
-              <TouchableOpacity
-                onPress={() => setShowCGMDisclaimer(true)}
-                style={{ backgroundColor: 'rgba(59,130,246,0.2)', padding: 8, borderRadius: 8, borderWidth: 1, borderColor: '#3b82f6' }}
-                accessibilityLabel="Connect Dexcom CGM" accessibilityRole="button"
-              >
-                <Text style={{ color: '#93c5fd', fontSize: 11, fontWeight: 'bold', textAlign: 'center' }}>Connect Dexcom</Text>
-              </TouchableOpacity>
-              {cgm.healthKitAvailable && (
-                <TouchableOpacity
-                  onPress={() => cgm.connect('libre')}
-                  style={{ backgroundColor: 'rgba(239,68,68,0.15)', padding: 8, borderRadius: 8, borderWidth: 1, borderColor: '#f87171' }}
-                  accessibilityLabel="Connect via Apple Health" accessibilityRole="button"
-                >
-                  <Text style={{ color: '#fca5a5', fontSize: 11, fontWeight: 'bold', textAlign: 'center' }}>Connect via Apple Health</Text>
-                </TouchableOpacity>
-              )}
-              <Text style={{ color: '#6b7280', fontSize: 9, textAlign: 'center' }}>Fuels today’s mission selection</Text>
+          {!isNewUser && progress.gamesPlayed > 0 && (
+            <View style={styles.progressBlock}>
+              <Text style={styles.weekNote}>
+                {progress.adherenceWeek.completed} missions completed this week
+              </Text>
+              <ProgressIndicator
+                currentTier={progress.currentTier || 'tier1'}
+                unlockedTiers={[
+                  ...(['tier1'] as const),
+                  ...(progress.maxTierUnlocked !== 'tier1' ? [progress.maxTierUnlocked] : []),
+                ]}
+                variant="detailed"
+                showLabel={true}
+              />
             </View>
           )}
-        </View>
 
-        {/* Optional persistence — demoted */}
-        <View style={{ width: maxWidth }} className="bg-black/60 p-3 rounded-xl border border-purple-900 mb-3">
-          <Text className="text-purple-400 text-xs font-bold mb-2">OPTIONAL IDENTITY</Text>
-          <BeamWalletButton
-            isConnected={isConnected}
-            address={address}
-            connectWallet={connectWallet}
-            disconnectWallet={disconnectWallet}
-          />
-          <TouchableOpacity
-            onPress={() => setShowTreasury(true)}
-            style={{ marginTop: 8, padding: 8, borderRadius: 8, borderWidth: 1, borderColor: 'rgba(167,139,250,0.4)' }}
-          >
-            <Text style={{ color: '#c4b5fd', fontSize: 11, textAlign: 'center' }}>Royal Treasury (optional)</Text>
-          </TouchableOpacity>
-        </View>
-          </>
-        )}
-        </>}
-
-        <View style={{ marginTop: 12 }}>
-          <Text style={{ color: '#6b7280', fontSize: 11, textAlign: 'center' }}>
-            {isNewUser ? 'One mission a day. Practice, then do it in real life.' : 'Practice trains the decision — the mission changes the day.'}
+          <Text style={styles.footerHint}>
+            {isNewUser
+              ? 'One mission a day. Practice, then do it in real life.'
+              : 'Practice trains the decision — the mission changes the day.'}
           </Text>
-        </View>
+        </Animated.View>
       </ScrollView>
 
-      {/* CGM Disclaimer Modal */}
+      {/* Settings sheet */}
+      <Modal
+        visible={showSettings}
+        animationType="slide"
+        transparent
+        onRequestClose={() => setShowSettings(false)}
+      >
+        <View style={styles.sheetBackdrop}>
+          <View style={styles.sheet}>
+            <View style={styles.sheetHeader}>
+              <Text style={styles.sheetTitle}>Settings</Text>
+              <TouchableOpacity onPress={() => setShowSettings(false)} accessibilityRole="button">
+                <Text style={styles.link}>Done</Text>
+              </TouchableOpacity>
+            </View>
+            <ScrollView showsVerticalScrollIndicator={false}>
+              <SettingsSection title="Care & growth">
+                <SheetButton
+                  label="Customize practice"
+                  onPress={() => {
+                    setShowSettings(false);
+                    onSelectGame?.();
+                  }}
+                />
+                <SheetButton
+                  label="Challenges"
+                  onPress={() => {
+                    setShowSettings(false);
+                    track('challenge_hub_viewed', { source: 'settings' });
+                    router.push('/challenge' as any);
+                  }}
+                />
+                <SheetButton label="Library" onPress={() => { setShowSettings(false); setShowLibrary(true); }} />
+                <SheetButton label="Slow Mo lab" onPress={() => { setShowSettings(false); router.push('/slowmo' as any); }} />
+              </SettingsSection>
+
+              <SettingsSection title="Privacy">
+                <PrivacyToggle
+                  currentMode={progress.privacyMode}
+                  onToggle={(mode) => setPrivacyMode(mode)}
+                />
+                <SheetButton label="Privacy details" onPress={() => setShowPrivacySettings(true)} />
+              </SettingsSection>
+
+              <SettingsSection title="Tutorial">
+                <TouchableOpacity
+                  onPress={() => setSkipOnboarding(!progress.skipOnboarding)}
+                  accessibilityRole="switch"
+                  style={styles.switchRow}
+                >
+                  <Text style={styles.sheetBody}>
+                    {progress.skipOnboarding ? 'Tutorial off' : 'Tutorial on'}
+                  </Text>
+                  <View
+                    style={[
+                      styles.switchTrack,
+                      { backgroundColor: progress.skipOnboarding ? P.danger : P.accent },
+                    ]}
+                  >
+                    <View
+                      style={[
+                        styles.switchThumb,
+                        progress.skipOnboarding ? { marginLeft: 18 } : { marginLeft: 2 },
+                      ]}
+                    />
+                  </View>
+                </TouchableOpacity>
+              </SettingsSection>
+
+              <SettingsSection title="Controls">
+                <View style={styles.controlRow}>
+                  {(['swipe', 'tap'] as ControlMode[]).map((mode) => (
+                    <PressableScale
+                      key={mode}
+                      onPress={() => setSelectedMode(mode)}
+                      accessibilityRole="radio"
+                      accessibilityState={{ selected: selectedMode === mode }}
+                      style={[
+                        styles.controlChip,
+                        selectedMode === mode && styles.controlChipOn,
+                      ]}
+                    >
+                      <Text
+                        style={[
+                          styles.controlChipText,
+                          selectedMode === mode && styles.controlChipTextOn,
+                        ]}
+                      >
+                        {mode === 'swipe' ? 'Swipe' : 'Tap'}
+                      </Text>
+                    </PressableScale>
+                  ))}
+                </View>
+              </SettingsSection>
+
+              <SettingsSection title="CGM">
+                {cgm.connection.isConnected ? (
+                  <View style={styles.switchRow}>
+                    <View>
+                      <Text style={styles.sheetBody}>
+                        {cgm.connection.provider === 'libre' ? 'Apple Health' : 'Dexcom'} connected
+                      </Text>
+                      {cgm.latestReading && (
+                        <Text style={styles.sheetMuted}>
+                          Latest {cgm.latestReading.value} mg/dL
+                        </Text>
+                      )}
+                    </View>
+                    <TouchableOpacity onPress={cgm.disconnect} accessibilityRole="button">
+                      <Text style={[styles.link, { color: P.danger }]}>Disconnect</Text>
+                    </TouchableOpacity>
+                  </View>
+                ) : (
+                  <>
+                    <SheetButton label="Connect Dexcom" onPress={() => setShowCGMDisclaimer(true)} />
+                    {cgm.healthKitAvailable && (
+                      <SheetButton label="Connect Apple Health" onPress={() => cgm.connect('libre')} />
+                    )}
+                    <Text style={styles.sheetMuted}>Fuels today’s mission selection</Text>
+                  </>
+                )}
+              </SettingsSection>
+
+              <SettingsSection title="Optional identity">
+                <BeamWalletButton
+                  isConnected={isConnected}
+                  address={address}
+                  connectWallet={connectWallet}
+                  disconnectWallet={disconnectWallet}
+                />
+                <SheetButton
+                  label="Royal Treasury (optional)"
+                  onPress={() => {
+                    setShowSettings(false);
+                    setShowTreasury(true);
+                  }}
+                />
+              </SettingsSection>
+            </ScrollView>
+          </View>
+        </View>
+      </Modal>
+
       <Modal visible={showCGMDisclaimer} transparent animationType="fade" onRequestClose={() => setShowCGMDisclaimer(false)}>
-        <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.85)', justifyContent: 'center', alignItems: 'center', padding: 20 }}>
+        <View style={styles.modalCenter}>
           <MedicalDisclaimer
-            onAccept={() => { setShowCGMDisclaimer(false); cgm.connect(); }}
+            onAccept={() => {
+              setShowCGMDisclaimer(false);
+              cgm.connect();
+            }}
             onDecline={() => setShowCGMDisclaimer(false)}
           />
         </View>
       </Modal>
 
       <PrivacySettingsModal
-        settings={progress.privacySettings || {
-          mode: 'standard',
-          encryptHealthData: false,
-          glucoseLevels: 'public',
-          insulinDoses: 'public',
-          achievements: 'public',
-          gameStats: 'public',
-          healthProfile: 'public',
-        }}
+        settings={
+          progress.privacySettings || {
+            mode: 'standard',
+            encryptHealthData: false,
+            glucoseLevels: 'public',
+            insulinDoses: 'public',
+            achievements: 'public',
+            gameStats: 'public',
+            healthProfile: 'public',
+          }
+        }
         onSave={(settings) => {
           updatePrivacySettings(settings);
           setShowPrivacySettings(false);
@@ -707,85 +523,86 @@ export const MainMenu: React.FC<MainMenuProps> = ({ onStartGame, onSelectGame, o
         visible={showPrivacySettings}
       />
 
-      <Modal
-        visible={showLibrary}
-        animationType="slide"
-        transparent={false}
-        onRequestClose={() => setShowLibrary(false)}
-      >
-        <GrandLibrary 
+      <Modal visible={showLibrary} animationType="slide" onRequestClose={() => setShowLibrary(false)}>
+        <GrandLibrary
           discoveredLoreIds={progress.discoveredLoreIds}
           onClose={() => setShowLibrary(false)}
         />
       </Modal>
 
-      <Modal
-        visible={showTreasury}
-        animationType="slide"
-        transparent={true}
-        onRequestClose={() => setShowTreasury(false)}
-      >
-        <View className="flex-1 justify-end">
+      <Modal visible={showTreasury} animationType="slide" transparent onRequestClose={() => setShowTreasury(false)}>
+        <View style={{ flex: 1, justifyContent: 'flex-end' }}>
           <BeamAssets onClose={() => setShowTreasury(false)} />
         </View>
       </Modal>
 
-      <Modal
-        visible={showCoach}
-        animationType="slide"
-        transparent
-        onRequestClose={() => setShowCoach(false)}
-      >
-        <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.85)', justifyContent: 'flex-end' }}>
-          <View style={{ backgroundColor: '#0f0f1a', borderTopLeftRadius: 20, borderTopRightRadius: 20, padding: 20, borderWidth: 1, borderColor: '#a78bfa', maxHeight: '70%' }}>
-            <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 12 }}>
-              <Text style={{ color: '#c4b5fd', fontWeight: 'bold', fontSize: 16 }}>🧙 Alchemist</Text>
+      <Modal visible={showCoach} animationType="slide" transparent onRequestClose={() => setShowCoach(false)}>
+        <View style={styles.coachBackdrop}>
+          <View style={styles.coachSheet}>
+            <View style={styles.sheetHeader}>
+              <Text style={styles.sheetTitle}>Coach</Text>
               <TouchableOpacity onPress={() => setShowCoach(false)} accessibilityRole="button">
-                <Text style={{ color: '#9ca3af' }}>Close</Text>
+                <Text style={styles.link}>Close</Text>
               </TouchableOpacity>
             </View>
-            <Text style={{ color: '#9ca3af', fontSize: 11, marginBottom: 10 }}>
-              Habit coach only — never dosing or medical advice.
-            </Text>
+            <Text style={styles.sheetMuted}>Habit coach only — never dosing or medical advice.</Text>
             {progress.activeMission && (
-              <Text style={{ color: '#e5e7eb', fontSize: 13, marginBottom: 10 }}>
+              <Text style={[styles.sheetBody, { marginTop: 10 }]}>
                 Today: {progress.activeMission.realWorldAction}
               </Text>
             )}
             {coach.insights.map((line, i) => (
-              <Text key={i} style={{ color: '#a5f3fc', fontSize: 12, marginBottom: 4 }}>• {line}</Text>
+              <Text key={i} style={styles.insight}>
+                · {line}
+              </Text>
             ))}
-            {coach.chatReply && (
-              <View style={{ backgroundColor: 'rgba(167,139,250,0.15)', padding: 10, borderRadius: 10, marginVertical: 8 }}>
-                <Text style={{ color: '#e9d5ff', fontSize: 13, lineHeight: 18 }}>{coach.chatReply}</Text>
+            {coach.chatReply ? (
+              <View style={styles.coachReply}>
+                <Text style={styles.sheetBody}>{coach.chatReply}</Text>
               </View>
-            )}
+            ) : null}
             <TextInput
               value={coachInput}
               onChangeText={setCoachInput}
               placeholder="Ask about today’s mission…"
-              placeholderTextColor="#6b7280"
-              style={{ backgroundColor: '#111827', color: '#fff', borderRadius: 10, padding: 12, borderWidth: 1, borderColor: '#4b5563', marginBottom: 8 }}
+              placeholderTextColor={P.textMuted}
+              style={styles.input}
             />
-            <TouchableOpacity
+            <PressableScale
               disabled={coach.isLoading || !coachInput.trim()}
               onPress={async () => {
                 const q = coachInput.trim();
                 setCoachInput('');
                 await coach.ask(q, signalSnapshot);
               }}
-              style={{ backgroundColor: '#7c3aed', padding: 12, borderRadius: 10, opacity: coach.isLoading ? 0.6 : 1 }}
+              style={[styles.primaryCta, { opacity: coach.isLoading || !coachInput.trim() ? 0.5 : 1 }]}
             >
-              <Text style={{ color: '#fff', fontWeight: 'bold', textAlign: 'center' }}>
-                {coach.isLoading ? 'Consulting…' : 'Ask'}
-              </Text>
-            </TouchableOpacity>
+              <Text style={styles.primaryCtaText}>{coach.isLoading ? 'Thinking…' : 'Ask'}</Text>
+            </PressableScale>
           </View>
         </View>
       </Modal>
     </View>
   );
 };
+
+function SettingsSection({ title, children }: { title: string; children: React.ReactNode }) {
+  return (
+    <View style={styles.section}>
+      <Text style={styles.sectionTitle}>{title}</Text>
+      {children}
+    </View>
+  );
+}
+
+function SheetButton({ label, onPress }: { label: string; onPress: () => void }) {
+  return (
+    <TouchableOpacity onPress={onPress} accessibilityRole="button" style={styles.sheetBtn}>
+      <Text style={styles.sheetBody}>{label}</Text>
+      <Text style={styles.roleArrow}>→</Text>
+    </TouchableOpacity>
+  );
+}
 
 const BeamWalletButton: React.FC<{
   isConnected: boolean;
@@ -802,86 +619,365 @@ const BeamWalletButton: React.FC<{
   if (playerAccount) {
     const truncatedAddress = `${playerAccount.address.substring(0, 6)}...${playerAccount.address.substring(playerAccount.address.length - 4)}`;
     return (
-      <View className="flex-row gap-2">
-        <TouchableOpacity
-          className="bg-purple-600 px-4 py-2 rounded-full min-h-[36px] justify-center"
-          onPress={logout}
-          disabled={isLoading}
-        >
-          <Text className="text-white text-xs font-bold text-center">
-            {truncatedAddress} (Beam)
-          </Text>
-        </TouchableOpacity>
-      </View>
+      <TouchableOpacity onPress={logout} disabled={isLoading} style={styles.sheetBtn}>
+        <Text style={styles.sheetBody}>{truncatedAddress} (Beam)</Text>
+      </TouchableOpacity>
     );
   }
 
   if (isConnected && address) {
     const truncatedAddress = `${address.substring(0, 6)}...${address.substring(address.length - 4)}`;
     return (
-      <TouchableOpacity
-        className="bg-purple-600 px-3 py-2 rounded-full min-h-[36px] justify-center min-w-[100px]"
-        onPress={disconnectWallet}
-      >
-        <Text className="text-white text-xs font-bold text-center">{truncatedAddress}</Text>
+      <TouchableOpacity onPress={disconnectWallet} style={styles.sheetBtn}>
+        <Text style={styles.sheetBody}>{truncatedAddress}</Text>
       </TouchableOpacity>
     );
   }
 
   return (
-    <View className="flex-row gap-2">
-      <TouchableOpacity
-        className="bg-amber-600 px-4 py-2 rounded-full min-h-[36px] justify-center"
-        onPress={connectWallet}
-        accessibilityLabel="Connect crypto wallet"
-        accessibilityRole="button"
-      >
-        <Text className="text-white font-bold text-xs text-center">
-          {Platform.OS === 'web' ? 'Connect Wallet' : 'Wallet'}
-        </Text>
-      </TouchableOpacity>
-      
-      <TouchableOpacity
-        className="bg-blue-600 px-4 py-2 rounded-full min-h-[36px] justify-center border border-blue-400"
+    <View style={{ gap: 8 }}>
+      <SheetButton
+        label={Platform.OS === 'web' ? 'Connect wallet' : 'Wallet'}
         onPress={() => {
-          if (login) login();
-          // Tooltip explanation - logic to show it would be here
+          void connectWallet();
         }}
-        disabled={isLoading}
-        accessibilityLabel="Sign in with social account"
-        accessibilityRole="button"
-      >
-        <Text className="text-white font-bold text-xs text-center">
-          {isLoading ? '...' : 'Play with Social'}
-        </Text>
-      </TouchableOpacity>
+      />
+      <SheetButton
+        label={isLoading ? '…' : 'Continue with social'}
+        onPress={() => {
+          if (login) void login();
+        }}
+      />
     </View>
   );
 };
 
-// #14: Weekly challenge countdown
-const WeeklyCountdown: React.FC = () => {
-  const now = new Date();
-  const nextMonday = new Date(now);
-  nextMonday.setDate(now.getDate() + ((8 - now.getDay()) % 7 || 7));
-  nextMonday.setHours(0, 0, 0, 0);
-  const diff = nextMonday.getTime() - now.getTime();
-  const days = Math.floor(diff / 86400000);
-  const hours = Math.floor((diff % 86400000) / 3600000);
-
-  return (
-    <View style={{ width: 350, marginTop: 8, marginBottom: 4, alignSelf: 'center' }}>
-      <Text style={{ color: '#6b7280', fontSize: 10, textAlign: 'center' }}>
-        🧪 Weekly Challenge resets in {days}d {hours}h
-      </Text>
-    </View>
-  );
-};
-
-interface MainMenuProps {
-  onStartGame: (controlMode: ControlMode) => void;
-  onSelectGame: () => void;
-  onUserModeSelected?: (mode: string) => void;
-  userModeSelected?: boolean;
-  onViewStats?: () => void;
-}
+const styles = StyleSheet.create({
+  root: {
+    flex: 1,
+    backgroundColor: P.ink,
+  },
+  zContent: {
+    flex: 1,
+    zIndex: 10,
+  },
+  topBar: {
+    zIndex: 20,
+    paddingTop: 12,
+    paddingHorizontal: 24,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  topEyebrow: {
+    fontFamily: FONTS.bodyMedium,
+    color: P.textMuted,
+    fontSize: 10,
+    letterSpacing: 1.4,
+    textTransform: 'uppercase',
+  },
+  topMeta: {
+    fontFamily: FONTS.body,
+    color: P.textSoft,
+    fontSize: 13,
+    marginTop: 2,
+  },
+  iconBtn: {
+    padding: 10,
+    borderWidth: 1,
+    borderColor: P.line,
+    borderRadius: 2,
+    backgroundColor: P.mist,
+  },
+  homeScroll: {
+    alignItems: 'center',
+    paddingHorizontal: 24,
+    paddingTop: 36,
+    paddingBottom: 48,
+  },
+  brandMark: {
+    fontFamily: FONTS.display,
+    color: P.text,
+    fontSize: 36,
+    lineHeight: 42,
+    letterSpacing: -0.5,
+  },
+  tagline: {
+    fontFamily: FONTS.body,
+    color: P.textSoft,
+    fontSize: 16,
+    lineHeight: 24,
+    marginTop: 8,
+  },
+  signalLine: {
+    fontFamily: FONTS.body,
+    color: P.textMuted,
+    fontSize: 12,
+    marginTop: 10,
+  },
+  primaryCta: {
+    backgroundColor: P.accent,
+    paddingVertical: 16,
+    borderRadius: 2,
+    alignItems: 'center',
+  },
+  primaryCtaText: {
+    fontFamily: FONTS.bodyBold,
+    color: P.ink,
+    fontSize: 16,
+    letterSpacing: 0.2,
+  },
+  secondaryRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: 8,
+    marginTop: 18,
+  },
+  link: {
+    fontFamily: FONTS.bodyMedium,
+    color: P.textSoft,
+    fontSize: 13,
+  },
+  dot: {
+    color: P.textMuted,
+    fontSize: 13,
+  },
+  progressBlock: {
+    marginTop: 28,
+    gap: 10,
+  },
+  weekNote: {
+    fontFamily: FONTS.body,
+    color: P.textMuted,
+    fontSize: 12,
+    textAlign: 'center',
+  },
+  footerHint: {
+    fontFamily: FONTS.body,
+    color: P.textMuted,
+    fontSize: 12,
+    textAlign: 'center',
+    marginTop: 28,
+    lineHeight: 18,
+  },
+  toast: {
+    position: 'absolute',
+    top: 0,
+    left: 20,
+    right: 20,
+    zIndex: 100,
+    backgroundColor: P.inkElevated,
+    borderWidth: 1,
+    borderColor: P.line,
+    padding: 14,
+    borderRadius: 2,
+  },
+  toastTitle: {
+    fontFamily: FONTS.bodyBold,
+    color: P.text,
+    fontSize: 14,
+  },
+  toastBody: {
+    fontFamily: FONTS.body,
+    color: P.textMuted,
+    fontSize: 12,
+    marginTop: 2,
+  },
+  roleScroll: {
+    paddingVertical: 48,
+    paddingHorizontal: 24,
+    maxWidth,
+    alignSelf: 'center',
+    width: '100%',
+  },
+  roleHeadline: {
+    fontFamily: FONTS.display,
+    color: P.text,
+    fontSize: 28,
+    lineHeight: 34,
+    marginTop: 20,
+  },
+  roleSub: {
+    fontFamily: FONTS.body,
+    color: P.textMuted,
+    fontSize: 14,
+    marginTop: 8,
+    marginBottom: 28,
+    lineHeight: 20,
+  },
+  roleList: {
+    gap: 10,
+  },
+  roleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 18,
+    paddingHorizontal: 16,
+    borderWidth: 1,
+    borderColor: P.line,
+    backgroundColor: P.mist,
+    borderRadius: 2,
+  },
+  roleName: {
+    fontFamily: FONTS.bodyBold,
+    color: P.text,
+    fontSize: 16,
+  },
+  roleDesc: {
+    fontFamily: FONTS.body,
+    color: P.textMuted,
+    fontSize: 13,
+    marginTop: 4,
+  },
+  roleArrow: {
+    fontFamily: FONTS.body,
+    color: P.textMuted,
+    fontSize: 18,
+    marginLeft: 12,
+  },
+  sheetBackdrop: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.55)',
+    justifyContent: 'flex-end',
+  },
+  sheet: {
+    backgroundColor: P.inkElevated,
+    borderTopLeftRadius: 12,
+    borderTopRightRadius: 12,
+    borderWidth: 1,
+    borderColor: P.line,
+    padding: 20,
+    maxHeight: '85%',
+  },
+  sheetHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  sheetTitle: {
+    fontFamily: FONTS.display,
+    color: P.text,
+    fontSize: 22,
+  },
+  section: {
+    marginBottom: 22,
+    gap: 8,
+  },
+  sectionTitle: {
+    fontFamily: FONTS.bodyMedium,
+    color: P.accent,
+    fontSize: 11,
+    letterSpacing: 1.4,
+    textTransform: 'uppercase',
+    marginBottom: 4,
+  },
+  sheetBtn: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: P.line,
+  },
+  sheetBody: {
+    fontFamily: FONTS.body,
+    color: P.text,
+    fontSize: 14,
+  },
+  sheetMuted: {
+    fontFamily: FONTS.body,
+    color: P.textMuted,
+    fontSize: 12,
+    marginTop: 4,
+  },
+  switchRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 8,
+  },
+  switchTrack: {
+    width: 36,
+    height: 20,
+    borderRadius: 10,
+    justifyContent: 'center',
+  },
+  switchThumb: {
+    width: 14,
+    height: 14,
+    borderRadius: 7,
+    backgroundColor: '#fff',
+  },
+  controlRow: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  controlChip: {
+    flex: 1,
+    paddingVertical: 12,
+    borderWidth: 1,
+    borderColor: P.line,
+    borderRadius: 2,
+    alignItems: 'center',
+  },
+  controlChipOn: {
+    borderColor: P.accent,
+    backgroundColor: P.accentSoft,
+  },
+  controlChipText: {
+    fontFamily: FONTS.bodyMedium,
+    color: P.textMuted,
+    fontSize: 13,
+  },
+  controlChipTextOn: {
+    color: P.text,
+  },
+  modalCenter: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.85)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  coachBackdrop: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.7)',
+    justifyContent: 'flex-end',
+  },
+  coachSheet: {
+    backgroundColor: P.inkElevated,
+    borderTopLeftRadius: 12,
+    borderTopRightRadius: 12,
+    padding: 20,
+    borderWidth: 1,
+    borderColor: P.line,
+    maxHeight: '75%',
+  },
+  insight: {
+    fontFamily: FONTS.body,
+    color: P.cool,
+    fontSize: 12,
+    marginTop: 4,
+  },
+  coachReply: {
+    backgroundColor: P.mist,
+    padding: 12,
+    borderRadius: 2,
+    marginVertical: 10,
+    borderWidth: 1,
+    borderColor: P.line,
+  },
+  input: {
+    backgroundColor: P.ink,
+    color: P.text,
+    borderRadius: 2,
+    padding: 12,
+    borderWidth: 1,
+    borderColor: P.line,
+    marginVertical: 12,
+    fontFamily: FONTS.body,
+  },
+});

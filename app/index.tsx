@@ -7,14 +7,14 @@ import { HeroIntro } from '@/components/game/HeroIntro';
 import { usePlayerProgressContext } from '@/context/PlayerProgressContext';
 import { ControlMode } from '@/types/game';
 import { track } from '@/utils/analytics';
+import { COLORS, FONTS } from '@/constants/designSystem';
 
-// #19: Time-of-day ambient tint
 function getAmbientColor(): string {
   const hour = new Date().getHours();
-  if (hour >= 6 && hour < 10) return '#1a150a';   // warm morning
-  if (hour >= 10 && hour < 16) return '#0a0a12';  // neutral day
-  if (hour >= 16 && hour < 20) return '#12080a';  // warm evening
-  return '#0a0a14';                                 // cool night
+  if (hour >= 6 && hour < 10) return '#121810';
+  if (hour >= 10 && hour < 16) return COLORS.PROGRAMME.ink;
+  if (hour >= 16 && hour < 20) return '#14120e';
+  return '#0a1012';
 }
 
 export default function MenuScreen() {
@@ -34,10 +34,9 @@ export default function MenuScreen() {
   const ambientBg = getAmbientColor();
 
   if (!hydrated) {
-    // #17: Pulsing castle loading skeleton
     return (
       <View style={{ flex: 1, backgroundColor: ambientBg, justifyContent: 'center', alignItems: 'center' }}>
-        <PulsingCastle />
+        <QuietLoader />
       </View>
     );
   }
@@ -81,19 +80,38 @@ export default function MenuScreen() {
   );
 }
 
-// #17: Pulsing castle loading skeleton
-function PulsingCastle() {
-  const anim = React.useRef(new Animated.Value(0.4)).current;
+function QuietLoader() {
+  const anim = React.useRef(new Animated.Value(0.35)).current;
   React.useEffect(() => {
-    Animated.loop(Animated.sequence([
-      Animated.timing(anim, { toValue: 1, duration: 800, useNativeDriver: true }),
-      Animated.timing(anim, { toValue: 0.4, duration: 800, useNativeDriver: true }),
-    ])).start();
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(anim, { toValue: 1, duration: 900, useNativeDriver: true }),
+        Animated.timing(anim, { toValue: 0.35, duration: 900, useNativeDriver: true }),
+      ]),
+    ).start();
   }, [anim]);
   return (
-    <Animated.View style={{ opacity: anim, alignItems: 'center' }}>
-      <Text style={{ fontSize: 64 }}>🏰</Text>
-      <Text style={{ color: '#fbbf2480', fontSize: 12, marginTop: 8 }}>Entering the Realm...</Text>
+    <Animated.View style={{ opacity: anim, alignItems: 'center', paddingHorizontal: 32 }}>
+      <Text
+        style={{
+          fontFamily: FONTS.display,
+          color: COLORS.PROGRAMME.text,
+          fontSize: 28,
+          letterSpacing: -0.3,
+        }}
+      >
+        Glucose Wars
+      </Text>
+      <Text
+        style={{
+          fontFamily: FONTS.body,
+          color: COLORS.PROGRAMME.textMuted,
+          fontSize: 13,
+          marginTop: 10,
+        }}
+      >
+        Opening your programme…
+      </Text>
     </Animated.View>
   );
 }

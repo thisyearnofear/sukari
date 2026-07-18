@@ -3,6 +3,15 @@ import {
   ThemeProvider,
 } from "@react-navigation/native";
 import { useFonts } from "expo-font";
+import {
+  Fraunces_600SemiBold,
+  Fraunces_600SemiBold_Italic,
+} from "@expo-google-fonts/fraunces";
+import {
+  DMSans_400Regular,
+  DMSans_500Medium,
+  DMSans_700Bold,
+} from "@expo-google-fonts/dm-sans";
 import { Stack } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import { StatusBar } from "expo-status-bar";
@@ -15,13 +24,17 @@ import { PlayerProgressProvider } from "@/context/PlayerProgressContext";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { initAnalytics, track } from "@/utils/analytics";
 import { initErrorMonitoring } from "@/utils/errorMonitoring";
-
 // Prevent the splash screen from auto-hiding before asset loading is complete.
 SplashScreen.preventAutoHideAsync();
 
 export default function RootLayout() {
   const [loaded] = useFonts({
     SpaceMono: require('../assets/fonts/SpaceMono-Regular.ttf'),
+    Fraunces_600SemiBold,
+    Fraunces_600SemiBold_Italic,
+    DMSans_400Regular,
+    DMSans_500Medium,
+    DMSans_700Bold,
   });
 
   useEffect(() => {
@@ -55,7 +68,7 @@ export default function RootLayout() {
                 <Stack.Screen name="slowmo" />
                 <Stack.Screen name="auth" />
               </Stack>
-              <StatusBar style="auto" />
+              <StatusBar style="light" />
             </ThemeProvider>
           </SafeAreaProvider>
         </PlayerProgressProvider>

@@ -1,11 +1,12 @@
 /**
- * TodayMission — single daily programme mission card.
- * Enhances former DailyQuests multi-list into one adherence ask.
+ * Today’s Mission — single programme ask.
+ * Visual language: programme instrument, not quest board.
  */
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet } from 'react-native';
 import { ProgrammeMission, AdherenceWeek } from '@/domain/programme';
-import { COLORS } from '@/constants/designSystem';
+import { COLORS, FONTS } from '@/constants/designSystem';
+import { PressableScale } from '@/components/ui/PressableScale';
 
 interface TodayMissionProps {
   mission: ProgrammeMission | null;
@@ -14,6 +15,8 @@ interface TodayMissionProps {
   onPractice?: () => void;
   onMarkDone?: () => void;
   onAskCoach?: () => void;
+  /** When true, hide internal Practice (parent owns primary CTA) */
+  compact?: boolean;
 }
 
 export const DailyQuests: React.FC<TodayMissionProps> = ({
@@ -23,12 +26,13 @@ export const DailyQuests: React.FC<TodayMissionProps> = ({
   onPractice,
   onMarkDone,
   onAskCoach,
+  compact = false,
 }) => {
   if (!mission) {
     return (
       <View style={styles.container}>
-        <Text style={styles.title}>TODAY’S MISSION</Text>
-        <Text style={styles.empty}>Your next decree appears at dawn.</Text>
+        <Text style={styles.eyebrow}>Today</Text>
+        <Text style={styles.empty}>Your next mission appears at dawn.</Text>
       </View>
     );
   }
@@ -39,59 +43,57 @@ export const DailyQuests: React.FC<TodayMissionProps> = ({
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.title}>TODAY’S MISSION</Text>
-        <View style={styles.renownBadge}>
-          <Text style={styles.renownText}>👑 {renown}</Text>
-        </View>
+        <Text style={styles.eyebrow}>Today’s mission</Text>
+        {adherenceWeek && (
+          <Text style={styles.weekLine}>
+            {adherenceWeek.completed}/{Math.max(adherenceWeek.assigned, 1)} this week
+          </Text>
+        )}
       </View>
 
-      {adherenceWeek && (
-        <Text style={styles.weekLine}>
-          Week {adherenceWeek.completed}/{Math.max(adherenceWeek.assigned, 1)} complete
-          {adherenceWeek.relapses > 0 ? ` · ${adherenceWeek.relapses} recovery` : ''}
-        </Text>
-      )}
+      <Text style={styles.realmCopy}>{mission.realmCopy}</Text>
 
-      <View style={[styles.card, done && styles.cardDone]}>
-        <Text style={styles.realmCopy}>{mission.realmCopy}</Text>
-        <Text style={styles.actionLabel}>REAL WORLD</Text>
+      <View style={styles.actionBlock}>
+        <Text style={styles.actionLabel}>In the real world</Text>
         <Text style={styles.action}>{mission.realWorldAction}</Text>
-        <Text style={styles.status}>
-          {done ? '✓ Complete' : practiced ? 'Practiced — mark when done in real life' : 'Assigned'}
-        </Text>
+      </View>
 
-        <View style={styles.row}>
-          {onPractice && !done && (
-            <TouchableOpacity
-              style={styles.primaryBtn}
-              onPress={onPractice}
-              accessibilityRole="button"
-              accessibilityLabel="Practice today’s mission"
-            >
-              <Text style={styles.primaryBtnText}>PRACTICE</Text>
-            </TouchableOpacity>
-          )}
-          {onMarkDone && practiced && !done && (
-            <TouchableOpacity
-              style={styles.secondaryBtn}
-              onPress={onMarkDone}
-              accessibilityRole="button"
-              accessibilityLabel="Mark real-world action done"
-            >
-              <Text style={styles.secondaryBtnText}>I DID IT</Text>
-            </TouchableOpacity>
-          )}
-          {onAskCoach && (
-            <TouchableOpacity
-              style={styles.ghostBtn}
-              onPress={onAskCoach}
-              accessibilityRole="button"
-              accessibilityLabel="Ask the Alchemist"
-            >
-              <Text style={styles.ghostBtnText}>ALCHEMIST</Text>
-            </TouchableOpacity>
-          )}
-        </View>
+      <Text style={[styles.status, done && styles.statusDone]}>
+        {done ? 'Complete' : practiced ? 'Practiced — mark when done in life' : 'Assigned'}
+        {renown > 0 ? ` · ${renown} renown` : ''}
+      </Text>
+
+      <View style={styles.row}>
+        {!compact && onPractice && !done && (
+          <PressableScale
+            onPress={onPractice}
+            accessibilityRole="button"
+            accessibilityLabel="Practice today’s mission"
+            style={styles.primaryBtn}
+          >
+            <Text style={styles.primaryBtnText}>Practice</Text>
+          </PressableScale>
+        )}
+        {onMarkDone && practiced && !done && (
+          <PressableScale
+            onPress={onMarkDone}
+            accessibilityRole="button"
+            accessibilityLabel="Mark real-world action done"
+            style={styles.secondaryBtn}
+          >
+            <Text style={styles.secondaryBtnText}>I did it</Text>
+          </PressableScale>
+        )}
+        {onAskCoach && (
+          <PressableScale
+            onPress={onAskCoach}
+            accessibilityRole="button"
+            accessibilityLabel="Ask the coach"
+            style={styles.ghostBtn}
+          >
+            <Text style={styles.ghostBtnText}>Ask coach</Text>
+          </PressableScale>
+        )}
       </View>
     </View>
   );
@@ -99,74 +101,113 @@ export const DailyQuests: React.FC<TodayMissionProps> = ({
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: 'rgba(0,0,0,0.55)',
-    borderRadius: 16,
+    backgroundColor: COLORS.PROGRAMME.mist,
+    borderRadius: 2,
     borderWidth: 1,
-    borderColor: 'rgba(245, 158, 11, 0.35)',
-    padding: 14,
+    borderColor: COLORS.PROGRAMME.line,
+    paddingVertical: 20,
+    paddingHorizontal: 18,
   },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'center',
+    alignItems: 'baseline',
+    marginBottom: 14,
+  },
+  eyebrow: {
+    fontFamily: FONTS.bodyMedium,
+    color: COLORS.PROGRAMME.accent,
+    fontSize: 11,
+    letterSpacing: 1.6,
+    textTransform: 'uppercase',
+  },
+  weekLine: {
+    fontFamily: FONTS.body,
+    color: COLORS.PROGRAMME.textMuted,
+    fontSize: 12,
+  },
+  empty: {
+    fontFamily: FONTS.body,
+    color: COLORS.PROGRAMME.textSoft,
+    fontSize: 15,
+    lineHeight: 22,
+  },
+  realmCopy: {
+    fontFamily: FONTS.display,
+    color: COLORS.PROGRAMME.text,
+    fontSize: 22,
+    lineHeight: 28,
+    marginBottom: 16,
+  },
+  actionBlock: {
+    marginBottom: 12,
+    paddingTop: 12,
+    borderTopWidth: 1,
+    borderTopColor: COLORS.PROGRAMME.line,
+  },
+  actionLabel: {
+    fontFamily: FONTS.bodyMedium,
+    color: COLORS.PROGRAMME.textMuted,
+    fontSize: 11,
+    letterSpacing: 1.2,
+    textTransform: 'uppercase',
     marginBottom: 6,
   },
-  title: {
-    color: COLORS.ALLY || '#fbbf24',
+  action: {
+    fontFamily: FONTS.body,
+    color: COLORS.PROGRAMME.text,
+    fontSize: 16,
+    lineHeight: 24,
+  },
+  status: {
+    fontFamily: FONTS.body,
+    color: COLORS.PROGRAMME.textMuted,
     fontSize: 12,
-    fontWeight: 'bold',
-    letterSpacing: 1,
+    marginBottom: 14,
   },
-  renownBadge: {
-    backgroundColor: 'rgba(217, 119, 6, 0.25)',
-    paddingHorizontal: 8,
-    paddingVertical: 2,
-    borderRadius: 10,
+  statusDone: {
+    color: COLORS.PROGRAMME.accent,
   },
-  renownText: { color: '#fde68a', fontSize: 11, fontWeight: 'bold' },
-  weekLine: { color: '#9ca3af', fontSize: 10, marginBottom: 8 },
-  empty: { color: '#9ca3af', fontSize: 12 },
-  card: {
-    backgroundColor: 'rgba(15, 15, 26, 0.9)',
-    borderRadius: 12,
-    padding: 12,
-    borderWidth: 1,
-    borderColor: 'rgba(167, 139, 250, 0.25)',
+  row: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 10,
   },
-  cardDone: { borderColor: 'rgba(34, 197, 94, 0.5)' },
-  realmCopy: { color: '#e5e7eb', fontSize: 13, fontWeight: '600', marginBottom: 8, lineHeight: 18 },
-  actionLabel: {
-    color: '#60a5fa',
-    fontSize: 9,
-    fontWeight: 'bold',
-    letterSpacing: 1,
-    marginBottom: 2,
-  },
-  action: { color: '#fff', fontSize: 13, marginBottom: 8, lineHeight: 18 },
-  status: { color: '#a78bfa', fontSize: 11, marginBottom: 10 },
-  row: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   primaryBtn: {
-    backgroundColor: '#16a34a',
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: 10,
+    backgroundColor: COLORS.PROGRAMME.accent,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderRadius: 2,
   },
-  primaryBtnText: { color: '#fff', fontWeight: 'bold', fontSize: 11 },
+  primaryBtnText: {
+    fontFamily: FONTS.bodyBold,
+    color: COLORS.PROGRAMME.ink,
+    fontSize: 13,
+    letterSpacing: 0.3,
+  },
   secondaryBtn: {
-    backgroundColor: 'rgba(59, 130, 246, 0.25)',
+    backgroundColor: COLORS.PROGRAMME.coolSoft,
     borderWidth: 1,
-    borderColor: '#3b82f6',
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: 10,
+    borderColor: COLORS.PROGRAMME.cool,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderRadius: 2,
   },
-  secondaryBtnText: { color: '#93c5fd', fontWeight: 'bold', fontSize: 11 },
+  secondaryBtnText: {
+    fontFamily: FONTS.bodyBold,
+    color: COLORS.PROGRAMME.text,
+    fontSize: 13,
+  },
   ghostBtn: {
     borderWidth: 1,
-    borderColor: 'rgba(167, 139, 250, 0.5)',
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: 10,
+    borderColor: COLORS.PROGRAMME.line,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    borderRadius: 2,
   },
-  ghostBtnText: { color: '#c4b5fd', fontWeight: 'bold', fontSize: 11 },
+  ghostBtnText: {
+    fontFamily: FONTS.bodyMedium,
+    color: COLORS.PROGRAMME.textSoft,
+    fontSize: 13,
+  },
 });

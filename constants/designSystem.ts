@@ -38,7 +38,7 @@ export const COLORS = {
   INFO: '#06b6d4',            // Cyan - info
 
   // Background & Text
-  BG_DARK: '#0a0a12',         // Dark navy - main background
+  BG_DARK: '#0a0a12',         // Dark navy - main background (legacy game)
   BG_DARKER: '#000000',       // Black - overlay background
   TEXT_PRIMARY: '#ffffff',    // White - primary text
   TEXT_SECONDARY: '#d1d5db',  // Light gray - secondary text
@@ -47,6 +47,35 @@ export const COLORS = {
 
   // Accessibility
   FOCUS_RING: '#60a5fa',      // Blue - keyboard focus
+
+  /**
+   * Programme / Realm surfaces — clinical instrument, not neon game UI.
+   * Avoid purple-on-black; zone accents carry metabolic meaning.
+   */
+  PROGRAMME: {
+    ink: '#0B1210',
+    inkElevated: '#121A17',
+    mist: 'rgba(180, 210, 195, 0.08)',
+    line: 'rgba(180, 210, 195, 0.16)',
+    text: '#E8F0EB',
+    textMuted: '#8FA397',
+    textSoft: '#B7C7BC',
+    accent: '#3D9B7A',
+    accentSoft: 'rgba(61, 155, 122, 0.18)',
+    warn: '#C4923A',
+    warnSoft: 'rgba(196, 146, 58, 0.16)',
+    cool: '#4A8FA8',
+    coolSoft: 'rgba(74, 143, 168, 0.16)',
+    danger: '#C45C5C',
+  },
+} as const;
+
+export const FONTS = {
+  display: 'Fraunces_600SemiBold',
+  displayItalic: 'Fraunces_600SemiBold_Italic',
+  body: 'DMSans_400Regular',
+  bodyMedium: 'DMSans_500Medium',
+  bodyBold: 'DMSans_700Bold',
 } as const;
 
 // ============================================
@@ -152,11 +181,12 @@ export const ANIMATIONS = {
   // Standard durations (in milliseconds)
   DURATION: {
     INSTANT: 0,
-    FAST: 150,
-    BASE: 300,
-    SLOW: 500,
-    SLOWER: 800,
-    SLOWEST: 1500,
+    /** Press / hover feedback — keep short (Emil) */
+    FAST: 160,
+    BASE: 280,
+    SLOW: 420,
+    SLOWER: 640,
+    SLOWEST: 1200,
   } as const,
 
   // Easing function names — use with Easing[key] from 'react-native'
@@ -168,53 +198,63 @@ export const ANIMATIONS = {
     EASE_IN_OUT: 'inOut',
   } as const,
 
+  /**
+   * Motion tokens (transitions.dev / Emil-aligned).
+   * Prefer named tokens over hardcoded ms in UI surfaces.
+   * Bezier tuples work with Easing.bezier(...tuple).
+   */
+  MOTION: {
+    press: { duration: 160, bezier: [0.23, 1, 0.32, 1] as const },
+    enter: { duration: 320, bezier: [0.23, 1, 0.32, 1] as const },
+    exit: { duration: 220, bezier: [0.4, 0, 1, 1] as const },
+    move: { duration: 400, bezier: [0.77, 0, 0.175, 1] as const },
+    drawer: { duration: 480, bezier: [0.32, 0.72, 0, 1] as const },
+    toast: { duration: 360, bezier: [0.23, 1, 0.32, 1] as const },
+    /** Rare delight only (mission complete, first open) */
+    celebrate: { duration: 640, bezier: [0.22, 1, 0.36, 1] as const },
+  } as const,
+
   // Common animation configurations
   PRESETS: {
-    // Fade in/out
     FADE_IN: {
-      duration: 300,
-      easing: 'ease-in',
-    },
-    FADE_OUT: {
-      duration: 300,
+      duration: 280,
       easing: 'ease-out',
     },
+    FADE_OUT: {
+      duration: 220,
+      easing: 'ease-in',
+    },
 
-    // Scale
     SCALE_IN: {
-      duration: 300,
+      duration: 280,
       easing: 'ease-out',
     },
     SCALE_OUT: {
-      duration: 200,
+      duration: 180,
       easing: 'ease-in',
     },
 
-    // Slide
     SLIDE_IN_UP: {
-      duration: 400,
+      duration: 360,
       easing: 'ease-out',
     },
     SLIDE_OUT_DOWN: {
-      duration: 300,
+      duration: 240,
       easing: 'ease-in',
     },
 
-    // Pulse (for looping)
     PULSE: {
       duration: 800,
       easing: 'ease-in-out',
     },
 
-    // Combo burst
     COMBO_BURST: {
       duration: 600,
       easing: 'ease-out',
     },
 
-    // Screen transition
     SCREEN_TRANSITION: {
-      duration: 300,
+      duration: 280,
       easing: 'ease-in-out',
     },
   } as const,
