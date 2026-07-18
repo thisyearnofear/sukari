@@ -27,18 +27,13 @@
   "dependencies": {
     "@expo/vector-icons": "^15.0.3",
     "@onbeam/sdk": "2.6.1",
-    "@rainbow-me/rainbowkit": "^2.1.0",
     "@react-native-async-storage/async-storage": "^2.2.0",
     "@react-navigation/bottom-tabs": "^7.2.0",
     "@react-navigation/native": "^7.0.14",
-    "@tanstack/react-query": "5.90.12",
-    "@walletconnect/ethereum-provider": "2.23.1",
-    "@walletconnect/modal-react-native": "1.1.0",
-    "@walletconnect/react-native-compat": "2.23.1",
-    "@walletconnect/react-native-dapp": "1.8.0",
+    "@walletconnect/ethereum-provider": "2.23.10",
     "autoprefixer": "^10.4.20",
     "bs58": "6.0.0",
-    "ethers": "6.16.0",
+    "ethers": "6.17.0",
     "expo": "~54.0.29",
     "expo-atlas": "^0.4.0",
     "expo-auth-session": "~7.0.10",
@@ -58,7 +53,7 @@
     "lightningcss": "^1.29.2",
     "lucide-react-native": "^0.479.0",
     "nativewind": "^4.1.23",
-    "ox": "0.6.9",
+    "ox": "0.14.30",
     "postcss": "^8.5.3",
     "react": "19.1.0",
     "react-dom": "19.1.0",
@@ -74,8 +69,7 @@
     "react-native-webview": "13.15.0",
     "react-native-worklets": "0.5.1",
     "tailwindcss": "^3.4.17",
-    "viem": "^2.21.8",
-    "wagmi": "^2.12.8",
+    "viem": "2.55.2",
     "zustand": "5.0.9"
   },
   "devDependencies": {
@@ -94,9 +88,6 @@
   },
   "private": true,
   "overrides": {
-    "ox": "0.6.9"
-  },
-  "resolutions": {
-    "@noble/hashes": "^1.4.0"
+    "ox": "0.14.30"
   }
 }

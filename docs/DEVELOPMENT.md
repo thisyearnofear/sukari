@@ -38,11 +38,10 @@ npm run lint                # full project lint
 
 If you already committed secrets historically, rotate those keys — untracking `.env` does not remove them from git history.
 
-### Required (WalletConnect)
+### Optional (legacy Scroll / WalletConnect)
+Only needed if you exercise native Scroll/VRF wallet paths (`@walletconnect/ethereum-provider`). Not required for the Adherence OS web demo.
 - `EXPO_PUBLIC_WALLET_CONNECT_PROJECT_ID=...`
-
-### Optional (RPC)
-- `EXPO_PUBLIC_RPC_URL=...`
+- `EXPO_PUBLIC_RPC_URL=...` (defaults to Scroll Sepolia)
 
 ### Optional Analytics (PostHog, web-only for now)
 This repo includes a lightweight analytics wrapper at `utils/analytics.ts`.

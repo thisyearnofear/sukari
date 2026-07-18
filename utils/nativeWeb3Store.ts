@@ -28,8 +28,7 @@ export const useWeb3Store = create<Web3State>((set, get) => ({
       // For now, we'll simulate a connection
       console.log(`Connecting to ${walletType} wallet...`);
 
-      // This is where you'd implement the actual wallet connection logic
-      // using @walletconnect/react-native-compat or similar
+      // Optional: wire @walletconnect/ethereum-provider for real mobile wallets
 
       // For demo purposes, setting a mock state
       set({
@@ -57,9 +56,3 @@ export const useWeb3Store = create<Web3State>((set, get) => ({
     return get().signer;
   }
 }));
-
-// For native platforms, return a function that provides access to our Web3 store
-export const wagmiConfig = {
-  // This is a mock configuration since we're not using wagmi on native
-  // Instead, we're using our own Web3 store implementation
-};
