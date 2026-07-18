@@ -1,5 +1,5 @@
 /**
- * Synthetic demo patient "Maya" — deterministic 14-day timeline for hackathon demos.
+ * Synthetic demo patient "Amina" — deterministic 14-day timeline for hackathon demos.
  * Explicitly labeled synthetic; never presented as a real patient record.
  */
 
@@ -11,8 +11,8 @@ import type { WeeklyDigestPayload } from '@/domain/digest/types';
 const SAFETY =
   'Habits and lifestyle experiments only — never insulin, medication dosing, or diagnosis.';
 
-export const MAYA_DEMO = {
-  patientLabel: 'Maya · demo patient (synthetic)',
+export const AMINA_DEMO = {
+  patientLabel: 'Amina · demo patient (synthetic)',
   age: 51,
   condition: 'Type 2 diabetes — home metabolic-care programme',
   defaultDayIndex: 10,
@@ -34,7 +34,7 @@ function dayStart(dayIndex: number): number {
 }
 
 /** Generate a day of synthetic CGM-like points (every ~15 min, daytime denser). */
-export function mayaReadingsForDay(dayIndex: number, walkedAfterDinner: boolean): GlucoseReading[] {
+export function aminaReadingsForDay(dayIndex: number, walkedAfterDinner: boolean): GlucoseReading[] {
   const start = dayStart(dayIndex);
   const points: GlucoseReading[] = [];
   for (let m = 6 * 60; m <= 22 * 60; m += 15) {
@@ -60,10 +60,10 @@ export function mayaReadingsForDay(dayIndex: number, walkedAfterDinner: boolean)
   return points;
 }
 
-function mayaPattern(dayIndex: number): MetabolicPattern {
+function aminaPattern(dayIndex: number): MetabolicPattern {
   const walkedPrior = dayIndex >= 7;
   return {
-    id: `maya-pattern-d${dayIndex}`,
+    id: `amina-pattern-d${dayIndex}`,
     kind: 'evening_excursion',
     headline:
       'Your glucose response is most elevated between 7:00 and 9:00 PM, especially on low-activity days.',
@@ -100,7 +100,7 @@ function mayaPattern(dayIndex: number): MetabolicPattern {
   };
 }
 
-function mayaMission(dayIndex: number): ProgrammeMission {
+function aminaMission(dayIndex: number): ProgrammeMission {
   const walked = dayIndex >= 4 && dayIndex !== 6 && dayIndex !== 9;
   const practiced = dayIndex >= 3;
   const date = new Date(dayStart(dayIndex));
@@ -110,7 +110,7 @@ function mayaMission(dayIndex: number): ProgrammeMission {
   else if (practiced) status = 'practiced';
 
   return {
-    id: `maya-mission-${dateKey}`,
+    id: `amina-mission-${dateKey}`,
     dateKey,
     behaviourTarget: 'post_meal_walk',
     templateId: 'post_meal_walk',
@@ -125,7 +125,7 @@ function mayaMission(dayIndex: number): ProgrammeMission {
   };
 }
 
-export interface MayaDayState {
+export interface AminaDayState {
   dayIndex: number;
   label: string;
   pattern: MetabolicPattern;
@@ -137,13 +137,13 @@ export interface MayaDayState {
   loopPhase: 'detect' | 'mission' | 'rehearse' | 'act' | 'measure' | 'adapt';
 }
 
-export function getMayaDay(dayIndex: number): MayaDayState {
-  const clamped = Math.max(0, Math.min(MAYA_DEMO.totalDays - 1, dayIndex));
+export function getAminaDay(dayIndex: number): AminaDayState {
+  const clamped = Math.max(0, Math.min(AMINA_DEMO.totalDays - 1, dayIndex));
   const walked = clamped >= 4 && clamped !== 6 && clamped !== 9;
-  const readings = mayaReadingsForDay(clamped, walked);
-  const mission = mayaMission(clamped);
+  const readings = aminaReadingsForDay(clamped, walked);
+  const mission = aminaMission(clamped);
 
-  let loopPhase: MayaDayState['loopPhase'] = 'detect';
+  let loopPhase: AminaDayState['loopPhase'] = 'detect';
   if (clamped >= 1) loopPhase = 'mission';
   if (clamped >= 2) loopPhase = 'rehearse';
   if (clamped >= 4) loopPhase = 'act';
@@ -166,8 +166,8 @@ export function getMayaDay(dayIndex: number): MayaDayState {
 
   return {
     dayIndex: clamped,
-    label: `Day ${clamped + 1} of ${MAYA_DEMO.totalDays}`,
-    pattern: mayaPattern(clamped),
+    label: `Day ${clamped + 1} of ${AMINA_DEMO.totalDays}`,
+    pattern: aminaPattern(clamped),
     mission,
     readings,
     walkedAfterDinner: walked,
@@ -180,9 +180,9 @@ export function getMayaDay(dayIndex: number): MayaDayState {
   };
 }
 
-export function buildMayaClinicianDigest(dayIndex: number = MAYA_DEMO.defaultDayIndex): WeeklyDigestPayload {
-  const day = getMayaDay(dayIndex);
-  const escalation = dayIndex >= MAYA_DEMO.scenes.outreach;
+export function buildAminaClinicianDigest(dayIndex: number = AMINA_DEMO.defaultDayIndex): WeeklyDigestPayload {
+  const day = getAminaDay(dayIndex);
+  const escalation = dayIndex >= AMINA_DEMO.scenes.outreach;
   const adherence: AdherenceWeek = {
     weekKey: day.mission.dateKey,
     assigned: 7,
@@ -209,7 +209,7 @@ export function buildMayaClinicianDigest(dayIndex: number = MAYA_DEMO.defaultDay
       narrative:
         'Adherence dipped. Patient reported barriers and one urgent-sounding chat that was escalated out of the habit coach. No dosing advice was given. Human outreach recommended.',
       createdAt: Date.now(),
-      patientLabel: MAYA_DEMO.patientLabel,
+      patientLabel: AMINA_DEMO.patientLabel,
       dataCoverage: 'Synthetic CGM · evening window still covered · chat escalation logged',
       recurringPatterns: [
         'Evening excursions persist on skipped-walk nights',
@@ -253,9 +253,9 @@ export function buildMayaClinicianDigest(dayIndex: number = MAYA_DEMO.defaultDay
       'One soft relapse on a high-stress evening — recovery mission recommended',
     ],
     narrative:
-      'Maya rehearsed and completed a post-dinner walking experiment. Post-dinner glucose responses were generally lower on completed evenings. No dosing advice was given. Habits and lifestyle support only.',
+      'Amina rehearsed and completed a post-dinner walking experiment. Post-dinner glucose responses were generally lower on completed evenings. No dosing advice was given. Habits and lifestyle support only.',
     createdAt: Date.now(),
-    patientLabel: MAYA_DEMO.patientLabel,
+    patientLabel: AMINA_DEMO.patientLabel,
     dataCoverage: 'Synthetic CGM · 14-day fixture · ~90% evening-window coverage',
     recurringPatterns: [
       'Largest excursions clustered 7:00–9:00 PM',
@@ -281,14 +281,14 @@ export function buildMayaClinicianDigest(dayIndex: number = MAYA_DEMO.defaultDay
   };
 }
 
-export function mayaLoopSteps(dayIndex: number): {
-  key: MayaDayState['loopPhase'];
+export function aminaLoopSteps(dayIndex: number): {
+  key: AminaDayState['loopPhase'];
   title: string;
   done: boolean;
   active: boolean;
 }[] {
-  const day = getMayaDay(dayIndex);
-  const order: MayaDayState['loopPhase'][] = [
+  const day = getAminaDay(dayIndex);
+  const order: AminaDayState['loopPhase'][] = [
     'detect',
     'mission',
     'rehearse',
@@ -296,7 +296,7 @@ export function mayaLoopSteps(dayIndex: number): {
     'measure',
     'adapt',
   ];
-  const titles: Record<MayaDayState['loopPhase'], string> = {
+  const titles: Record<AminaDayState['loopPhase'], string> = {
     detect: 'Detect pattern',
     mission: 'One mission',
     rehearse: 'Rehearse',

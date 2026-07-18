@@ -2,7 +2,7 @@
 
 ## Current Status
 
-Sukari has moved from a game-first GlucoseWars prototype to a mission-first adherence product.
+Sukari has moved from a game-first GlucoseWars prototype to a mission-first adherence product powered by Mira, Famile's shared health and wellness agent identity.
 
 Shipped this cycle:
 
@@ -11,7 +11,9 @@ Shipped this cycle:
 - First-minute signal choice: labelled demo, read-only connection, private local check-in, or general habit mission.
 - First mission card before rehearsal.
 - Approved "Adjusted for you" mission adaptation after easier/later choices.
+- Mira presence on the mission card, with a small orb that reflects the current agent posture.
 - Clearly labelled demo pattern path.
+- Amina established as the deterministic synthetic demo patient, separate from Mira.
 - Deployed optional Runware mission-media worker with local fallback.
 - Local-first digest history and care-team panel.
 - Desktop programme-operator surface: exceptions, outreach rationale, weekly outcomes.
@@ -40,13 +42,18 @@ Shipped this cycle:
    - Difficulty adaptation policy.
    - Safety escalation copy review.
 
-4. **Pilot readiness**
+4. **Personalised nudge media**
+   - Generate mission visuals only from approved template IDs and visual intents.
+   - Let the signal-derived context tune practice scenarios, speech, image, or video support.
+   - Keep generated media optional, explainable, and subordinate to the real-world action.
+
+5. **Pilot readiness**
    - 8-12 week design-partner pilot.
    - 50-100 enrolled users in one beachhead population.
    - Weekly Adherent Patients as primary behavioural metric.
    - Health outcomes exploratory only until study design exists.
 
-5. **Operator workflow**
+6. **Operator workflow**
    - Outreach state: suggested, reviewed, sent, dismissed.
    - Weekly team report.
    - Export or integration path for programme operators.

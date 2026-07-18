@@ -88,10 +88,10 @@ export const DailyQuests: React.FC<TodayMissionProps> = ({
           <PressableScale
             onPress={onAskCoach}
             accessibilityRole="button"
-            accessibilityLabel="Ask the coach"
+            accessibilityLabel="Ask Mira"
             style={styles.ghostBtn}
           >
-            <Text style={styles.ghostBtnText}>Ask coach</Text>
+            <Text style={styles.ghostBtnText}>Ask Mira</Text>
           </PressableScale>
         )}
       </View>

@@ -10,17 +10,17 @@ Metabolic programmes know what patients should do, but adherence fails between a
 
 ## Solution
 
-Sukari turns signal into action:
+Sukari turns signal into action through Mira, Famile's shared health and wellness agent:
 
 1. Detect one actionable pattern.
 2. Propose one daily habit experiment.
 3. Let the patient do it now, make it easier, save it for later, or decline.
-4. Offer an optional mission-bound rehearsal in under a minute.
+4. Offer an optional mission-bound rehearsal in under a minute, tuned to the pattern.
 5. Record real-world completion without requiring rehearsal.
 6. Measure the associated response.
 7. Surface exceptions to the care team with outreach rationale.
 
-The game is the rehearsal layer. The product is adherence evidence.
+The game is the rehearsal layer. The agent is the connective tissue. The product is adherence evidence.
 
 ## Buyer
 
@@ -49,8 +49,9 @@ CGM adoption, virtual metabolic programmes, GLP-1 care models, and capable AI ma
 Working prototype includes:
 
 - Sukari brand and value-first entry.
-- Signal/demo pattern to mission card before rehearsal.
+- Signal/demo pattern to Mira mission card before rehearsal.
 - Do now, make easier, later today, and optional mission-bound rehearsal.
+- Mira visual presence with bounded habit-scope posture.
 - Transfer beat with done/later.
 - Measured response language.
 - Local-first weekly digest history.
@@ -60,6 +61,8 @@ Working prototype includes:
 - Instrumented funnel through care-team outreach.
 - Retired Web3/NFT/leaderboard/challenge surfaces.
 - Passing engineering gates.
+
+Amina is the synthetic demo patient used for judging and sales demos. Mira is the persistent agent identity that can later carry across Famile products, subject to explicit product-level consent.
 
 ## Ask
 

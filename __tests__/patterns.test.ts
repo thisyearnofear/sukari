@@ -5,10 +5,10 @@ import {
   SELF_REPORTED_MOMENTS,
 } from '@/domain/patterns';
 import {
-  MAYA_DEMO,
-  getMayaDay,
-  buildMayaClinicianDigest,
-  mayaLoopSteps,
+  AMINA_DEMO,
+  getAminaDay,
+  buildAminaClinicianDigest,
+  aminaLoopSteps,
 } from '@/domain/demo';
 import { buildLocalDigest } from '@/domain/digest/types';
 import { emptyAdherenceWeek , selectMission } from '@/domain/programme';
@@ -17,11 +17,12 @@ import {
   buildMissionAdaptation,
   buildMissionMediaBrief,
   buildPersonalisedWorldState,
+  buildMiraPresence,
   worldSceneLabel,
 } from '@/domain/agent';
 
 describe('patterns domain', () => {
-  it('returns Maya evening pattern in demo mode', () => {
+  it('returns Amina evening pattern in demo mode', () => {
     const pattern = resolvePattern({ useDemo: true, demoDayIndex: 10 });
     expect(pattern.source).toBe('demo');
     expect(pattern.kind).toBe('evening_excursion');
@@ -36,7 +37,7 @@ describe('patterns domain', () => {
   });
 
   it('detects evening excursion from synthetic readings', () => {
-    const day = getMayaDay(2);
+    const day = getAminaDay(2);
     const pattern = detectPatternFromReadings(day.readings);
     expect(pattern).not.toBeNull();
     expect(pattern?.kind).toBe('evening_excursion');
@@ -59,6 +60,14 @@ describe('patterns domain', () => {
       action: 'Walk for 5 minutes after your next meal.',
     });
     expect(buildMissionAdaptation('post_meal_walk', 'later').label).toBe('Adjusted for your day');
+  });
+
+  it('gives Mira a truthful, bounded posture for the current mission state', () => {
+    const pattern = resolvePattern({ useDemo: true, demoDayIndex: 10 });
+    expect(buildMiraPresence(pattern, 'unselected', false).label).toBe('Mira noticed a pattern');
+    expect(buildMiraPresence(pattern, 'accepted', true).label).toBe('Mira adjusted this');
+    expect(buildMiraPresence(pattern, 'deferred', false).label).toBe('Mira is holding this');
+    expect(buildMiraPresence(pattern, 'completed', false).label).toBe('Mira logged this');
   });
 
   it('builds a bounded world state that changes presentation without retaining readings', () => {
@@ -90,11 +99,11 @@ describe('patterns domain', () => {
   });
 });
 
-describe('Maya demo fixture', () => {
+describe('Amina demo fixture', () => {
   it('exposes a stable 14-day timeline', () => {
-    expect(MAYA_DEMO.totalDays).toBe(14);
-    const early = getMayaDay(1);
-    const late = getMayaDay(10);
+    expect(AMINA_DEMO.totalDays).toBe(14);
+    const early = getAminaDay(1);
+    const late = getAminaDay(10);
     expect(early.outcome).toBeNull();
     expect(late.outcome).not.toBeNull();
     expect(late.outcome?.associatedNote.toLowerCase()).toContain('associated');
@@ -102,7 +111,7 @@ describe('Maya demo fixture', () => {
   });
 
   it('builds clinician digest with outreach fields', () => {
-    const digest = buildMayaClinicianDigest(10);
+    const digest = buildAminaClinicianDigest(10);
     expect(digest.mode).toBe('clinician');
     expect(digest.outreachRecommended).toBe(false);
     expect(digest.experimentsTried?.length).toBeGreaterThan(0);
@@ -110,14 +119,14 @@ describe('Maya demo fixture', () => {
   });
 
   it('escalates outreach on late demo days', () => {
-    const digest = buildMayaClinicianDigest(12);
+    const digest = buildAminaClinicianDigest(12);
     expect(digest.outreachRecommended).toBe(true);
     expect(digest.safetyFlags?.length).toBeGreaterThan(0);
     expect(digest.outreachReason?.toLowerCase()).toContain('escalat');
   });
 
   it('advances loop phases across days', () => {
-    const steps = mayaLoopSteps(10);
+    const steps = aminaLoopSteps(10);
     const active = steps.find((s) => s.active);
     expect(active?.key).toBe('adapt');
   });

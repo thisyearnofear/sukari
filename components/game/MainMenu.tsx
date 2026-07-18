@@ -39,10 +39,10 @@ import {
   type MetabolicPattern,
 } from '@/domain/patterns';
 import {
-  MAYA_DEMO,
-  getMayaDay,
-  mayaLoopSteps,
-  buildMayaClinicianDigest,
+  AMINA_DEMO,
+  getAminaDay,
+  aminaLoopSteps,
+  buildAminaClinicianDigest,
 } from '@/domain/demo';
 import { selectMission, type ProgrammeMission } from '@/domain/programme';
 import {
@@ -63,6 +63,7 @@ import { QuietWinBeat } from '@/components/programme/QuietWinBeat';
 
 const maxWidth = Platform.OS === 'web' ? 760 : 400;
 const P = COLORS.PROGRAMME;
+// Preserve existing demo settings through the patient-fixture rename.
 const DEMO_KEY = 'glucoseWars.demoMaya';
 const DEMO_DAY_KEY = 'glucoseWars.demoMayaDay';
 const DEFERRED_KEY = 'glucoseWars.missionDeferred';
@@ -108,7 +109,7 @@ export const MainMenu: React.FC<MainMenuProps> = ({
   const [showCoach, setShowCoach] = useState(false);
   const [coachInput, setCoachInput] = useState('');
   const [demoMode, setDemoMode] = useState(false);
-  const [demoDay, setDemoDay] = useState<number>(MAYA_DEMO.defaultDayIndex);
+  const [demoDay, setDemoDay] = useState<number>(AMINA_DEMO.defaultDayIndex);
   const [missionChoice, setMissionChoice] = useState<MissionEase | null>(null);
   const [missionDeferred, setMissionDeferred] = useState(false);
   const [signalPathChosen, setSignalPathChosen] = useState(false);
@@ -141,12 +142,12 @@ export const MainMenu: React.FC<MainMenuProps> = ({
       : signalSnapshot.connected
         ? 'cgm'
         : 'general';
-  const maya = useMemo(() => (demoMode ? getMayaDay(demoDay) : null), [demoMode, demoDay]);
+  const amina = useMemo(() => (demoMode ? getAminaDay(demoDay) : null), [demoMode, demoDay]);
   const pattern = useMemo(
     () => {
       if (manualMoment && !demoMode) return buildSelfReportedPattern(manualMoment);
       return resolvePattern({
-        readings: demoMode ? maya?.readings : cgm.readings,
+        readings: demoMode ? amina?.readings : cgm.readings,
         snapshot: signalSnapshot,
         useDemo: demoMode,
         demoDayIndex: demoDay,
@@ -158,7 +159,7 @@ export const MainMenu: React.FC<MainMenuProps> = ({
       demoMode,
       demoDay,
       manualMoment,
-      maya?.readings,
+      amina?.readings,
       cgm.readings,
       signalSnapshot.connected,
       signalSnapshot.trend,
@@ -166,9 +167,9 @@ export const MainMenu: React.FC<MainMenuProps> = ({
       signalSnapshot.minimized.band,
     ],
   );
-  const displayMission = demoMode ? maya?.mission ?? null : missionOverride || progress.activeMission;
+  const displayMission = demoMode ? amina?.mission ?? null : missionOverride || progress.activeMission;
   const loopSteps = useMemo(() => {
-    if (demoMode) return mayaLoopSteps(demoDay);
+    if (demoMode) return aminaLoopSteps(demoDay);
     const status = progress.activeMission?.status;
     const practiced = status === 'practiced' || status === 'completed';
     const done = status === 'completed';
@@ -288,21 +289,21 @@ export const MainMenu: React.FC<MainMenuProps> = ({
     setMissionOverride(null);
     setAdaptation(null);
     await AsyncStorage.setItem(DEMO_KEY, on ? '1' : '0');
-    track('demo_maya_toggled', { on });
+    track('demo_amina_toggled', { on });
     if (on) {
-      const day = startDay ?? MAYA_DEMO.scenes.pattern;
+      const day = startDay ?? AMINA_DEMO.scenes.pattern;
       setDemoDay(day);
       await AsyncStorage.setItem(DEMO_DAY_KEY, String(day));
     }
   };
 
   const jumpDemoDay = async (next: number) => {
-    const clamped = Math.max(0, Math.min(MAYA_DEMO.totalDays - 1, next));
+    const clamped = Math.max(0, Math.min(AMINA_DEMO.totalDays - 1, next));
     setDemoDay(clamped);
     setMissionChoice(null);
     setAdaptation(null);
     await AsyncStorage.setItem(DEMO_DAY_KEY, String(clamped));
-    track('demo_maya_day_jump', { day: clamped });
+    track('demo_amina_day_jump', { day: clamped });
   };
 
   const assignFromPattern = (
@@ -395,7 +396,7 @@ export const MainMenu: React.FC<MainMenuProps> = ({
     setChangingSignalSource(false);
     if (path === 'demo') {
       setManualMoment(null);
-      await setDemo(true, MAYA_DEMO.scenes.pattern);
+      await setDemo(true, AMINA_DEMO.scenes.pattern);
     }
   };
 
@@ -414,7 +415,7 @@ export const MainMenu: React.FC<MainMenuProps> = ({
 
   const openCareTeamSummary = async () => {
     const digest = demoMode
-      ? buildMayaClinicianDigest(demoDay)
+      ? buildAminaClinicianDigest(demoDay)
       : buildLocalDigest({
           adherence: progress.adherenceWeek,
           missionHistory: progress.missionHistory,
@@ -556,7 +557,7 @@ export const MainMenu: React.FC<MainMenuProps> = ({
               style={[styles.signalOption, styles.signalOptionPrimary]}
               accessibilityRole="button"
             >
-              <Text style={styles.signalOptionTitle}>Use Maya&apos;s example</Text>
+              <Text style={styles.signalOptionTitle}>Use Amina&apos;s example</Text>
               <Text style={styles.signalOptionPrimaryBody}>A private, synthetic 14-day pattern. No account or data needed.</Text>
             </PressableScale>
             <PressableScale
@@ -606,7 +607,7 @@ export const MainMenu: React.FC<MainMenuProps> = ({
   }
 
   const signalLine = demoMode
-    ? `${MAYA_DEMO.patientLabel} · ${maya?.label}`
+    ? `${AMINA_DEMO.patientLabel} · ${amina?.label}`
     : signalSnapshot.connected
       ? `CGM · ${band.replace('_', ' ')}${signalSnapshot.trend ? ` · ${signalSnapshot.trend}` : ''}`
       : manualMoment
@@ -617,7 +618,7 @@ export const MainMenu: React.FC<MainMenuProps> = ({
   // pattern; completion visibly settles the field (docs/PRODUCT_DESIGN.md §7).
   const { band: homeBand, intensity: homeIntensity } = fieldStateFromPattern(pattern, {
     missionCompleted: demoMode
-      ? maya?.mission?.status === 'completed'
+      ? amina?.mission?.status === 'completed'
       : progress.activeMission?.status === 'completed',
     deferred: !demoMode && missionDeferred,
   });
@@ -685,30 +686,30 @@ export const MainMenu: React.FC<MainMenuProps> = ({
               <Text style={styles.judgeScenesLabel}>Demo scenes</Text>
               <View style={styles.judgeSceneRow}>
                 <PressableScale
-                  onPress={() => jumpDemoDay(MAYA_DEMO.scenes.pattern)}
+                  onPress={() => jumpDemoDay(AMINA_DEMO.scenes.pattern)}
                   style={[
                     styles.sceneChip,
-                    demoDay === MAYA_DEMO.scenes.pattern && styles.sceneChipOn,
+                    demoDay === AMINA_DEMO.scenes.pattern && styles.sceneChipOn,
                   ]}
                 >
                   <Text style={styles.sceneChipText}>1 · Pattern</Text>
                 </PressableScale>
                 <PressableScale
-                  onPress={() => jumpDemoDay(MAYA_DEMO.scenes.measure)}
+                  onPress={() => jumpDemoDay(AMINA_DEMO.scenes.measure)}
                   style={[
                     styles.sceneChip,
-                    demoDay === MAYA_DEMO.scenes.measure && styles.sceneChipOn,
+                    demoDay === AMINA_DEMO.scenes.measure && styles.sceneChipOn,
                   ]}
                 >
                   <Text style={styles.sceneChipText}>2 · Measure</Text>
                 </PressableScale>
                 <PressableScale
                   onPress={async () => {
-                    await jumpDemoDay(MAYA_DEMO.scenes.outreach);
+                    await jumpDemoDay(AMINA_DEMO.scenes.outreach);
                   }}
                   style={[
                     styles.sceneChip,
-                    demoDay >= MAYA_DEMO.scenes.outreach && styles.sceneChipOn,
+                    demoDay >= AMINA_DEMO.scenes.outreach && styles.sceneChipOn,
                   ]}
                 >
                   <Text style={styles.sceneChipText}>3 · Outreach</Text>
@@ -732,7 +733,7 @@ export const MainMenu: React.FC<MainMenuProps> = ({
 
           {demoMode ? (
             <View style={styles.demoControls}>
-              <Text style={styles.demoHint}>{MAYA_DEMO.disclaimer}</Text>
+              <Text style={styles.demoHint}>{AMINA_DEMO.disclaimer}</Text>
               <View style={styles.demoRow}>
                 <PressableScale
                   onPress={() => jumpDemoDay(demoDay - 1)}
@@ -741,7 +742,7 @@ export const MainMenu: React.FC<MainMenuProps> = ({
                 >
                   <Text style={styles.demoChipText}>← Prior day</Text>
                 </PressableScale>
-                <Text style={styles.demoDayLabel}>{maya?.label}</Text>
+                <Text style={styles.demoDayLabel}>{amina?.label}</Text>
                 <PressableScale
                   onPress={() => jumpDemoDay(demoDay + 1)}
                   style={styles.demoChip}
@@ -757,13 +758,14 @@ export const MainMenu: React.FC<MainMenuProps> = ({
             <PatternMissionCard
               pattern={pattern}
               mission={displayMission}
-              outcome={maya?.outcome}
-              reflection={maya?.reflection}
-              demoLabel={demoMode ? MAYA_DEMO.disclaimer : null}
+              outcome={amina?.outcome}
+              reflection={amina?.reflection}
+              demoLabel={demoMode ? AMINA_DEMO.disclaimer : null}
               missionChoice={missionChoice}
               adaptation={adaptation}
               worldState={displayWorldState}
               deferred={missionDeferred && !demoMode}
+              onAskMira={() => setShowCoach(true)}
               onAccept={() => {
                 setMissionChoice('accept');
                 setMissionDeferred(false);
@@ -832,7 +834,7 @@ export const MainMenu: React.FC<MainMenuProps> = ({
           {missionChoice === 'not_practical' && !supportDismissed && displayMission ? (
             <View style={styles.supportCard}>
               <View style={styles.supportHead}>
-                <Text style={styles.supportEyebrow}>Suggested by your agent</Text>
+                <Text style={styles.supportEyebrow}>Mira suggests support here</Text>
                 <AgencyLaneTag lane="asks_first" />
               </View>
               <Text style={styles.supportTitle}>A human can help with this one.</Text>
@@ -888,7 +890,7 @@ export const MainMenu: React.FC<MainMenuProps> = ({
 
           <View style={styles.secondaryRow}>
             <TouchableOpacity onPress={() => setShowCoach(true)} accessibilityRole="button">
-              <Text style={styles.link}>Coach</Text>
+              <Text style={styles.link}>Ask Mira</Text>
             </TouchableOpacity>
             <Text style={styles.dot}>·</Text>
             <TouchableOpacity
@@ -950,7 +952,7 @@ export const MainMenu: React.FC<MainMenuProps> = ({
                 >
                   <View>
                     <Text style={styles.sheetBody}>
-                      {demoMode ? 'Maya demo on' : 'Maya demo off'}
+                      {demoMode ? 'Amina demo on' : 'Amina demo off'}
                     </Text>
                     <Text style={styles.sheetMuted}>Synthetic 14-day closed-loop timeline</Text>
                   </View>
@@ -973,14 +975,14 @@ export const MainMenu: React.FC<MainMenuProps> = ({
                     <SheetButton
                       label="Jump to measured-response day"
                       onPress={() => {
-                        jumpDemoDay(MAYA_DEMO.scenes.measure);
+                        jumpDemoDay(AMINA_DEMO.scenes.measure);
                         setShowSettings(false);
                       }}
                     />
                     <SheetButton
                       label="Jump to outreach / escalation day"
                       onPress={() => {
-                        jumpDemoDay(MAYA_DEMO.scenes.outreach);
+                        jumpDemoDay(AMINA_DEMO.scenes.outreach);
                         setShowSettings(false);
                       }}
                     />
@@ -1120,7 +1122,7 @@ export const MainMenu: React.FC<MainMenuProps> = ({
               This connection is not available in this session. Dexcom needs programme OAuth configuration; Apple Health needs a compatible native device and permission.
             </Text>
             <Text style={styles.availabilityBody}>
-              You can still use Maya&apos;s labelled example or a private local check-in today.
+              You can still use Amina&apos;s labelled example or a private local check-in today.
             </Text>
             <PressableScale
               onPress={() => setShowSignalAvailability(false)}
@@ -1157,12 +1159,12 @@ export const MainMenu: React.FC<MainMenuProps> = ({
         <View style={styles.coachBackdrop}>
           <View style={styles.coachSheet}>
             <View style={styles.sheetHeader}>
-              <Text style={styles.sheetTitle}>Coach</Text>
+              <Text style={styles.sheetTitle}>Mira</Text>
               <TouchableOpacity onPress={() => setShowCoach(false)} accessibilityRole="button">
                 <Text style={styles.link}>Close</Text>
               </TouchableOpacity>
             </View>
-            <Text style={styles.sheetMuted}>Habit coach only — never dosing or medical advice.</Text>
+            <Text style={styles.sheetMuted}>Mira supports habits only — never dosing or medical advice.</Text>
             {displayMission && (
               <Text style={[styles.sheetBody, { marginTop: 10 }]}>
                 Today: {displayMission.realWorldAction}
@@ -1182,7 +1184,7 @@ export const MainMenu: React.FC<MainMenuProps> = ({
             <TextInput
               value={coachInput}
               onChangeText={setCoachInput}
-              placeholder="Why this mission? Or ask about barriers…"
+              placeholder="Ask Mira why, or name a barrier…"
               placeholderTextColor={P.textMuted}
               style={styles.input}
             />
@@ -1195,7 +1197,7 @@ export const MainMenu: React.FC<MainMenuProps> = ({
               }}
               style={[styles.primaryCta, { opacity: coach.isLoading || !coachInput.trim() ? 0.5 : 1 }]}
             >
-              <Text style={styles.primaryCtaText}>{coach.isLoading ? 'Thinking…' : 'Ask'}</Text>
+              <Text style={styles.primaryCtaText}>{coach.isLoading ? 'Thinking…' : 'Ask Mira'}</Text>
             </PressableScale>
           </View>
         </View>

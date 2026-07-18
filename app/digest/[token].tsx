@@ -18,7 +18,7 @@ import { fetchWeeklyDigest, listLocalWeeklyDigests, WeeklyDigestPayload } from '
 import { track } from '@/utils/analytics';
 import { COLORS, FONTS, ANIMATIONS } from '@/constants/designSystem';
 import { PressableScale } from '@/components/ui/PressableScale';
-import { buildMayaClinicianDigest, MAYA_DEMO } from '@/domain/demo';
+import { buildAminaClinicianDigest, AMINA_DEMO } from '@/domain/demo';
 
 const LOCAL_DIGEST_KEY = 'glucoseWars.lastDigest';
 const P = COLORS.PROGRAMME;
@@ -36,8 +36,8 @@ export default function WeeklyDigestScreen() {
         setError('Missing digest token');
         return;
       }
-      if (token === 'local-maya-outreach') {
-        setDigest(buildMayaClinicianDigest(MAYA_DEMO.scenes.outreach));
+      if (token === 'local-amina-outreach' || token === 'local-maya-outreach') {
+        setDigest(buildAminaClinicianDigest(AMINA_DEMO.scenes.outreach));
         return;
       }
       const remote = await fetchWeeklyDigest(token);

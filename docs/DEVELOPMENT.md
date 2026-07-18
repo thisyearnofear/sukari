@@ -34,7 +34,7 @@ Run `npm run build:web` when routing, Expo config, or web rendering changes.
 - Demo patterns must be clearly labelled.
 - Desktop care is an operator surface, not a stretched patient view.
 - Legacy Beam/Web3/NFT/leaderboard/challenge language should not appear in shipped navigation or primary copy.
-- Coaching remains habit-scope only. Never dosing, diagnosis, or urgent care substitution.
+- Mira remains habit-scope only in Sukari. Never dosing, diagnosis, urgent-care substitution, or implied access to another Famile product.
 
 ## Repo Map
 
@@ -48,7 +48,7 @@ components/
   game/                battle, intro, home composition
   programme/           mission, ribbon, transfer, quiet win
 domain/
-  coach/               habit coach and clinical scope
+  coach/               Mira's habit-scope capability and clinical boundary
   digest/              weekly digest client/types
   patterns/            signal patterns and field state
   programme/           mission templates and transfer logic

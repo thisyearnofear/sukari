@@ -1,1 +1,1 @@
-export * from './mayaPatient';
+export * from './aminaPatient';

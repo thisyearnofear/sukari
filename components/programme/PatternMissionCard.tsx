@@ -14,10 +14,12 @@ import {
   buildMissionMediaBrief,
   type MissionAdaptation,
   type PersonalisedWorldState,
+  buildMiraPresence,
   worldSceneLabel,
   worldToneCopy,
 } from '@/domain/agent';
 import { MissionVisual } from '@/components/programme/MissionVisual';
+import { MiraOrb } from '@/components/agent/MiraOrb';
 import { getPracticeCueForTemplate } from '@/domain/programme';
 
 const P = COLORS.PROGRAMME;
@@ -41,6 +43,7 @@ interface PatternMissionCardProps {
   worldState?: PersonalisedWorldState | null;
   /** Soft home state after “Later today” */
   deferred?: boolean;
+  onAskMira?: () => void;
 }
 
 export function PatternMissionCard({
@@ -59,6 +62,7 @@ export function PatternMissionCard({
   adaptation,
   worldState,
   deferred = false,
+  onAskMira,
 }: PatternMissionCardProps) {
   const [showDetails, setShowDetails] = useState(false);
   const done = mission?.status === 'completed';
@@ -67,6 +71,7 @@ export function PatternMissionCard({
   const canLogRealWorldAction = (accepted || practiced || deferred) && !done;
   const decisionState = done ? 'completed' : deferred ? 'deferred' : accepted || practiced ? 'accepted' : 'unselected';
   const trace = buildAgentDecisionTrace(pattern, mission, decisionState);
+  const mira = buildMiraPresence(pattern, decisionState, Boolean(adaptation));
   const mediaBrief = buildMissionMediaBrief(pattern, mission, worldState);
   const practiceCue = getPracticeCueForTemplate(mission?.templateId || pattern.suggestedBehaviour);
 
@@ -97,6 +102,13 @@ export function PatternMissionCard({
       <View style={styles.cardHeader}>
         <Text style={[styles.eyebrow, styles.cardHeaderEyebrow]}>Today&apos;s mission</Text>
         <AgencyLaneTag lane="always" />
+      </View>
+      <View style={styles.miraPresence} accessibilityRole="summary">
+        <MiraOrb posture={mira.posture} onPress={onAskMira} />
+        <View style={styles.miraCopy}>
+          <Text style={styles.miraLabel}>{mira.label}</Text>
+          <Text style={styles.miraMessage}>{mira.message}</Text>
+        </View>
       </View>
       <MissionVisual brief={mediaBrief} worldState={worldState} requestPersonalisation={showDetails} />
       <Text style={styles.missionAction}>{experimentText}</Text>
@@ -139,7 +151,7 @@ export function PatternMissionCard({
           <Text style={styles.patternOneLiner}>{pattern.headline}</Text>
           <Text style={styles.detailBody}>{pattern.explanation}</Text>
           <View style={styles.trace} accessibilityRole="summary">
-            <Text style={styles.traceLabel}>Sukari&apos;s decision trace</Text>
+            <Text style={styles.traceLabel}>Mira&apos;s decision trace</Text>
             <Text style={styles.traceLine}>Observed: {trace.observed}</Text>
             <Text style={styles.traceLine}>Proposed: {trace.proposed}</Text>
             <Text style={styles.traceLine}>Next: {trace.next}</Text>
@@ -310,6 +322,27 @@ const styles = StyleSheet.create({
   },
   cardHeaderEyebrow: {
     marginBottom: 0,
+  },
+  miraPresence: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 14,
+  },
+  miraCopy: {
+    flex: 1,
+    marginLeft: 10,
+  },
+  miraLabel: {
+    fontFamily: FONTS.bodyBold,
+    color: P.text,
+    fontSize: 12,
+  },
+  miraMessage: {
+    fontFamily: FONTS.body,
+    color: P.textSoft,
+    fontSize: 12,
+    lineHeight: 17,
+    marginTop: 2,
   },
   eyebrow: {
     fontFamily: FONTS.bodyMedium,

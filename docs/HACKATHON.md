@@ -27,7 +27,7 @@ Optional rehearsal is a gamified learning mechanism, not the product. The produc
 11. Show measured response language.
 12. Open the care-team panel to show exception rationale and weekly outcomes.
 
-The Maya demo remains deterministic for judging. Live signal paths are technical proof, but demos should not depend on OAuth success.
+The Amina demo remains deterministic for judging. Mira is the named Famile agent; Amina is only a deterministic synthetic patient fixture. Live signal paths are technical proof, but demos should not depend on OAuth success.
 
 ## Shipped Progress
 

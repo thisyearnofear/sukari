@@ -6,7 +6,7 @@
 import type { SignalSnapshot } from '@/domain/signals/snapshot';
 import type { GlucoseReading } from '@/types/health';
 import type { MetabolicPattern } from './types';
-import { MAYA_DEMO, getMayaDay } from '@/domain/demo/mayaPatient';
+import { AMINA_DEMO, getAminaDay } from '@/domain/demo/aminaPatient';
 
 const SAFETY =
   'Habits and lifestyle experiments only — never insulin, medication dosing, or diagnosis.';
@@ -182,7 +182,7 @@ export function resolvePattern(input: {
   demoDayIndex?: number;
 }): MetabolicPattern {
   if (input.useDemo) {
-    return getMayaDay(input.demoDayIndex ?? MAYA_DEMO.defaultDayIndex).pattern;
+    return getAminaDay(input.demoDayIndex ?? AMINA_DEMO.defaultDayIndex).pattern;
   }
   const fromReadings = input.readings?.length
     ? detectPatternFromReadings(input.readings, input.snapshot)

@@ -5,7 +5,7 @@
  *   domain/programme  — daily missions, transfer, practice bias
  *   domain/signals    — CGM / simulated SignalSnapshot
  *   domain/patterns   — pattern → experiment framing
- *   domain/demo       — synthetic Maya timeline for demos
+ *   domain/demo       — synthetic Amina timeline for demos
  *   domain/coach      — worker client + clinical scope
  *   domain/digest     — weekly care-team summary
  *   domain/invite     — caregiver support cards

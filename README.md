@@ -2,14 +2,14 @@
 
 **One mission today. Better evidence for tomorrow.**
 
-Sukari is a personalised action-and-play adherence layer for continuous metabolic care. It turns a connected signal, labelled demo pattern, or private local check-in into one patient-controlled habit mission, then adapts the optional practice and visual support around that real-world choice.
+Sukari is a personalised action-and-play adherence layer for continuous metabolic care. Mira, the shared Famile agent, turns a connected signal, labelled demo pattern, or private local check-in into one patient-controlled habit mission, then adapts optional practice and visual support around that real-world choice.
 
 Built for type 2 diabetes, prediabetes, GLP-1-supported lifestyle care, and adjacent metabolic programmes.
 
 ## Product Loop
 
 ```text
-signal -> bounded pattern -> mission -> user choice -> outcome -> next adaptation
+signal -> bounded pattern -> Mira's mission -> user choice -> outcome -> next adaptation
 ```
 
 The first minute is intentionally simple:
@@ -20,7 +20,7 @@ The first minute is intentionally simple:
 - get one mission;
 - choose "Do it now", "Make it easier", or "Later today".
 
-"Why this?", the agent decision trace, and optional rehearsal are available through progressive disclosure. Rehearsal is a behavioural nudge, not a gate: its scenario and mechanics are derived from the approved mission, never arbitrary rewards or raw health data.
+Mira stays concise: what she noticed, what she proposes, and what she is waiting for. "Why this?", her decision trace, and optional rehearsal are available through progressive disclosure. Rehearsal is a behavioural nudge, not a gate: its scenario and mechanics are derived from the approved mission, never arbitrary rewards or raw health data.
 
 ## Safety Boundary
 

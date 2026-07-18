@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { View, Text, ScrollView, StyleSheet } from 'react-native';
 import { router } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { buildMayaClinicianDigest, MAYA_DEMO } from '@/domain/demo';
+import { buildAminaClinicianDigest, AMINA_DEMO } from '@/domain/demo';
 import { listLocalWeeklyDigests, type StoredWeeklyDigest, type WeeklyDigestPayload } from '@/domain/digest';
 import { COLORS, FONTS } from '@/constants/designSystem';
 import { PressableScale } from '@/components/ui/PressableScale';
@@ -20,10 +20,10 @@ export default function CarePanelScreen() {
   const [showDemo, setShowDemo] = useState(false);
 
   const demoPanel = useMemo(() => {
-    const needsOutreach = buildMayaClinicianDigest(MAYA_DEMO.scenes.outreach);
-    const settling = buildMayaClinicianDigest(MAYA_DEMO.scenes.measure);
+    const needsOutreach = buildAminaClinicianDigest(AMINA_DEMO.scenes.outreach);
+    const settling = buildAminaClinicianDigest(AMINA_DEMO.scenes.measure);
     const stable = {
-      ...buildMayaClinicianDigest(MAYA_DEMO.scenes.measure),
+      ...buildAminaClinicianDigest(AMINA_DEMO.scenes.measure),
       patientLabel: 'Programme member · sample (synthetic)',
       missionsCompleted: 6,
       missionsAssigned: 7,
@@ -159,7 +159,7 @@ function ExceptionCard({ digest }: { digest: WeeklyDigestPayload & { token?: str
       <PressableScale
         onPress={() => {
           track('care_outreach_reviewed', { patient: digest.patientLabel || 'programme_member', safety_flags: digest.safetyFlags?.length ?? 0 });
-          router.push({ pathname: '/digest/[token]', params: { token: digest.token || 'local-maya-outreach' } });
+          router.push({ pathname: '/digest/[token]', params: { token: digest.token || 'local-amina-outreach' } });
         }}
         style={styles.reviewButton}
         accessibilityRole="button"

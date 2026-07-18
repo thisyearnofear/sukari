@@ -18,8 +18,9 @@ live signal, labelled demo pattern, or private local check-in
 - `components/game/MainMenu.tsx`: role selection, signal/demo/local check-in choice, mission card, and rehearsal entry.
 - `app/(game)/battle.tsx`: rehearsal route.
 - `components/programme/MissionRibbon.tsx`: keeps the real-world mission visible during practice.
+- `components/agent/MiraOrb.tsx`: lightweight cross-platform visual carrier for Mira's domain-derived posture.
 - `components/programme/TransferBeat.tsx`: done/later handoff from practice to real life.
-- `domain/agent/`: patient-visible decision trace and vetted media brief contracts.
+- `domain/agent/`: Mira presence, patient-visible decision trace, and vetted media brief contracts.
 - `domain/programme/practiceBias.ts`: deterministic mission-to-practice tuning and patient-readable focus labels.
 - `components/programme/MissionVisual.tsx`: local visual cue with optional Runware-generated mission illustration.
 - `app/digest/[token].tsx`: patient/care-team digest view.
@@ -32,9 +33,9 @@ Retired routes such as `game-selection` and `slowmo` redirect out of the shipped
 ```text
 domain/
   coach/       habit-scope coach and clinical safety boundary
-  agent/       explainable decision trace and non-sensitive media briefs
+  agent/       Mira presence, explainable decision trace, and non-sensitive media briefs
   config/      worker and app URL helpers
-  demo/        deterministic Maya demo data
+  demo/        deterministic Amina demo data
   digest/      weekly summary payloads, publishing, and local history
   invite/      supporter invite flows
   media/       optional mission-media client
