@@ -89,6 +89,16 @@ Successful LLM responses include `"source":"llm"` and `"provider":"runware"|"ope
 
 Without a worker URL, the app still runs fully offline using local `selectMission` + local digests.
 
+### Netlify web deploy
+Config: [`netlify.toml`](../netlify.toml) — uses **npm** + `npx expo export --platform web` → `dist`.
+
+Do **not** commit `pnpm-lock.yaml` (stale pnpm lockfiles make Netlify use frozen pnpm and fail).
+
+Set these in Netlify → Site settings → Environment variables (build-time):
+- `EXPO_PUBLIC_APP_URL=https://glucosewars.netlify.app`
+- `EXPO_PUBLIC_LEADERBOARD_WORKER_URL=https://glucosewars-leaderboard.papaandthejimjams.workers.dev`
+- `EXPO_PUBLIC_LEADERBOARD_API_URL=` (same worker URL)
+
 ### Day-1 Adherence loop verification
 1. Pick a role → see **Today’s Mission** on Realm Home  
 2. **Practice Mission** → results **Transfer** beat → **I Did It**  

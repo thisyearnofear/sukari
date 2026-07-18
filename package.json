@@ -13,7 +13,8 @@
     "lint:fix": "expo lint --fix",
     "secrets:check": "node scripts/check-secrets.mjs",
     "typecheck": "tsc --noEmit",
-    "prepare": "husky"
+    "prepare": "husky",
+    "build:web": "expo export --platform web"
   },
   "lint-staged": {
     "*.{ts,tsx,js,jsx}": [
