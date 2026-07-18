@@ -4,9 +4,9 @@
 
 Sukari is an AI adherence engine for continuous metabolic care.
 
-The game is the engagement mechanism, not the product. The product is the closed loop from signal to mission to real-world adherence evidence.
+Optional rehearsal is a learning mechanism, not the product. The product is the closed loop from signal to mission to real-world adherence evidence.
 
-> Continuous metabolic care fails between appointments. Sukari gives each patient one personalized action at a time, lets them rehearse it, learns from the response, and tells the care team when human attention is useful.
+> Continuous metabolic care fails between appointments. Sukari gives each patient one personalized action at a time, lets them act directly or rehearse the decision, learns from the response, and tells the care team when human attention is useful.
 
 **Tagline:** One mission today. Better evidence for tomorrow.
 
@@ -18,8 +18,8 @@ The game is the engagement mechanism, not the product. The product is the closed
 2. Select a role.
 3. Connect/import a signal or use the labelled demo pattern.
 4. Show the mission card before rehearsal.
-5. Accept the mission and rehearse.
-6. Complete now or choose later today.
+5. Accept the mission and show the visible agent decision trace.
+6. Complete now or choose later today; show optional practice only after acceptance.
 7. Show measured response language.
 8. Open the care-team panel to show exception rationale and weekly outcomes.
 
@@ -32,6 +32,9 @@ The Maya demo remains deterministic for judging. Live signal paths are technical
 | Sukari brand and product copy | Done |
 | Value proposition before role selection | Done |
 | Mission card before rehearsal | Done |
+| Direct-action path without rehearsal | Done |
+| Compact responsive rehearsal surface | Done |
+| Agent decision trace | Done |
 | Labelled demo pattern | Done |
 | Mission ribbon in battle | Done |
 | Transfer beat and later-today state | Done |

@@ -58,7 +58,8 @@ export const GAME_TIERS: Record<GameTier, TierConfig> = {
     foodSpawnRate: 1200,
     maxConcurrentFoods: 5,
     swipeDirections: ['up', 'down', 'left', 'right'],
-    showMetrics: true,
+    // The compact rehearsal HUD is responsive across phone and desktop widths.
+    showMetrics: false,
     showGlucose: true,
     showComboCounter: true,
     showSocialStats: true,
@@ -80,7 +81,8 @@ export const GAME_TIERS: Record<GameTier, TierConfig> = {
     foodSpawnRate: 1000,
     maxConcurrentFoods: 7,
     swipeDirections: ['up', 'down', 'left', 'right'],
-    showMetrics: true,
+    // The compact rehearsal HUD is responsive across phone and desktop widths.
+    showMetrics: false,
     showGlucose: true,
     showComboCounter: true,
     showSocialStats: true,
@@ -102,7 +104,8 @@ export const GAME_TIERS: Record<GameTier, TierConfig> = {
     foodSpawnRate: 0, // No random spawning - planned meals
     maxConcurrentFoods: 1, // One meal at a time
     swipeDirections: ['up', 'down', 'left', 'right'],
-    showMetrics: true,
+    // The compact rehearsal HUD is responsive across phone and desktop widths.
+    showMetrics: false,
     showGlucose: true,
     showComboCounter: false,
     showSocialStats: false,
@@ -125,7 +128,8 @@ export const GAME_TIERS: Record<GameTier, TierConfig> = {
     foodSpawnRate: 900,
     maxConcurrentFoods: 8,
     swipeDirections: ['up', 'down', 'left', 'right'],
-    showMetrics: true,
+    // The compact rehearsal HUD is responsive across phone and desktop widths.
+    showMetrics: false,
     showGlucose: true,
     showComboCounter: true,
     showSocialStats: true,

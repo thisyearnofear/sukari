@@ -10,7 +10,7 @@ The old name, GlucoseWars, implied a broad game or combat metaphor. Sukari is so
 
 **Tagline:** One mission today. Better evidence for tomorrow.
 
-**10-second pitch:** Sukari watches the metabolic signal, chooses one winnable experiment, lets the patient rehearse the decision, follows up when they act, and tells the care team only when human attention can change the week.
+**10-second pitch:** Sukari watches the metabolic signal, proposes one winnable experiment, follows up on the patient's chosen action, and tells the care team only when human attention can change the week.
 
 **Explicitly not:** AI doctor, symptom chatbot, dosing assistant, game-first education app, NFT product, leaderboard, or consumer wellness toy.
 
@@ -27,7 +27,7 @@ This is the Peter Thiel lens: do not start as a general wellness app. Dominate a
 Sukari has one loop and three surfaces.
 
 1. **Patient home:** value proposition, role selection, current signal, one mission, and patient governance.
-2. **Rehearsal:** a short practice session tied to today's mission, not an arcade mode for its own sake.
+2. **Optional rehearsal:** a short practice session tied to today's mission, never a gate before real-world action.
 3. **Care team:** desktop-first programme-operator view with exceptions, outreach rationale, and weekly outcomes.
 
 The first mission flow now prioritizes evidence:
@@ -36,7 +36,7 @@ The first mission flow now prioritizes evidence:
 2. Ask who the product is helping: patient, supporter, or care team.
 3. Connect/import a signal or use a clearly labelled demo pattern.
 4. Show the mission card before any rehearsal.
-5. Only then enter onboarding and practice.
+5. The patient can act now, save it for later, make it easier, or choose a short optional practice.
 
 ## Voice
 
@@ -59,7 +59,7 @@ Avoid:
 
 ## Design Register
 
-Patient surfaces should feel calm, adult, and action-oriented. The game layer can be energetic, but the mission ribbon must keep it anchored to the real-world ask.
+Patient surfaces should feel calm, adult, and action-oriented. Rehearsal uses one stable metabolic field and a compact HUD across phone and desktop; it does not change theme, flash the whole screen, shake, or introduce unrelated game lore.
 
 Care-team desktop surfaces should feel operational: dense enough to scan, restrained, and built for repeated use. They should not be enlarged patient screens.
 
@@ -67,13 +67,16 @@ Care-team desktop surfaces should feel operational: dense enough to scan, restra
 
 The agent proposes. The patient disposes.
 
-Sukari may autonomously detect patterns, select one in-scope mission, remember responses, follow up once on a "later today" promise, and compile a weekly digest. It must ask before changing a mission mid-day, involving a supporter, or suggesting care-team outreach. It must never dose, diagnose, shame, contact people without consent, or obscure its reasoning.
+Sukari may autonomously detect patterns, select one in-scope mission, remember responses, follow up once on a "later today" promise, and compile a weekly digest. Every proposal exposes its decision trace: what was observed, what was proposed, and what it is waiting for next. It must ask before changing a mission mid-day, involving a supporter, or suggesting care-team outreach. It must never dose, diagnose, shame, contact people without consent, or obscure its reasoning.
 
 ## Shipped Progress
 
 - Name and visible brand changed to Sukari.
 - Value-first intro added before role selection.
 - Mission-first flow added before rehearsal.
+- Real-world action is now the default after mission acceptance; rehearsal is elective.
+- Rehearsal now uses a single compact, responsive HUD with no full-screen flashes, shakes, or time-of-day theme changes.
+- Mission cards expose an agent decision trace: observed evidence, proposal, and next patient-controlled step.
 - Demo patterns are labelled as demo evidence.
 - Desktop care surface now emphasizes operator value: exceptions, rationale, outcomes.
 - Local digest history powers the care surface instead of fixture-only data.
@@ -84,14 +87,14 @@ Sukari may autonomously detect patterns, select one in-scope mission, remember r
 
 ## Metrics
 
-North star: **Weekly Adherent Patients (WAP)**, defined as at least one real-world mission completion and at least one rehearsal in a week.
+North star: **Weekly Adherent Patients (WAP)**, defined as at least one real-world mission completion in a week. Rehearsal is a supporting engagement signal, never a prerequisite.
 
 Supporting metrics:
 
 - Value screen to role selection.
 - Role selection to mission accepted.
-- Mission accepted to rehearsal started.
-- Rehearsal to done now or later today.
+- Mission accepted to direct action, later-today promise, or elective rehearsal.
+- Elective rehearsal to real-world completion.
 - Completion to measurable response.
 - Care-team exception to outreach reviewed.
 - Staff minutes per enrolled patient.

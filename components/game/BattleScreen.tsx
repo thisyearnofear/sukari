@@ -5,7 +5,6 @@ import { FoodCard } from './FoodCard';
 import { BattleHUD } from './BattleHUD';
 import { BattleTutorialModal } from './BattleTutorialModal';
 import { LifeModeHeader, LifeModeFooter, LeftSidePanel, RightSidePanel, SIDE_PANEL_WIDTH, LifeModePauseOverlay, SocialMeterDisplay } from './LifeModeHUD';
-import { AnimatedBackground } from './AnimatedBackground';
 import { InsulinControl } from './InsulinControl';
 import { GameState, StabilityZone, ControlMode, SwipeDirection, SwipeAction } from '@/types/game';
 import type { GameMechanic } from '@/hooks/usePlayerProgress';
@@ -14,7 +13,6 @@ import { COMBO_TIERS } from '@/constants/gameConfig';
 import { getGlucoseZone } from '@/constants/healthScenarios';
 import { TierConfig } from '@/constants/gameTiers';
 import { getStabilityZone } from '@/utils/gameLogic';
-import { GatesOpen, KingdomTrembles, StormApproaches, KingdomRallies, KingdomFalls } from './DramaticMoments';
 import { MetabolicField, type MetabolicBand } from '@/components/atmosphere/MetabolicField';
 import { COLORS, FONTS } from '@/constants/designSystem';
 
@@ -42,7 +40,7 @@ function zoneIntensity(zone: StabilityZone): number {
 }
 
 // Screen-wide combo burst effect
-const ComboBurst: React.FC<{
+export const ComboBurst: React.FC<{
   comboCount: number;
   color: string;
 }> = ({ comboCount, color }) => {
@@ -133,7 +131,7 @@ const ComboBurst: React.FC<{
 };
 
 // Screen flash effect for correct/incorrect swipes
-const ScreenFlash: React.FC<{
+export const ScreenFlash: React.FC<{
   type: 'success' | 'error' | null;
   trigger: number;
 }> = ({ type, trigger }) => {
@@ -208,7 +206,6 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({
   missionAction = null,
 }) => {
   const hasMechanic = hasMechanicProp || (() => true); // Default: show everything
-  const shakeAnim = useRef(new Animated.Value(0)).current;
 
   const [showInsulinControl, setShowInsulinControl] = useState(false);
   const [showTutorial, setShowTutorial] = useState(false);
@@ -268,52 +265,8 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [gameState.isGameActive, gameState.foods, gameState.gameMode, showTutorial, showInsulinControl, onSwipe]);
    const zone = getStabilityZone(gameState.stability);
+   // Legacy life-mode chrome remains type-compatible while all shipped tiers use the compact HUD.
    const insets = useSafeAreaInsets();
-   
-   // Track combo for burst effect
-   const prevComboRef = useRef(gameState.comboCount);
-   const [comboBurstTrigger, setComboBurstTrigger] = useState(0);
-   
-   // Dramatic moments state
-   const [showGatesOpen, setShowGatesOpen] = useState(true); // #1: show on mount
-   const [showComboRally, setShowComboRally] = useState<string | null>(null); // #2: color
-   const [showStorm, setShowStorm] = useState<{ name: string; icon: string } | null>(null); // #4
-   const [showDefeatCrack, setShowDefeatCrack] = useState(false); // #6
-   const prevPlotTwistRef = useRef(gameState.activePlotTwist);
-   const prevGameResultRef = useRef(gameState.gameResult);
-   const isCritical = zone === 'critical-low' || zone === 'critical-high';
-
-   // #2: Combo rally pulse when reaching a new combo tier
-   useEffect(() => {
-     const prev = prevComboRef.current;
-     const curr = gameState.comboCount;
-     if (curr >= 3 && curr > prev && [3, 5, 8, 12, 18, 25].includes(curr)) {
-       setShowComboRally('#fbbf24');
-       setTimeout(() => setShowComboRally(null), 700);
-     }
-     prevComboRef.current = curr;
-   }, [gameState.comboCount]);
-
-   // #4: Storm when plot twist arrives
-   useEffect(() => {
-     if (gameState.activePlotTwist && !prevPlotTwistRef.current) {
-       setShowStorm({ name: gameState.activePlotTwist.name, icon: gameState.activePlotTwist.icon });
-     }
-     prevPlotTwistRef.current = gameState.activePlotTwist;
-   }, [gameState.activePlotTwist]);
-
-   // #6: Defeat crack effect
-   useEffect(() => {
-     if (gameState.gameResult === 'defeat' && prevGameResultRef.current !== 'defeat') {
-       setShowDefeatCrack(true);
-     }
-     prevGameResultRef.current = gameState.gameResult;
-   }, [gameState.gameResult]);
-   
-   // Track swipe feedback
-   const [flashType, setFlashType] = useState<'success' | 'error' | null>(null);
-   const [flashTrigger, setFlashTrigger] = useState(0);
-   
    // Tutorial for tier1 - show modal for first 2 foods
    const [tutorialFood, setTutorialFood] = useState<any>(null);
    const [shownContextualTip, setShownContextualTip] = useState(false);
@@ -377,100 +330,20 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({
      };
    }, [gameState.foods, gameState.correctSwipes, gameState.incorrectSwipes, gameState.isGameActive, isTier1Tutorial, showTutorial]);
   
-  // Get combo color
-  const currentTier = [...COMBO_TIERS].reverse().find(t => gameState.comboCount >= t.count);
-  const comboColor = currentTier?.color || '#fbbf24';
-
-  // Screen shake effect
-  useEffect(() => {
-    if (gameState.screenShake > 0) {
-      Animated.sequence([
-        Animated.timing(shakeAnim, { toValue: gameState.screenShake, duration: 50, useNativeDriver: true }),
-        Animated.timing(shakeAnim, { toValue: -gameState.screenShake, duration: 50, useNativeDriver: true }),
-        Animated.timing(shakeAnim, { toValue: gameState.screenShake / 2, duration: 50, useNativeDriver: true }),
-        Animated.timing(shakeAnim, { toValue: -gameState.screenShake / 2, duration: 50, useNativeDriver: true }),
-        Animated.timing(shakeAnim, { toValue: 0, duration: 50, useNativeDriver: true }),
-      ]).start();
-    }
-  }, [gameState.screenShake, shakeAnim]);
-
-  // Combo burst trigger
-  useEffect(() => {
-    if (gameState.comboCount > prevComboRef.current && gameState.comboCount >= 3) {
-      setComboBurstTrigger(prev => prev + 1);
-    }
-    prevComboRef.current = gameState.comboCount;
-  }, [gameState.comboCount]);
-
-  // Flash effect based on announcement type
-  useEffect(() => {
-    if (gameState.announcementType === 'success') {
-      setFlashType('success');
-      setFlashTrigger(prev => prev + 1);
-    } else if (gameState.announcementType === 'error') {
-      setFlashType('error');
-      setFlashTrigger(prev => prev + 1);
-    }
-  }, [gameState.announcement, gameState.announcementType]);
-
   const fieldBand = zoneToBand(zone);
   const fieldIntensity = zoneIntensity(zone);
 
   return (
-    <Animated.View 
-      style={[
-        {
-          flex: 1,
-          backgroundColor: P.ink,
-          alignSelf: 'center',
-          width: '100%',
-          maxWidth: Platform.OS === 'web' ? 960 : 500,
-        },
-        { transform: [{ translateX: shakeAnim }] }
-      ]}
+    <View
+      style={{
+        flex: 1,
+        backgroundColor: P.ink,
+        alignSelf: 'center',
+        width: '100%',
+        maxWidth: Platform.OS === 'web' ? 960 : 500,
+      }}
     >
       <MetabolicField band={fieldBand} intensity={fieldIntensity} />
-
-      {/* Life mode: soft time wash only — field remains the hero */}
-      {gameState.gameMode === 'life' ? (
-        <View style={{ ...StyleSheet.absoluteFillObject, opacity: 0.22 }} pointerEvents="none">
-          <AnimatedBackground
-            zone={zone}
-            comboCount={gameState.comboCount}
-            timer={gameState.timer}
-            timePhase={gameState.timePhase}
-            gameMode={gameState.gameMode}
-            tier={tierConfig?.tier}
-          />
-        </View>
-      ) : null}
-
-      {/* #8: Morning condition badge (Life Mode) */}
-      {gameState.gameMode === 'life' && gameState.morningCondition !== 'normal_day' && (
-        <View style={{ position: 'absolute', top: insets.top + 100, right: 8, zIndex: 30, backgroundColor: P.mist, paddingHorizontal: 10, paddingVertical: 6, borderRadius: 2, borderWidth: 1, borderColor: P.line }}>
-          <Text style={{ color: P.textSoft, fontSize: 10, fontFamily: FONTS.bodyMedium }}>
-            {gameState.morningCondition === 'well_rested' ? 'Well rested' :
-             gameState.morningCondition === 'poor_sleep' ? 'Poor sleep' :
-             gameState.morningCondition === 'sick_day' ? 'Sick day' :
-             gameState.morningCondition === 'stressed' ? 'Stressed' :
-             gameState.morningCondition === 'marathon_day' ? 'Marathon day' :
-             gameState.morningCondition === 'recovery_day' ? 'Recovery day' : ''}
-          </Text>
-        </View>
-      )}
-
-      {/* ═══ DRAMATIC MOMENTS ═══ */}
-      {showGatesOpen && <GatesOpen onComplete={() => setShowGatesOpen(false)} tier={tierConfig?.tier} />}
-      {isCritical && <KingdomTrembles zone={zone as 'critical-low' | 'critical-high'} />}
-      {showComboRally && <KingdomRallies color={showComboRally} />}
-      {showStorm && <StormApproaches name={showStorm.name} icon={showStorm.icon} onComplete={() => setShowStorm(null)} />}
-      {showDefeatCrack && <KingdomFalls />}
-
-      {/* Screen flash effect */}
-      <ScreenFlash type={flashType} trigger={flashTrigger} />
-      
-      {/* Combo burst effect */}
-       <ComboBurst comboCount={comboBurstTrigger} color={comboColor} />
 
        {/* Tier1 Tutorial Modal */}
        <BattleTutorialModal
@@ -601,7 +474,7 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({
           onSwipe={onSwipe}
           controlMode={controlMode}
           gameMode={gameState.gameMode}
-          showOptimalHint={gameState.gameMode === 'life'}
+          showOptimalHint={false}
         />
       ))}
 
@@ -745,7 +618,7 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({
           onClose={() => setShowInsulinControl(false)}
         />
       )}
-    </Animated.View>
+    </View>
   );
 };
 

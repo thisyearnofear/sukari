@@ -2,7 +2,7 @@
 
 Sukari is the adherence layer for continuous metabolic care.
 
-It turns a metabolic pattern into one daily mission, rehearses the decision in a short practice, records the real-world follow-through, measures the associated response, and gives the care team an exception-oriented view when human outreach is useful.
+It turns a metabolic pattern into one daily mission, records the real-world follow-through, offers an optional short practice for people who want it, measures the associated response, and gives the care team an exception-oriented view when human outreach is useful.
 
 > One mission today. Better evidence for tomorrow.
 
@@ -12,18 +12,21 @@ Sukari is not an AI doctor, dosing tool, NFT product, leaderboard game, or sympt
 
 1. Detect a signal or use a clearly labelled demo pattern.
 2. Propose one mission with patient controls: accept, make easier, swap, or decline.
-3. Rehearse the decision in a short battle with the mission visible.
-4. Transfer the decision into real life: done now or later today.
+3. Act in real life, save it for later today, or choose an optional 45-second rehearsal.
+4. Record the real-world follow-through.
 5. Measure the associated response without causal overclaiming.
 6. Surface care-team exceptions with outreach rationale and weekly outcomes.
 
-The battle is the engagement mechanism. The product is closed-loop adherence.
+Rehearsal is an optional learning mechanism. The product is closed-loop adherence.
 
 ## Current Progress
 
 - Brand changed from GlucoseWars to Sukari in the shipped app display and active product docs.
 - First-run experience now leads with the value proposition and user pain before role selection.
 - First mission flow now shows a connect/import or labelled demo pattern, then a mission card before rehearsal.
+- Patients can now act on a mission without entering rehearsal; practice appears only after a mission is accepted.
+- The rehearsal surface now uses a stable compact HUD across phone and desktop rather than changing full-screen themes and legacy side panels.
+- Mission cards show the agent decision trace: observed evidence, proposal, and the next patient-controlled step.
 - Desktop now exposes a programme-operator care surface with exceptions, outreach rationale, weekly outcomes, and local-first digest history.
 - Legacy Web3, NFT, leaderboard, Beam, and challenge-era shipped surfaces were removed or redirected out of the primary experience.
 - Funnel instrumentation now covers value screen, role selection, mission acceptance, rehearsal, real-world completion, measured response, and care-team exception/outreach.

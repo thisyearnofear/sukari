@@ -128,15 +128,33 @@ export const MainMenu: React.FC<MainMenuProps> = ({
     const status = progress.activeMission?.status;
     const practiced = status === 'practiced' || status === 'completed';
     const done = status === 'completed';
+    const accepted = !!missionChoice && missionChoice !== 'not_practical';
     return [
       { key: 'detect', title: 'Detect', done: true, active: false },
-      { key: 'mission', title: 'Mission', done: !!missionChoice || practiced, active: !missionChoice && !practiced },
-      { key: 'rehearse', title: 'Rehearse', done: practiced, active: !!missionChoice && !practiced },
-      { key: 'act', title: 'Act', done: done, active: practiced && !done },
+      { key: 'mission', title: 'Mission', done: accepted || practiced, active: !accepted && !practiced },
+      { key: 'rehearse', title: 'Practice', done: practiced, active: false },
+      { key: 'act', title: 'Act', done: done, active: accepted && !done },
       { key: 'measure', title: 'Measure', done: false, active: done },
       { key: 'adapt', title: 'Care team', done: false, active: false },
     ];
   }, [demoMode, demoDay, progress.activeMission?.status, missionChoice]);
+
+  const deferMission = async () => {
+    const mission = displayMission || selectMission({
+      userMode: progress.userMode,
+      forceTemplateId: pattern.suggestedBehaviour,
+      activeMission: null,
+    });
+    await AsyncStorage.setItem(DEFERRED_KEY, JSON.stringify({ dateKey: mission.dateKey }));
+    setMissionDeferred(true);
+    setMissionChoice('accept');
+    track('mission_deferred', { template_id: mission.templateId, from: 'home_pattern_card', demo: demoMode });
+  };
+
+  const rehearsalAvailable =
+    !!missionChoice &&
+    missionChoice !== 'not_practical' &&
+    displayMission?.status !== 'completed';
 
   useEffect(() => {
     AsyncStorage.multiGet([DEMO_KEY, DEMO_DAY_KEY, DEFERRED_KEY]).then((pairs) => {
@@ -493,6 +511,7 @@ export const MainMenu: React.FC<MainMenuProps> = ({
                 track('mission_marked_done', { from: 'home_pattern_card', demo: demoMode });
                 track('completion_to_measured_response', { from: 'home_pattern_card', demo: demoMode });
               }}
+              onLater={deferMission}
             />
           </View>
 
@@ -532,31 +551,24 @@ export const MainMenu: React.FC<MainMenuProps> = ({
             </View>
           ) : null}
 
-          <PressableScale
-            onPress={() => {
-              if (!missionChoice || missionChoice === 'not_practical') {
-                setMissionChoice('accept');
-              }
-              if (!demoMode) {
-                const template =
-                  missionChoice === 'another'
-                    ? 'protein_first'
-                    : pattern.suggestedBehaviour;
-                assignFromPattern(template);
-              }
-              onStartGame(selectedMode);
-              track('mission_accepted_to_rehearsal_started', {
-                template: displayMission?.templateId || pattern.suggestedBehaviour,
-                demo: demoMode,
-              });
-            }}
-            accessibilityLabel="Rehearse today’s mission in a short battle"
-            accessibilityRole="button"
-            style={styles.primaryCta}
-          >
-            <Text style={styles.primaryCtaText}>Rehearse in 45 seconds</Text>
-            <Text style={styles.primaryCtaSub}>Practice the decision — then do it in real life</Text>
-          </PressableScale>
+          {rehearsalAvailable ? (
+            <PressableScale
+              onPress={() => {
+                onStartGame(selectedMode);
+                track('mission_accepted_to_rehearsal_started', {
+                  template: displayMission?.templateId || pattern.suggestedBehaviour,
+                  demo: demoMode,
+                  elective: true,
+                });
+              }}
+              accessibilityLabel="Optionally practice today’s mission in a short rehearsal"
+              accessibilityRole="button"
+              style={styles.practiceCta}
+            >
+              <Text style={styles.practiceCtaText}>Practice the choice (optional)</Text>
+              <Text style={styles.practiceCtaSub}>A 45-second rehearsal before you act in real life</Text>
+            </PressableScale>
+          ) : null}
 
           <View style={styles.secondaryRow}>
             <TouchableOpacity onPress={() => setShowCoach(true)} accessibilityRole="button">
@@ -587,7 +599,7 @@ export const MainMenu: React.FC<MainMenuProps> = ({
           </View>
 
           <Text style={styles.footerHint}>
-            Habits only — never dosing or diagnosis. Practice is rehearsal; the product is follow-through.
+            Habits only — never dosing or diagnosis. Practice is optional; follow-through is what counts.
           </Text>
         </Animated.View>
       </ScrollView>
@@ -1097,6 +1109,27 @@ const styles = StyleSheet.create({
     color: 'rgba(11, 18, 16, 0.7)',
     fontSize: 12,
     marginTop: 5,
+  },
+  practiceCta: {
+    borderWidth: 1,
+    borderColor: P.line,
+    backgroundColor: P.mist,
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+    borderRadius: 2,
+    alignItems: 'center',
+  },
+  practiceCtaText: {
+    fontFamily: FONTS.bodyBold,
+    color: P.text,
+    fontSize: 14,
+  },
+  practiceCtaSub: {
+    fontFamily: FONTS.body,
+    color: P.textMuted,
+    fontSize: 12,
+    marginTop: 4,
+    textAlign: 'center',
   },
   secondaryRow: {
     flexDirection: 'row',

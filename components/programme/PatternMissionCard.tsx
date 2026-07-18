@@ -25,6 +25,7 @@ interface PatternMissionCardProps {
   onNotPractical?: () => void;
   onWhy?: () => void;
   onMarkDone?: () => void;
+  onLater?: () => void;
   missionChoice?: MissionEase | null;
   /** Soft home state after “Later today” */
   deferred?: boolean;
@@ -42,12 +43,15 @@ export function PatternMissionCard({
   onNotPractical,
   onWhy,
   onMarkDone,
+  onLater,
   missionChoice,
   deferred = false,
 }: PatternMissionCardProps) {
   const [showDetails, setShowDetails] = useState(false);
   const done = mission?.status === 'completed';
   const practiced = mission?.status === 'practiced' || done;
+  const accepted = !!missionChoice && missionChoice !== 'not_practical';
+  const canLogRealWorldAction = (accepted || practiced || deferred) && !done;
 
   const experimentText =
     missionChoice === 'easier'
@@ -66,8 +70,8 @@ export function PatternMissionCard({
         <View style={styles.waitBanner}>
           <Text style={styles.waitTitle}>Waiting on you today</Text>
           <Text style={styles.waitBody}>
-            Rehearsal is done. Mark the habit when you’ve finished it in real life — no penalty for
-            waiting.
+            Your action is saved for later today. Mark it when you’ve finished it in real life — no
+            penalty for waiting.
           </Text>
         </View>
       ) : null}
@@ -80,6 +84,17 @@ export function PatternMissionCard({
       <Text style={styles.patternOneLiner} numberOfLines={showDetails ? 4 : 2}>
         {pattern.headline}
       </Text>
+
+      <View style={styles.trace} accessibilityRole="summary">
+        <Text style={styles.traceLabel}>Sukari&apos;s decision trace</Text>
+        <Text style={styles.traceLine}>
+          Observed: {pattern.source === 'cgm' ? 'your connected signal' : 'your programme context'}
+        </Text>
+        <Text style={styles.traceLine}>Proposed: one achievable action for today</Text>
+        <Text style={styles.traceLine}>
+          Next: {done ? 'measure the response tomorrow' : deferred ? 'wait for your update' : 'you choose what happens'}
+        </Text>
+      </View>
 
       <PressableScale
         onPress={() => {
@@ -117,7 +132,7 @@ export function PatternMissionCard({
       {!missionChoice && !done && !deferred ? (
         <View style={styles.choiceRow}>
           <PressableScale onPress={onAccept} style={styles.acceptBtn} accessibilityRole="button">
-            <Text style={styles.acceptText}>Accept</Text>
+            <Text style={styles.acceptText}>I&apos;ll do this</Text>
           </PressableScale>
           <PressableScale onPress={onMakeEasier} style={styles.ghostBtn} accessibilityRole="button">
             <Text style={styles.ghostText}>Easier</Text>
@@ -147,10 +162,19 @@ export function PatternMissionCard({
         </Text>
       )}
 
-      {(practiced || deferred) && !done && onMarkDone ? (
-        <PressableScale onPress={onMarkDone} style={styles.doneBtn} accessibilityRole="button">
-          <Text style={styles.acceptText}>I did it in real life</Text>
-        </PressableScale>
+      {canLogRealWorldAction ? (
+        <View style={styles.realWorldActions}>
+          {onMarkDone ? (
+            <PressableScale onPress={onMarkDone} style={styles.doneBtn} accessibilityRole="button">
+              <Text style={styles.acceptText}>I did it in real life</Text>
+            </PressableScale>
+          ) : null}
+          {!deferred && onLater ? (
+            <PressableScale onPress={onLater} style={styles.laterBtn} accessibilityRole="button">
+              <Text style={styles.laterText}>Later today</Text>
+            </PressableScale>
+          ) : null}
+        </View>
       ) : null}
 
       {outcome ? (
@@ -245,6 +269,27 @@ const styles = StyleSheet.create({
     fontSize: 13,
     lineHeight: 19,
   },
+  trace: {
+    marginTop: 14,
+    paddingTop: 12,
+    borderTopWidth: 1,
+    borderTopColor: P.line,
+    gap: 3,
+  },
+  traceLabel: {
+    fontFamily: FONTS.bodyMedium,
+    color: P.cool,
+    fontSize: 11,
+    letterSpacing: 0.8,
+    textTransform: 'uppercase',
+    marginBottom: 2,
+  },
+  traceLine: {
+    fontFamily: FONTS.body,
+    color: P.textMuted,
+    fontSize: 11,
+    lineHeight: 16,
+  },
   linkBtn: {
     alignSelf: 'flex-start',
     marginTop: 10,
@@ -329,12 +374,30 @@ const styles = StyleSheet.create({
     fontSize: 13,
     marginTop: 12,
   },
-  doneBtn: {
+  realWorldActions: {
+    flexDirection: 'row',
+    gap: 8,
     marginTop: 14,
+  },
+  doneBtn: {
+    flex: 1,
     backgroundColor: P.cool,
     paddingVertical: 12,
     borderRadius: 2,
     alignItems: 'center',
+  },
+  laterBtn: {
+    borderWidth: 1,
+    borderColor: P.line,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    borderRadius: 2,
+    justifyContent: 'center',
+  },
+  laterText: {
+    fontFamily: FONTS.bodyMedium,
+    color: P.textSoft,
+    fontSize: 12,
   },
   outcomeBlock: {
     marginTop: 16,
