@@ -1,9 +1,11 @@
 /**
- * ShareCard — Visual share card rendered as a View.
- * Designed to look good as a screenshot on social media.
+ * ShareCard — screenshot-ready share surface for social / caregivers.
  */
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
+import { COLORS, FONTS } from '@/constants/designSystem';
+
+const P = COLORS.PROGRAMME;
 
 interface Props {
   score: number;
@@ -22,97 +24,154 @@ export const ShareCard: React.FC<Props> = ({
   grade,
   accuracy,
   result,
-  tier,
   comboMax,
   supportAction,
   missionLabel,
 }) => {
   const isVictory = result === 'victory';
-  const gradeColors: Record<string, string> = { S: '#fbbf24', A: '#22c55e', B: '#3b82f6', C: '#f59e0b', D: '#ef4444' };
+  const gradeColors: Record<string, string> = {
+    S: P.warn,
+    A: P.accent,
+    B: P.cool,
+    C: P.warn,
+    D: P.danger,
+  };
 
   return (
     <View style={styles.card}>
-      <View style={styles.header}>
-        <Text style={styles.logo}>🏰</Text>
-        <Text style={styles.title}>GLUCOSE WARS</Text>
-      </View>
+      <Text style={styles.brand}>Glucose Wars</Text>
+      <Text style={[styles.result, { color: isVictory ? P.accent : P.danger }]}>
+        {isVictory ? 'Practice complete' : 'Field collapsed'}
+      </Text>
 
-      <View style={styles.resultRow}>
-        <Text style={styles.resultEmoji}>{isVictory ? '👑' : '💀'}</Text>
-        <Text style={[styles.resultText, { color: isVictory ? '#fbbf24' : '#ef4444' }]}>
-          {isVictory ? 'VICTORY' : 'DEFEATED'}
-        </Text>
-      </View>
-
-      {missionLabel ? (
-        <Text style={styles.mission}>{missionLabel}</Text>
-      ) : null}
+      {missionLabel ? <Text style={styles.mission}>{missionLabel}</Text> : null}
 
       <View style={styles.statsRow}>
         <View style={styles.stat}>
           <Text style={styles.statValue}>{score.toLocaleString()}</Text>
-          <Text style={styles.statLabel}>SCORE</Text>
+          <Text style={styles.statLabel}>Score</Text>
         </View>
         <View style={styles.stat}>
-          <Text style={[styles.gradeValue, { color: gradeColors[grade] || '#fff' }]}>{grade}</Text>
-          <Text style={styles.statLabel}>GRADE</Text>
+          <Text style={[styles.gradeValue, { color: gradeColors[grade] || P.text }]}>
+            {grade}
+          </Text>
+          <Text style={styles.statLabel}>Grade</Text>
         </View>
         <View style={styles.stat}>
           <Text style={styles.statValue}>{accuracy}%</Text>
-          <Text style={styles.statLabel}>ACCURACY</Text>
+          <Text style={styles.statLabel}>Accuracy</Text>
         </View>
       </View>
 
-      {comboMax && comboMax >= 3 && (
-        <Text style={styles.combo}>⚡ Best combo: {comboMax}x</Text>
-      )}
+      {comboMax && comboMax >= 3 ? (
+        <Text style={styles.combo}>Best streak · {comboMax}×</Text>
+      ) : null}
 
       {supportAction ? (
         <View style={styles.supportBox}>
-          <Text style={styles.supportLabel}>SUPPORT TONIGHT</Text>
+          <Text style={styles.supportLabel}>Support ask</Text>
           <Text style={styles.supportText}>{supportAction}</Text>
         </View>
       ) : null}
 
-      <Text style={styles.footer}>glucosewars.app</Text>
+      <Text style={styles.footer}>glucosewars.netlify.app</Text>
     </View>
   );
 };
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: '#0a0a12',
-    borderRadius: 16,
-    borderWidth: 2,
-    borderColor: '#fbbf24',
-    padding: 20,
+    backgroundColor: P.ink,
+    borderRadius: 2,
+    borderWidth: 1,
+    borderColor: P.line,
+    paddingVertical: 22,
+    paddingHorizontal: 20,
     width: 300,
     alignItems: 'center',
   },
-  header: { flexDirection: 'row', alignItems: 'center', marginBottom: 12 },
-  logo: { fontSize: 24, marginRight: 8 },
-  title: { color: '#fbbf24', fontSize: 18, fontWeight: 'bold', letterSpacing: 2 },
-  resultRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 16 },
-  resultEmoji: { fontSize: 32, marginRight: 8 },
-  resultText: { fontSize: 24, fontWeight: 'bold', letterSpacing: 3 },
-  statsRow: { flexDirection: 'row', justifyContent: 'space-around', width: '100%', marginBottom: 12 },
-  stat: { alignItems: 'center' },
-  statValue: { color: '#fff', fontSize: 20, fontWeight: 'bold' },
-  gradeValue: { fontSize: 28, fontWeight: 'bold' },
-  statLabel: { color: '#6b7280', fontSize: 9, fontWeight: 'bold', marginTop: 2 },
-  combo: { color: '#fbbf24', fontSize: 12, marginBottom: 8 },
-  mission: { color: '#c4b5fd', fontSize: 11, textAlign: 'center', marginBottom: 10 },
+  brand: {
+    fontFamily: FONTS.display,
+    color: P.text,
+    fontSize: 20,
+    letterSpacing: -0.3,
+    marginBottom: 8,
+  },
+  result: {
+    fontFamily: FONTS.display,
+    fontSize: 18,
+    marginBottom: 12,
+  },
+  mission: {
+    fontFamily: FONTS.body,
+    color: P.textSoft,
+    fontSize: 12,
+    textAlign: 'center',
+    lineHeight: 17,
+    marginBottom: 14,
+  },
+  statsRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    width: '100%',
+    marginBottom: 12,
+    paddingTop: 12,
+    borderTopWidth: 1,
+    borderTopColor: P.line,
+  },
+  stat: { alignItems: 'center', flex: 1 },
+  statValue: {
+    fontFamily: FONTS.display,
+    color: P.text,
+    fontSize: 20,
+  },
+  gradeValue: {
+    fontFamily: FONTS.display,
+    fontSize: 26,
+  },
+  statLabel: {
+    fontFamily: FONTS.body,
+    color: P.textMuted,
+    fontSize: 10,
+    letterSpacing: 0.8,
+    textTransform: 'uppercase',
+    marginTop: 4,
+  },
+  combo: {
+    fontFamily: FONTS.bodyMedium,
+    color: P.warn,
+    fontSize: 12,
+    marginBottom: 8,
+  },
   supportBox: {
     marginTop: 8,
-    marginBottom: 8,
-    padding: 10,
-    borderRadius: 10,
+    marginBottom: 4,
+    padding: 12,
+    borderRadius: 2,
     borderWidth: 1,
-    borderColor: 'rgba(59,130,246,0.5)',
-    backgroundColor: 'rgba(59,130,246,0.12)',
+    borderColor: P.line,
+    backgroundColor: P.mist,
     width: '100%',
   },
-  supportLabel: { color: '#93c5fd', fontSize: 9, fontWeight: 'bold', letterSpacing: 1, marginBottom: 4 },
-  supportText: { color: '#e5e7eb', fontSize: 12, textAlign: 'center', lineHeight: 16 },
-  footer: { color: '#374151', fontSize: 10, marginTop: 8 },
+  supportLabel: {
+    fontFamily: FONTS.bodyMedium,
+    color: P.accent,
+    fontSize: 10,
+    letterSpacing: 1.2,
+    textTransform: 'uppercase',
+    marginBottom: 6,
+  },
+  supportText: {
+    fontFamily: FONTS.body,
+    color: P.text,
+    fontSize: 13,
+    textAlign: 'center',
+    lineHeight: 18,
+  },
+  footer: {
+    fontFamily: FONTS.body,
+    color: P.textMuted,
+    fontSize: 10,
+    marginTop: 12,
+  },
 });

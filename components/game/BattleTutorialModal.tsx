@@ -1,6 +1,9 @@
 import React, { useEffect } from 'react';
-import { Text, Animated, Modal, TouchableOpacity } from 'react-native';
+import { Text, Animated, Easing, Modal, Pressable, StyleSheet, View } from 'react-native';
 import { FoodDefinition } from '@/types/game';
+import { COLORS, FONTS, ANIMATIONS } from '@/constants/designSystem';
+
+const P = COLORS.PROGRAMME;
 
 interface BattleTutorialModalProps {
   visible: boolean;
@@ -16,108 +19,145 @@ export const BattleTutorialModal: React.FC<BattleTutorialModalProps> = ({
   controlMode,
 }) => {
   const fadeAnim = React.useRef(new Animated.Value(0)).current;
-  const scaleAnim = React.useRef(new Animated.Value(0.8)).current;
+  const slideAnim = React.useRef(new Animated.Value(12)).current;
 
   useEffect(() => {
     if (visible) {
+      const { duration, bezier } = ANIMATIONS.MOTION.enter;
+      const ease = Easing.bezier(bezier[0], bezier[1], bezier[2], bezier[3]);
       Animated.parallel([
         Animated.timing(fadeAnim, {
           toValue: 1,
-          duration: 300,
+          duration,
+          easing: ease,
           useNativeDriver: true,
         }),
-        Animated.spring(scaleAnim, {
-          toValue: 1,
+        Animated.timing(slideAnim, {
+          toValue: 0,
+          duration,
+          easing: ease,
           useNativeDriver: true,
-          friction: 8,
-          tension: 40,
         }),
       ]).start();
 
-      // Optional: Auto-dismiss after 6 seconds (increased from 4s) 
-      // but let the user tap to continue
       const timer = setTimeout(onDismiss, 6000);
       return () => {
         clearTimeout(timer);
         fadeAnim.setValue(0);
-        scaleAnim.setValue(0.8);
+        slideAnim.setValue(12);
       };
-    } else {
-      fadeAnim.setValue(0);
-      scaleAnim.setValue(0.8);
     }
-  }, [visible, onDismiss, fadeAnim, scaleAnim]);
+    fadeAnim.setValue(0);
+    slideAnim.setValue(12);
+  }, [visible, onDismiss, fadeAnim, slideAnim]);
 
   if (!food) return null;
 
   const isAlly = food.faction === 'ally';
-  const direction = isAlly ? '👆' : '👇';
-  const buttonText = isAlly ? 'RALLY' : 'BANISH';
-  const color = isAlly ? '#22c55e' : '#ef4444';
+  const accent = isAlly ? P.accent : P.danger;
+  const gesture =
+    controlMode === 'swipe'
+      ? isAlly
+        ? 'Swipe up'
+        : 'Swipe down'
+      : isAlly
+        ? 'Tap Steady'
+        : 'Tap Refuse';
 
   return (
     <Modal visible={visible} transparent animationType="none">
-      <TouchableOpacity
-        style={{
-          flex: 1,
-          backgroundColor: 'rgba(0,0,0,0.7)',
-          alignItems: 'center',
-          justifyContent: 'center',
-        }}
-        activeOpacity={1}
+      <Pressable
+        style={styles.backdrop}
         onPress={onDismiss}
+        accessibilityRole="button"
+        accessibilityLabel="Dismiss tutorial"
       >
         <Animated.View
-          style={{
-            opacity: fadeAnim,
-            transform: [{ scale: scaleAnim }],
-            alignItems: 'center',
-            backgroundColor: '#0f0f1a',
-            borderRadius: 20,
-            borderWidth: 2,
-            borderColor: color,
-            padding: 24,
-            maxWidth: 320,
-          }}
+          style={[
+            styles.sheet,
+            {
+              borderColor: accent,
+              opacity: fadeAnim,
+              transform: [{ translateY: slideAnim }],
+            },
+          ]}
         >
-          {/* Food preview */}
-          <Text style={{ fontSize: 60, marginBottom: 16 }}>{food.sprite}</Text>
+          <Text style={styles.brand}>Glucose Wars</Text>
+          <Text style={styles.sprite}>{food.sprite}</Text>
+          <Text style={[styles.foodName, { color: accent }]}>{food.name}</Text>
 
-          {/* Instruction */}
-          <Text style={{ fontSize: 16, color: '#d1d5db', textAlign: 'center', marginBottom: 24, fontWeight: '600' }}>
+          <Text style={styles.instruction}>
             {isAlly
-              ? `🥗 This is HEALTHY\nSwipe or tap ${direction} to RALLY it!`
-              : `🍩 This is JUNK FOOD\nSwipe or tap ${direction} to BANISH it!`}
+              ? `This steadies the field.\n${gesture} to take it.`
+              : `This risks a spike or crash.\n${gesture} to refuse it.`}
           </Text>
 
-          {/* Action button - always show as "Tap to Continue" or primary action */}
-          <TouchableOpacity
-            onPress={onDismiss}
-            style={{
-              backgroundColor: color,
-              paddingHorizontal: 40,
-              paddingVertical: 14,
-              borderRadius: 14,
-              marginBottom: 8,
-              shadowColor: color,
-              shadowOffset: { width: 0, height: 4 },
-              shadowOpacity: 0.3,
-              shadowRadius: 8,
-              elevation: 5,
-            }}
-            activeOpacity={0.8}
-          >
-            <Text style={{ color: 'white', fontWeight: 'bold', fontSize: 16, letterSpacing: 1 }}>
-              {buttonText.toUpperCase()}
-            </Text>
-          </TouchableOpacity>
+          <View style={[styles.cta, { backgroundColor: accent }]}>
+            <Text style={styles.ctaText}>{isAlly ? 'Steady' : 'Refuse'}</Text>
+          </View>
 
-          {/* Dismiss hint */}
-          <Text style={{ fontSize: 11, color: '#6b7280', marginTop: 8 }}>
-            Tap anywhere to continue
-          </Text>
+          <Text style={styles.hint}>Tap anywhere to continue</Text>
         </Animated.View>
-      </TouchableOpacity>
+      </Pressable>
     </Modal>
   );
 };
+
+const styles = StyleSheet.create({
+  backdrop: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.72)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 24,
+  },
+  sheet: {
+    alignItems: 'center',
+    backgroundColor: P.inkElevated,
+    borderRadius: 2,
+    borderWidth: 1,
+    paddingVertical: 28,
+    paddingHorizontal: 24,
+    maxWidth: 340,
+    width: '100%',
+  },
+  brand: {
+    fontFamily: FONTS.display,
+    color: P.text,
+    fontSize: 18,
+    marginBottom: 16,
+  },
+  sprite: {
+    fontSize: 52,
+    marginBottom: 8,
+  },
+  foodName: {
+    fontFamily: FONTS.bodyBold,
+    fontSize: 14,
+    marginBottom: 14,
+  },
+  instruction: {
+    fontFamily: FONTS.body,
+    fontSize: 15,
+    color: P.textSoft,
+    textAlign: 'center',
+    lineHeight: 22,
+    marginBottom: 22,
+  },
+  cta: {
+    paddingHorizontal: 28,
+    paddingVertical: 12,
+    borderRadius: 2,
+    marginBottom: 12,
+  },
+  ctaText: {
+    fontFamily: FONTS.bodyBold,
+    color: P.ink,
+    fontSize: 14,
+  },
+  hint: {
+    fontFamily: FONTS.body,
+    fontSize: 11,
+    color: P.textMuted,
+  },
+});
