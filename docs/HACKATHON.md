@@ -16,7 +16,7 @@ Optional rehearsal is a gamified learning mechanism, not the product. The produc
 
 1. Start at the Sukari value screen.
 2. Select a role.
-3. Connect/import a signal or use the labelled demo pattern.
+3. Connect a signal, use the labelled demo pattern, or show the private local check-in.
 4. Show the mission card before rehearsal.
 5. Choose "Make it easier" or "Later today" once to show the visible "Adjusted for you" agent moment.
 6. Accept the mission or complete now; show optional rehearsal only after the real-world choice is clear.
@@ -35,6 +35,7 @@ The Maya demo remains deterministic for judging. Live signal paths are technical
 | Sukari brand and product copy | Done |
 | Value proposition before role selection | Done |
 | Signal path: demo, connect, or habit mission | Done |
+| Private local check-in maps a moment to an approved mission | Done |
 | Mission card before rehearsal | Done |
 | Direct-action path without rehearsal | Done |
 | Visible "Adjusted for you" mission adaptation | Done |

@@ -14,7 +14,9 @@ This reflects the product thesis: adherence per minute of attention should impro
 | Role selected after value screen | `value_to_role_completed` |
 | Role captured | `role_selected` |
 | Signal path selected | `signal_path_selected` |
+| Private check-in started / submitted | `manual_signal_started` / `manual_signal_submitted` |
 | Mission accepted | `role_to_mission_accepted` |
+| Mission response selected | `mission_response_selected` with `choice` and `input_source` |
 | Mission made easier | `mission_made_easier` |
 | Mission deferred | `mission_deferred` |
 | Rehearsal started | `mission_accepted_to_rehearsal_started` |
@@ -28,9 +30,10 @@ This reflects the product thesis: adherence per minute of attention should impro
 
 - value screen completion rate;
 - role selection distribution;
-- signal import vs labelled demo pattern use;
+- signal import vs labelled demo pattern vs private check-in use;
+- selected mission input vs current source changes;
 - mission accept/ease/defer/decline rate;
-- rehearsal start rate after mission acceptance;
+- direct completion vs elective rehearsal, segmented by input source;
 - rehearsal completion rate;
 - done-now vs later-today split;
 - later-today eventual completion rate;
@@ -65,13 +68,19 @@ Hypothesis: do it now/easier/later/not practical controls increase overall missi
 
 Primary metric: mission accepted or adapted.
 
-### 4. Transfer Beat
+### 4. First-Session Input Choice
+
+Hypothesis: a private local check-in offers a more useful path than a generic mission when a live signal is unavailable.
+
+Review after the first 5-10 sessions: `signal_path_selected`, `manual_signal_started`, `manual_signal_submitted`, and `mission_response_selected`, split by `input_source`. Do not use free-form check-in text in analytics.
+
+### 5. Transfer Beat
 
 Hypothesis: the done/later choice drives real-world completion better than ending at rehearsal results.
 
 Primary metric: rehearsal -> real-world completion/later.
 
-### 5. Care-Team Exception Value
+### 6. Care-Team Exception Value
 
 Hypothesis: operators care about concise exception rationale more than raw dashboards.
 

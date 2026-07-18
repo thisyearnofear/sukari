@@ -3,7 +3,7 @@
 Sukari is a React Native Expo app with a local-first adherence loop and optional worker-backed coaching/digest publishing. The current product spine is:
 
 ```text
-signal or demo pattern
+live signal, labelled demo pattern, or private local check-in
   -> programme mission
   -> do now / make easier / later / optional mission-specific rehearsal
   -> transfer / completion
@@ -15,7 +15,7 @@ signal or demo pattern
 
 - `app/index.tsx`: value-first entry and programme home.
 - `components/game/HeroIntro.tsx`: first-run value proposition.
-- `components/game/MainMenu.tsx`: role selection, pattern import/demo choice, mission card, and rehearsal entry.
+- `components/game/MainMenu.tsx`: role selection, signal/demo/local check-in choice, mission card, and rehearsal entry.
 - `app/(game)/battle.tsx`: rehearsal route.
 - `components/programme/MissionRibbon.tsx`: keeps the real-world mission visible during practice.
 - `components/programme/TransferBeat.tsx`: done/later handoff from practice to real life.
@@ -64,6 +64,9 @@ Analytics are wrapped through the app's tracking utility and should remain optio
 - `value_to_role_completed`
 - `role_selected`
 - `signal_path_selected`
+- `manual_signal_started`
+- `manual_signal_submitted`
+- `mission_response_selected`
 - `role_to_mission_accepted`
 - `mission_made_easier`
 - `mission_deferred`
@@ -75,6 +78,8 @@ Analytics are wrapped through the app's tracking utility and should remain optio
 - `care_outreach_reviewed`
 
 Supporting events include `agent_trace_opened`, `practice_started`, and `signal_connection_chosen`. They measure progressive disclosure, optional rehearsal use, and connect intent; they do not replace the core completion funnel.
+
+`manual_signal_started` and `manual_signal_submitted` measure the local check-in boundary. The submitted event contains only a bounded moment ID and chosen template ID, never free-form notes or raw health data. `mission_response_selected` normalizes do-now, easier, later, not-practical, and direct-completion choices with a coarse `input_source` (`demo`, `manual`, `cgm`, or `general`).
 
 Do not add new funnel names casually. Prefer extending properties on these events unless a new product boundary is introduced.
 
@@ -92,6 +97,14 @@ A production cohort product needs:
 - clear separation between raw glucose data and derived adherence evidence.
 
 Do not expose multi-patient care data through public `EXPO_PUBLIC_*` client secrets or unauthenticated worker routes.
+
+## Signal Intake Boundary
+
+The current Cloudflare Worker is not a patient-data intake service. It supports bounded coach, digest, and mission-media operations only. The shipped manual check-in remains on-device and maps a selected moment to an approved mission template.
+
+The app capability-gates live connection: Dexcom needs an OAuth client ID in the deployed build; Apple Health needs a compatible native device and permission. When neither is available, the UI labels signal connection as a preview and explains the limitation rather than opening a non-functional consent flow.
+
+Before accepting real CGM exports, screenshots, voice notes, or free-form health text, introduce a separate Signal Intake Gateway with provider OAuth, explicit consent, purpose-limited retention, encryption, audit logs, and programme-scoped access control. Do not add those inputs to the current unauthenticated worker.
 
 ## Mission Media
 

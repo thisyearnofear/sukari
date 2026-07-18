@@ -5,7 +5,7 @@
 - [x] User-facing name changed to Sukari.
 - [x] Value proposition leads first run.
 - [x] Role selection follows value screen.
-- [x] Signal choice supports labelled demo, read-only connection, or habit mission.
+- [x] Signal choice supports labelled demo, read-only connection, private local check-in, or general habit mission.
 - [x] First mission card appears before rehearsal.
 - [x] Mission card supports do it now, make it easier, later today, and not practical today.
 - [x] "Adjusted for you" appears after easier/later choices.
@@ -21,6 +21,10 @@
 
 - [x] Value screen -> role selection.
 - [x] Signal path selection.
+- [x] Private local check-in start and completion.
+- [x] Normalized mission-response event with input-source segmentation.
+- [x] Settings control to change mission input without resetting programme progress.
+- [x] Connection capability gate labels unavailable live signal access as preview.
 - [x] Role -> mission accepted.
 - [x] Mission easier/later adaptation.
 - [x] Mission accepted -> rehearsal started.

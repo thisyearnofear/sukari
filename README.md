@@ -16,7 +16,7 @@ The first minute is intentionally simple:
 
 - see the value proposition;
 - choose a role;
-- use a demo signal, connect data, or start with a habit mission;
+- use a demo signal, connect data, share a private moment from today, or start with a general habit mission;
 - get one mission;
 - choose "Do it now", "Make it easier", or "Later today".
 

@@ -74,7 +74,9 @@ Sukari may autonomously detect patterns, select one in-scope mission, remember r
 
 - Name and visible brand changed to Sukari.
 - Value-first intro added before role selection.
-- First-minute signal choice added: labelled demo, read-only connection, or habit mission.
+- First-minute signal choice added: labelled demo, read-only connection, private local check-in, or general habit mission.
+- Live signal access is capability-gated; unavailable integrations are labelled as preview rather than implied to work.
+- Settings lets a person change mission input later without resetting role or programme progress.
 - Mission-first flow added before rehearsal.
 - Real-world action is now the default after mission acceptance; rehearsal is elective.
 - Approved smaller mission variants now create a visible "Adjusted for you" agent moment.

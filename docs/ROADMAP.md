@@ -8,7 +8,7 @@ Shipped this cycle:
 
 - Sukari name and product register.
 - Value proposition before role selection.
-- First-minute signal choice: labelled demo, read-only connection, or habit mission.
+- First-minute signal choice: labelled demo, read-only connection, private local check-in, or general habit mission.
 - First mission card before rehearsal.
 - Approved "Adjusted for you" mission adaptation after easier/later choices.
 - Clearly labelled demo pattern path.
@@ -25,6 +25,8 @@ Shipped this cycle:
    - Make Dexcom/HealthKit connection the real import path.
    - Keep demo patterns explicit and clearly labelled.
    - Store only the derived pattern needed for the mission unless raw data is explicitly required.
+   - Add consented imports in this order: CGM OAuth, HealthKit, clinician-approved CSV export, then optional photo/voice capture only after a privacy review.
+   - Keep free-form check-ins local unless a patient explicitly chooses a secure, auditable upload path.
 
 2. **Secure care-team backend**
    - Provider identity and programme enrollment.

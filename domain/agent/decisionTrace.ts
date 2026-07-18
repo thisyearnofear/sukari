@@ -88,6 +88,8 @@ export function buildAgentDecisionTrace(
         ? 'Labelled demonstration pattern'
         : pattern.source === 'cgm'
           ? 'Time-window pattern from connected readings'
+          : pattern.source === 'self_report'
+            ? 'Patient-selected local check-in'
           : 'Programme default because no continuous signal is connected',
     safetyBoundary: pattern.safetyBoundary,
   };

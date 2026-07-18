@@ -16,6 +16,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { ControlMode, UserMode } from '@/types/game';
+import { CGMProvider } from '@/types/health';
 import { usePlayerProgressContext } from '@/context/PlayerProgressContext';
 import { USER_MODE_CONFIGS } from '@/constants/userModes';
 import { PrivacyToggle } from '@/components/PrivacyToggle';
@@ -29,7 +30,13 @@ import { useCoach } from '@/hooks/useCoach';
 import { buildSignalSnapshot } from '@/domain/signals';
 import { buildLocalDigest, publishWeeklyDigest } from '@/domain/digest';
 import { buildSupportInvite, supportShareMessage } from '@/domain/invite';
-import { resolvePattern, fieldStateFromPattern } from '@/domain/patterns';
+import {
+  buildSelfReportedPattern,
+  fieldStateFromPattern,
+  resolvePattern,
+  SELF_REPORTED_MOMENTS,
+  type SelfReportedMoment,
+} from '@/domain/patterns';
 import {
   MAYA_DEMO,
   getMayaDay,
@@ -54,6 +61,13 @@ const DEMO_KEY = 'glucoseWars.demoMaya';
 const DEMO_DAY_KEY = 'glucoseWars.demoMayaDay';
 const DEFERRED_KEY = 'glucoseWars.missionDeferred';
 const SIGNAL_PATH_KEY = 'sukari.signalPathChosen';
+
+const PATIENT_MANUAL_MOMENTS = SELF_REPORTED_MOMENTS.filter(
+  (moment) => moment.id !== 'caregiver_checkin',
+);
+const CAREGIVER_MANUAL_MOMENT = SELF_REPORTED_MOMENTS.find(
+  (moment) => moment.id === 'caregiver_checkin',
+)!;
 
 interface MainMenuProps {
   onStartPractice: (controlMode: ControlMode) => void;
@@ -82,6 +96,8 @@ export const MainMenu: React.FC<MainMenuProps> = ({
   const [supportDismissed, setSupportDismissed] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [showCGMDisclaimer, setShowCGMDisclaimer] = useState(false);
+  const [showSignalAvailability, setShowSignalAvailability] = useState(false);
+  const [requestedProvider, setRequestedProvider] = useState<CGMProvider>('dexcom');
   const [showCoach, setShowCoach] = useState(false);
   const [coachInput, setCoachInput] = useState('');
   const [demoMode, setDemoMode] = useState(false);
@@ -89,12 +105,18 @@ export const MainMenu: React.FC<MainMenuProps> = ({
   const [missionChoice, setMissionChoice] = useState<MissionEase | null>(null);
   const [missionDeferred, setMissionDeferred] = useState(false);
   const [signalPathChosen, setSignalPathChosen] = useState(false);
+  const [changingSignalSource, setChangingSignalSource] = useState(false);
+  const [showManualCheckIn, setShowManualCheckIn] = useState(false);
+  const [manualMoment, setManualMoment] = useState<SelfReportedMoment | null>(null);
   const [missionOverride, setMissionOverride] = useState<ProgrammeMission | null>(null);
   const [adaptation, setAdaptation] = useState<MissionAdaptation | null>(null);
   const [showQuietWin, setShowQuietWin] = useState(false);
   const cgm = useCGMConnection();
   const coach = useCoach();
   const enterAnim = useRef(new Animated.Value(0)).current;
+  const dexcomConfigured = Boolean(process.env.EXPO_PUBLIC_DEXCOM_CLIENT_ID);
+  const liveSignalAvailable = dexcomConfigured || cgm.healthKitAvailable;
+  const defaultSignalProvider: CGMProvider = dexcomConfigured ? 'dexcom' : 'libre';
 
   const signalSnapshot = buildSignalSnapshot({
     connected: cgm.connection.isConnected,
@@ -105,20 +127,30 @@ export const MainMenu: React.FC<MainMenuProps> = ({
   });
 
   const band = signalSnapshot.minimized.band;
+  const missionInputSource = demoMode
+    ? 'demo'
+    : manualMoment
+      ? 'manual'
+      : signalSnapshot.connected
+        ? 'cgm'
+        : 'general';
   const maya = useMemo(() => (demoMode ? getMayaDay(demoDay) : null), [demoMode, demoDay]);
   const pattern = useMemo(
-    () =>
-      resolvePattern({
+    () => {
+      if (manualMoment && !demoMode) return buildSelfReportedPattern(manualMoment);
+      return resolvePattern({
         readings: demoMode ? maya?.readings : cgm.readings,
         snapshot: signalSnapshot,
         useDemo: demoMode,
         demoDayIndex: demoDay,
-      }),
+      });
+    },
     // Depend on stable signal fields — snapshot object is rebuilt each render
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [
       demoMode,
       demoDay,
+      manualMoment,
       maya?.readings,
       cgm.readings,
       signalSnapshot.connected,
@@ -154,7 +186,17 @@ export const MainMenu: React.FC<MainMenuProps> = ({
     setMissionDeferred(true);
     setMissionChoice('accept');
     setAdaptation(buildMissionAdaptation(mission.templateId, 'later'));
-    track('mission_deferred', { template_id: mission.templateId, from: 'home_pattern_card', demo: demoMode });
+    track('mission_deferred', {
+      template_id: mission.templateId,
+      from: 'home_pattern_card',
+      demo: demoMode,
+      input_source: missionInputSource,
+    });
+    track('mission_response_selected', {
+      choice: 'later',
+      template_id: mission.templateId,
+      input_source: missionInputSource,
+    });
   };
 
   const rehearsalAvailable =
@@ -268,20 +310,86 @@ export const MainMenu: React.FC<MainMenuProps> = ({
     ensureTodayMission(signalSnapshot, selected.templateId);
   };
 
-  const persistSignalPath = async (path: 'demo' | 'connect' | 'without_signal') => {
+  const persistSignalPath = async (path: 'demo' | 'connect' | 'manual' | 'without_signal') => {
     setSignalPathChosen(true);
     await AsyncStorage.setItem(SIGNAL_PATH_KEY, '1');
     track('signal_path_selected', { path, privacy_mode: progress.privacyMode });
   };
 
-  const chooseSignalPath = async (path: 'demo' | 'connect' | 'without_signal') => {
-    if (path === 'connect') {
-      track('signal_connection_chosen', { privacy_mode: progress.privacyMode });
-      setShowCGMDisclaimer(true);
+  const openSignalConnection = (provider: CGMProvider = defaultSignalProvider) => {
+    if ((provider === 'dexcom' && !dexcomConfigured) || (provider === 'libre' && !cgm.healthKitAvailable)) {
+      setShowSignalAvailability(true);
+      track('signal_connection_preview_opened', { provider, privacy_mode: progress.privacyMode });
       return;
     }
+    setRequestedProvider(provider);
+    setShowCGMDisclaimer(true);
+  };
+
+  const beginSignalSourceChange = () => {
+    setChangingSignalSource(true);
+    setShowManualCheckIn(false);
+    setShowSettings(false);
+    setSignalPathChosen(false);
+    track('signal_source_change_opened', {
+      current_source: demoMode ? 'demo' : manualMoment ? 'manual' : signalSnapshot.connected ? 'cgm' : 'general',
+      privacy_mode: progress.privacyMode,
+    });
+  };
+
+  const returnToCurrentSource = () => {
+    setChangingSignalSource(false);
+    setShowManualCheckIn(false);
+    setSignalPathChosen(true);
+  };
+
+  const acceptSignalConnection = async () => {
+    setShowCGMDisclaimer(false);
+    if (demoMode) await setDemo(false);
+    setManualMoment(null);
+    await persistSignalPath('connect');
+    setChangingSignalSource(false);
+    cgm.connect(requestedProvider);
+  };
+
+  const chooseSignalPath = async (path: 'demo' | 'connect' | 'manual' | 'without_signal') => {
+    if (path === 'connect') {
+      track('signal_connection_chosen', {
+        available: liveSignalAvailable,
+        privacy_mode: progress.privacyMode,
+      });
+      openSignalConnection();
+      return;
+    }
+    if (path === 'manual') {
+      if (demoMode) await setDemo(false);
+      setShowManualCheckIn(true);
+      track('manual_signal_started', { privacy_mode: progress.privacyMode });
+      return;
+    }
+    if (path === 'without_signal') {
+      if (demoMode) await setDemo(false);
+      setManualMoment(null);
+    }
     await persistSignalPath(path);
-    if (path === 'demo') await setDemo(true, MAYA_DEMO.scenes.pattern);
+    setChangingSignalSource(false);
+    if (path === 'demo') {
+      setManualMoment(null);
+      await setDemo(true, MAYA_DEMO.scenes.pattern);
+    }
+  };
+
+  const chooseManualMoment = async (moment: SelfReportedMoment) => {
+    if (demoMode) await setDemo(false);
+    setManualMoment(moment);
+    await persistSignalPath('manual');
+    setChangingSignalSource(false);
+    assignFromPattern(moment.templateId);
+    track('manual_signal_submitted', {
+      moment: moment.id,
+      template_id: moment.templateId,
+      privacy_mode: progress.privacyMode,
+    });
   };
 
   const openCareTeamSummary = async () => {
@@ -352,14 +460,75 @@ export const MainMenu: React.FC<MainMenuProps> = ({
   }
 
   if (!signalPathChosen) {
+    if (showManualCheckIn) {
+      const manualMoments = progress.userMode === 'caregiver'
+        ? [CAREGIVER_MANUAL_MOMENT]
+        : PATIENT_MANUAL_MOMENTS;
+
+      return (
+        <View style={styles.root}>
+          <MetabolicField band="unknown" intensity={0.3} />
+          <ScrollView style={styles.zContent} contentContainerStyle={styles.signalScroll}>
+            <TouchableOpacity
+              onPress={() => {
+                if (changingSignalSource) returnToCurrentSource();
+                else setShowManualCheckIn(false);
+              }}
+              accessibilityRole="button"
+              accessibilityLabel="Back to signal choices"
+              style={styles.backButton}
+            >
+              <Ionicons name="arrow-back" size={18} color={P.cool} />
+              <Text style={styles.backButtonText}>Back</Text>
+            </TouchableOpacity>
+            <Text style={styles.brandMark}>Sukari</Text>
+            <Text style={styles.signalHeadline}>What feels most useful right now?</Text>
+            <Text style={styles.signalSub}>
+              Pick a moment, not a diagnosis. Sukari will turn it into one bounded mission you can change or decline.
+            </Text>
+            <View style={styles.signalOptions}>
+              {manualMoments.map((moment) => (
+                <PressableScale
+                  key={moment.id}
+                  onPress={() => chooseManualMoment(moment)}
+                  style={styles.signalOption}
+                  accessibilityRole="button"
+                  accessibilityLabel={`${moment.title}. ${moment.body}`}
+                >
+                  <Text style={styles.signalOptionTitle}>{moment.title}</Text>
+                  <Text style={styles.signalOptionBody}>{moment.body}</Text>
+                </PressableScale>
+              ))}
+            </View>
+            <Text style={styles.signalScope}>
+              This stays on your device. It is used only to choose today&apos;s habit mission, never for dosing or diagnosis.
+            </Text>
+          </ScrollView>
+        </View>
+      );
+    }
+
     return (
       <View style={styles.root}>
         <MetabolicField band="unknown" intensity={0.3} />
         <ScrollView style={styles.zContent} contentContainerStyle={styles.signalScroll}>
+          {changingSignalSource ? (
+            <TouchableOpacity
+              onPress={returnToCurrentSource}
+              accessibilityRole="button"
+              accessibilityLabel="Keep my current mission input"
+              style={styles.backButton}
+            >
+              <Ionicons name="arrow-back" size={18} color={P.cool} />
+              <Text style={styles.backButtonText}>Keep current source</Text>
+            </TouchableOpacity>
+          ) : null}
           <Text style={styles.brandMark}>Sukari</Text>
-          <Text style={styles.signalHeadline}>Start with a signal.</Text>
+          <Text style={styles.signalHeadline}>
+            {changingSignalSource ? 'Choose a new mission input.' : 'Start with what you have.'}
+          </Text>
           <Text style={styles.signalSub}>
-            Use a labelled example or connect your own read-only signal. Either way, you will get one small mission today.
+            Sukari turns a signal or a moment from your day into one small, changeable mission.
           </Text>
           <View style={styles.signalOptions}>
             <PressableScale
@@ -375,8 +544,22 @@ export const MainMenu: React.FC<MainMenuProps> = ({
               style={styles.signalOption}
               accessibilityRole="button"
             >
-              <Text style={styles.signalOptionTitle}>Connect my signal</Text>
-              <Text style={styles.signalOptionBody}>Dexcom or Apple Health, read-only and with your permission.</Text>
+              <Text style={styles.signalOptionTitle}>
+                {liveSignalAvailable ? 'Connect a live signal' : 'Connect a signal (preview)'}
+              </Text>
+              <Text style={styles.signalOptionBody}>
+                {liveSignalAvailable
+                  ? 'Read-only, with your permission. Availability depends on your device and programme setup.'
+                  : 'Available in a configured programme build. This submission does not have a live connection enabled.'}
+              </Text>
+            </PressableScale>
+            <PressableScale
+              onPress={() => chooseSignalPath('manual')}
+              style={styles.signalOption}
+              accessibilityRole="button"
+            >
+              <Text style={styles.signalOptionTitle}>Tell Sukari about today</Text>
+              <Text style={styles.signalOptionBody}>Choose a moment in a few taps. It stays on this device.</Text>
             </PressableScale>
           </View>
           <PressableScale
@@ -384,17 +567,15 @@ export const MainMenu: React.FC<MainMenuProps> = ({
             style={styles.continueWithoutSignal}
             accessibilityRole="button"
           >
-            <Text style={styles.continueWithoutSignalText}>Start with a habit mission instead</Text>
+            <Text style={styles.continueWithoutSignalText}>Give me a general habit mission</Text>
           </PressableScale>
-          <Text style={styles.signalScope}>You can connect a signal later. Sukari never gives dosing or diagnostic advice.</Text>
+          <Text style={styles.signalScope}>Connect data later when you are ready. Sukari never gives dosing or diagnostic advice.</Text>
         </ScrollView>
         <Modal visible={showCGMDisclaimer} transparent animationType="fade" onRequestClose={() => setShowCGMDisclaimer(false)}>
           <View style={styles.modalCenter}>
             <MedicalDisclaimer
               onAccept={async () => {
-                setShowCGMDisclaimer(false);
-                await persistSignalPath('connect');
-                cgm.connect();
+                await acceptSignalConnection();
               }}
               onDecline={() => setShowCGMDisclaimer(false)}
             />
@@ -408,6 +589,8 @@ export const MainMenu: React.FC<MainMenuProps> = ({
     ? `${MAYA_DEMO.patientLabel} · ${maya?.label}`
     : signalSnapshot.connected
       ? `CGM · ${band.replace('_', ' ')}${signalSnapshot.trend ? ` · ${signalSnapshot.trend}` : ''}`
+      : manualMoment
+        ? `Adjusted from today · ${manualMoment.title.toLowerCase()}`
       : 'No CGM · missions use programme defaults';
 
   // Home field is a live instrument: band/intensity follow the detected
@@ -567,6 +750,11 @@ export const MainMenu: React.FC<MainMenuProps> = ({
                 assignFromPattern(pattern.suggestedBehaviour);
                 track('mission_accepted', { template: pattern.suggestedBehaviour, demo: demoMode });
                 track('role_to_mission_accepted', { template: pattern.suggestedBehaviour, demo: demoMode });
+                track('mission_response_selected', {
+                  choice: 'do_now',
+                  template_id: pattern.suggestedBehaviour,
+                  input_source: missionInputSource,
+                });
               }}
               onMakeEasier={() => {
                 setMissionChoice('easier');
@@ -575,11 +763,21 @@ export const MainMenu: React.FC<MainMenuProps> = ({
                 assignFromPattern(pattern.suggestedBehaviour);
                 track('mission_made_easier', { template: pattern.suggestedBehaviour });
                 track('role_to_mission_accepted', { template: pattern.suggestedBehaviour, variant: 'easier' });
+                track('mission_response_selected', {
+                  choice: 'easier',
+                  template_id: pattern.suggestedBehaviour,
+                  input_source: missionInputSource,
+                });
               }}
               onNotPractical={() => {
                 setMissionChoice('not_practical');
                 setAdaptation(null);
                 track('mission_not_practical', { template: pattern.suggestedBehaviour });
+                track('mission_response_selected', {
+                  choice: 'not_practical',
+                  template_id: pattern.suggestedBehaviour,
+                  input_source: missionInputSource,
+                });
               }}
               onMarkDone={() => {
                 completionHeartbeat();
@@ -590,6 +788,11 @@ export const MainMenu: React.FC<MainMenuProps> = ({
                 track('mission_marked_done', { from: 'home_pattern_card', demo: demoMode });
                 track('rehearsal_to_real_world_completion', { choice: 'done_direct', demo: demoMode });
                 track('completion_to_measured_response', { from: 'home_pattern_card', demo: demoMode });
+                track('mission_response_selected', {
+                  choice: 'completed_directly',
+                  template_id: displayMission?.templateId || pattern.suggestedBehaviour,
+                  input_source: missionInputSource,
+                });
               }}
               onLater={deferMission}
               onWhy={() =>
@@ -646,6 +849,7 @@ export const MainMenu: React.FC<MainMenuProps> = ({
                   template: displayMission?.templateId || pattern.suggestedBehaviour,
                   demo: demoMode,
                   elective: true,
+                  input_source: missionInputSource,
                 });
               }}
               accessibilityLabel="Optionally practice today’s mission in a short rehearsal"
@@ -760,6 +964,7 @@ export const MainMenu: React.FC<MainMenuProps> = ({
               </SettingsSection>
 
               <SettingsSection title="Signals">
+                <SheetButton label="Change mission input" onPress={beginSignalSourceChange} />
                 {cgm.connection.isConnected ? (
                   <View style={styles.switchRow}>
                     <View>
@@ -778,11 +983,19 @@ export const MainMenu: React.FC<MainMenuProps> = ({
                   </View>
                 ) : (
                   <>
-                    <SheetButton label="Connect Dexcom" onPress={() => setShowCGMDisclaimer(true)} />
-                    {cgm.healthKitAvailable && (
-                      <SheetButton label="Connect Apple Health" onPress={() => cgm.connect('libre')} />
+                    {dexcomConfigured ? (
+                      <SheetButton label="Connect Dexcom" onPress={() => openSignalConnection('dexcom')} />
+                    ) : (
+                      <SheetButton label="Dexcom connection (preview)" onPress={() => setShowSignalAvailability(true)} />
                     )}
-                    <Text style={styles.sheetMuted}>Fuels pattern → mission selection</Text>
+                    {cgm.healthKitAvailable && (
+                      <SheetButton label="Connect Apple Health" onPress={() => openSignalConnection('libre')} />
+                    )}
+                    <Text style={styles.sheetMuted}>
+                      {liveSignalAvailable
+                        ? 'Read-only signal access fuels pattern → mission selection.'
+                        : 'Live connection is not enabled in this submission build.'}
+                    </Text>
                   </>
                 )}
               </SettingsSection>
@@ -861,11 +1074,37 @@ export const MainMenu: React.FC<MainMenuProps> = ({
         <View style={styles.modalCenter}>
           <MedicalDisclaimer
             onAccept={() => {
-              setShowCGMDisclaimer(false);
-              cgm.connect();
+              acceptSignalConnection();
             }}
             onDecline={() => setShowCGMDisclaimer(false)}
           />
+        </View>
+      </Modal>
+
+      <Modal
+        visible={showSignalAvailability}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowSignalAvailability(false)}
+      >
+        <View style={styles.modalCenter}>
+          <View style={styles.availabilityCard}>
+            <Text style={styles.availabilityEyebrow}>Signal connection</Text>
+            <Text style={styles.availabilityTitle}>Preview in this build</Text>
+            <Text style={styles.availabilityBody}>
+              This connection is not available in this session. Dexcom needs programme OAuth configuration; Apple Health needs a compatible native device and permission.
+            </Text>
+            <Text style={styles.availabilityBody}>
+              You can still use Maya&apos;s labelled example or a private local check-in today.
+            </Text>
+            <PressableScale
+              onPress={() => setShowSignalAvailability(false)}
+              accessibilityRole="button"
+              style={styles.primaryCta}
+            >
+              <Text style={styles.primaryCtaText}>Choose another input</Text>
+            </PressableScale>
+          </View>
         </View>
       </Modal>
 
@@ -1089,6 +1328,19 @@ const styles = StyleSheet.create({
     maxWidth,
     alignSelf: 'center',
     width: '100%',
+  },
+  backButton: {
+    alignSelf: 'flex-start',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingVertical: 10,
+    marginBottom: 8,
+  },
+  backButtonText: {
+    fontFamily: FONTS.bodyMedium,
+    color: P.cool,
+    fontSize: 13,
   },
   signalHeadline: {
     fontFamily: FONTS.display,
@@ -1501,6 +1753,35 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     padding: 20,
+  },
+  availabilityCard: {
+    width: '100%',
+    maxWidth: 420,
+    borderWidth: 1,
+    borderColor: P.line,
+    backgroundColor: P.inkElevated,
+    borderRadius: 2,
+    padding: 20,
+    gap: 10,
+  },
+  availabilityEyebrow: {
+    fontFamily: FONTS.bodyMedium,
+    color: P.cool,
+    fontSize: 10,
+    letterSpacing: 1.3,
+    textTransform: 'uppercase',
+  },
+  availabilityTitle: {
+    fontFamily: FONTS.display,
+    color: P.text,
+    fontSize: 24,
+    lineHeight: 30,
+  },
+  availabilityBody: {
+    fontFamily: FONTS.body,
+    color: P.textSoft,
+    fontSize: 14,
+    lineHeight: 21,
   },
   coachBackdrop: {
     flex: 1,

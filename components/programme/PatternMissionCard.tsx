@@ -134,6 +134,8 @@ export function PatternMissionCard({
               ? 'Synthetic demo'
               : pattern.source === 'cgm'
                 ? 'CGM-backed'
+                : pattern.source === 'self_report'
+                  ? 'Your local check-in'
                 : 'Programme default'}
           </Text>
           {pattern.evidence.map((e, i) => (

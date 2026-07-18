@@ -32,7 +32,7 @@ export interface MetabolicPattern {
   suggestedBehaviour: BehaviourTarget;
   suggestedExperiment: string;
   whyThisExperiment: string;
-  source: 'cgm' | 'demo' | 'rules';
+  source: 'cgm' | 'demo' | 'rules' | 'self_report';
   detectedAt: number;
 }
 

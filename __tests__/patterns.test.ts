@@ -1,4 +1,9 @@
-import { resolvePattern, detectPatternFromReadings } from '@/domain/patterns';
+import {
+  buildSelfReportedPattern,
+  detectPatternFromReadings,
+  resolvePattern,
+  SELF_REPORTED_MOMENTS,
+} from '@/domain/patterns';
 import {
   MAYA_DEMO,
   getMayaDay,
@@ -48,6 +53,17 @@ describe('patterns domain', () => {
       action: 'Walk for 5 minutes after your next meal.',
     });
     expect(buildMissionAdaptation('post_meal_walk', 'later').label).toBe('Adjusted for your day');
+  });
+
+  it('turns a local check-in into transparent, bounded mission evidence', () => {
+    const moment = SELF_REPORTED_MOMENTS.find((item) => item.id === 'dinner_hard')!;
+    const pattern = buildSelfReportedPattern(moment);
+    const trace = buildAgentDecisionTrace(pattern, null, 'unselected');
+
+    expect(pattern.source).toBe('self_report');
+    expect(pattern.suggestedBehaviour).toBe('post_meal_walk');
+    expect(pattern.explanation).toContain('not an inference');
+    expect(trace.inputSummary).toBe('Patient-selected local check-in');
   });
 });
 
