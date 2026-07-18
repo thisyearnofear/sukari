@@ -1,5 +1,5 @@
 # Netlify — Expo Router static web export
-# Site: https://glucosewars.netlify.app/
+# Configure the deployed Sukari URL in the hosting provider.
 
 [build]
   # npm ci uses package-lock.json (pnpm-lock.yaml removed on purpose)
@@ -13,7 +13,7 @@
   # Force npm (do not use pnpm) — package-lock.json is source of truth
   NPM_FLAGS = ""
 
-# Client-side routes for invite / digest / challenge deep links
+# Client-side routes for invite and digest deep links
 [[redirects]]
   from = "/invite/*"
   to = "/index.html"
@@ -25,16 +25,10 @@
   status = 200
 
 [[redirects]]
-  from = "/challenge/*"
-  to = "/index.html"
-  status = 200
-
-[[redirects]]
   from = "/*"
   to = "/index.html"
   status = 200
 
 # Required EXPO_PUBLIC_* build env (set in Netlify UI → Site settings → Environment variables):
 #   EXPO_PUBLIC_APP_URL=https://glucosewars.netlify.app
-#   EXPO_PUBLIC_LEADERBOARD_WORKER_URL=https://glucosewars-leaderboard.papaandthejimjams.workers.dev
-#   EXPO_PUBLIC_LEADERBOARD_API_URL=https://glucosewars-leaderboard.papaandthejimjams.workers.dev
+#   EXPO_PUBLIC_SUKARI_API_URL=https://your-sukari-api.example

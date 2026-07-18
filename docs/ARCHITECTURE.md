@@ -22,7 +22,7 @@ signal or demo pattern
 - `app/digest/[token].tsx`: patient/care-team digest view.
 - `app/care.tsx`: desktop-first programme-operator surface.
 
-Retired routes such as `game-selection`, `slowmo`, and `challenge/*` redirect or are demoted from the shipped experience. They should not regain primary navigation without a deliberate product decision.
+Retired routes such as `game-selection` and `slowmo` redirect out of the shipped experience. They should not regain primary navigation without a deliberate product decision.
 
 ## Domain Map
 

@@ -4,7 +4,6 @@ import { HealthScenario } from '@/types/health';
 import { GameTier, TierConfig, GAME_TIERS } from '@/constants/gameTiers';
 import { useBattleGame } from '@/hooks/useBattleGame';
 import { useHealthProfile } from '@/hooks/useHealthProfile';
-import { ChallengeDefinition, ChallengeModifier } from '@/types/challenge';
 import { usePlayerProgressContext } from '@/context/PlayerProgressContext';
 
 interface GameSessionProviderProps {
@@ -24,10 +23,6 @@ interface GameSessionContextType {
   selectedTier: GameTier;
   setSelectedTier: (tier: GameTier) => void;
   tierConfig: TierConfig;
-
-  // Challenge session (UGC-lite)
-  challenge: ChallengeDefinition | null;
-  setChallenge: (challenge: ChallengeDefinition | null) => void;
 
   // Battle game hook return
   battleGame: BattleGame;
@@ -51,7 +46,6 @@ const GameSessionContext = createContext<GameSessionContextType | undefined>(und
 export const GameSessionProvider = ({ children, userMode }: GameSessionProviderProps) => {
   const [controlMode, setControlMode] = useState<ControlMode>('swipe');
   const [selectedTier, setSelectedTier] = useState<GameTier>('tier1');
-  const [challenge, setChallenge] = useState<ChallengeDefinition | null>(null);
 
   const tierConfig = useMemo(() => GAME_TIERS[selectedTier], [selectedTier]);
   const { progress } = usePlayerProgressContext();
@@ -62,11 +56,7 @@ export const GameSessionProvider = ({ children, userMode }: GameSessionProviderP
       : undefined,
   );
 
-  const battle = useBattleGame(health.logMeal, tierConfig, userMode, challenge ? {
-    id: challenge.id,
-    seed: challenge.seed,
-    modifiers: challenge.modifiers as ChallengeModifier[],
-  } : undefined, progress.mechanicsUnlocked);
+  const battle = useBattleGame(health.logMeal, tierConfig, userMode, progress.mechanicsUnlocked);
 
   const startGameForTier = useCallback(() => {
     battle.startGame(tierConfig.gameMode);
@@ -104,14 +94,12 @@ export const GameSessionProvider = ({ children, userMode }: GameSessionProviderP
       selectedTier,
       setSelectedTier,
       tierConfig,
-      challenge,
-      setChallenge,
       battleGame: battle,
       healthProfile: health,
       startGameForTier,
       handleGameResult,
     }),
-    [controlMode, selectedTier, tierConfig, challenge, battle, health, startGameForTier, handleGameResult],
+    [controlMode, selectedTier, tierConfig, battle, health, startGameForTier, handleGameResult],
   );
 
   return (

@@ -329,31 +329,3 @@ export interface GlucoseParticle {
   points: number;
   color: string;
 }
-
-// Scroll onchain integration
-export type AchievementType = 
-  | 'victory_classic'
-  | 'victory_life'
-  | 'perfect_stability'
-  | 'high_combo'
-  | 'health_streak'
-  | 'explorer';
-
-export interface OnchainAchievement {
-  id: AchievementType;
-  name: string;
-  description: string;
-  icon: string;
-  points: number;
-  unlocked: boolean;
-  unlockedAt?: number;
-  tokenId?: string; // NFT token ID on Scroll
-}
-
-export interface ScrollGameState extends GameState {
-  userAddress?: string;
-  achievements: OnchainAchievement[];
-  totalScore: number; // Lifetime score across all games
-  scrollBalance: number; // Token balance
-  lastMintedTokenId?: string;
-}

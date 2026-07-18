@@ -35,7 +35,6 @@ import {
 import { usePlayerProgressContext } from '@/context/PlayerProgressContext';
 import { getReflectionMessage } from '@/constants/userModes';
 import { SeededRandom, getWeeklySeed } from '@/utils/random';
-import { ChallengeModifier } from '@/types/challenge';
 import { getStabilityZone } from '@/utils/gameLogic';
 import { useGameTimer, getTimePhase, getMorningConditionConfig, getRandomAnnouncement } from './useGameTimer';
 import { useFoodSpawner } from './useFoodSpawner';
@@ -118,7 +117,6 @@ export const useBattleGame = (
   onFoodConsumed?: (foodNutrients: FoodNutrients) => void,
   tierConfig?: any,
   userMode?: UserMode,
-  challenge?: { id: string; seed: string; modifiers: ChallengeModifier[] },
   mechanicsUnlocked?: string[],
 ) => {
   const { discoverLore, progress } = usePlayerProgressContext();
@@ -130,7 +128,6 @@ export const useBattleGame = (
   const comboWindowMsRef = useRef<number>(COMBO_WINDOW);
   const balancedRangeRef = useRef<{ min: number; max: number }>({ min: 40, max: 60 });
   const powerupsDisabledRef = useRef<boolean>(false);
-  const challengeIdRef = useRef<string | null>(null);
 
   const showAnnouncement = useCallback((text: string, type: string = 'info', science?: string) => {
     const announcementType = type as GameState['announcementType'];
@@ -162,43 +159,18 @@ export const useBattleGame = (
       return hash || 1;
     };
 
-    if (challenge?.seed) {
-      seededRandomRef.current = new SeededRandom(stringToSeed(challenge.seed));
-      challengeIdRef.current = challenge.id;
-    } else if (tierConfig?.tier === 'weekly') {
+    if (tierConfig?.tier === 'weekly') {
       seededRandomRef.current = new SeededRandom(getWeeklySeed());
-      challengeIdRef.current = null;
     } else {
       seededRandomRef.current = null;
-      challengeIdRef.current = null;
     }
-  }, [tierConfig?.tier, challenge?.seed, challenge?.id]);
+  }, [tierConfig?.tier]);
 
-  // Apply challenge modifiers (if present)
   useEffect(() => {
-    if (!challenge) {
-      comboWindowMsRef.current = COMBO_WINDOW;
-      balancedRangeRef.current = { min: 40, max: 60 };
-      powerupsDisabledRef.current = false;
-      return;
-    }
-
-    // Defaults
     comboWindowMsRef.current = COMBO_WINDOW;
     balancedRangeRef.current = { min: 40, max: 60 };
     powerupsDisabledRef.current = false;
-
-    if (challenge.modifiers?.includes('short_combo_window')) {
-      comboWindowMsRef.current = Math.max(250, Math.round(COMBO_WINDOW * 0.65));
-    }
-    if (challenge.modifiers?.includes('thin_margins')) {
-      // Narrow balanced zone from 40-60 -> 45-55
-      balancedRangeRef.current = { min: 45, max: 55 };
-    }
-    if (challenge.modifiers?.includes('no_powerups')) {
-      powerupsDisabledRef.current = true;
-    }
-  }, [challenge]);
+  }, []);
 
   const startGame = useCallback((mode: GameMode = 'classic') => {
     const morningCondition = mode === 'life' ? getRandomMorningCondition() : 'normal_day';
@@ -218,13 +190,8 @@ export const useBattleGame = (
       metrics: startingMetrics,
       stability: startingMetrics.stability,
       timePhase: 'morning',
-      // Apply challenge-driven multipliers
-      spawnRateMultiplier: challenge?.modifiers?.includes('fast_spawn')
-        ? 1.25
-        : challenge?.modifiers?.includes('slow_spawn')
-          ? 0.8
-          : 1.0,
-      speedMultiplier: challenge?.modifiers?.includes('fast_fall') ? 1.25 : 1.0,
+      spawnRateMultiplier: 1.0,
+      speedMultiplier: 1.0,
     });
 
     setTimeout(() => {
@@ -237,7 +204,7 @@ export const useBattleGame = (
         showAnnouncement(getRandomAnnouncement('GAME_START'), 'info');
       }
     }, 500);
-  }, [showAnnouncement, challenge?.modifiers]);
+  }, [showAnnouncement]);
 
   const endGame = useCallback(async (result: 'victory' | 'defeat') => {
     setGameState(prev => {

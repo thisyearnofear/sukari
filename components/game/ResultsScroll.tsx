@@ -253,7 +253,7 @@ export const ResultsScroll: React.FC<ResultsScrollProps> = ({
               const missionLine = transfer
                 ? `Today’s mission: ${transfer.realWorldAction}`
                 : 'Practicing metabolic decisions in Sukari.';
-              const url = process.env.EXPO_PUBLIC_APP_URL || 'https://glucosewars.app';
+              const url = process.env.EXPO_PUBLIC_APP_URL || 'https://glucosewars.netlify.app';
               await Share.share({
                 message: `${missionLine}\nRehearsal: ${score} pts · ${accuracy}%.\nHabits only — never dosing.\n${url}`,
                 title: 'Sukari',

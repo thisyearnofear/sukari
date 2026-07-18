@@ -40,7 +40,7 @@ The battle is the engagement mechanism. The product is closed-loop adherence.
 - [KPI Experiment Plan](docs/KPI_EXPERIMENT_PLAN.md)
 - [Launch Checklist](docs/LAUNCH_CHECKLIST.md)
 
-Historical challenge, VRF, and contract docs remain in `docs/` and `contracts/` as archive material only. They are not part of the shipped Sukari product register.
+Historical challenge and VRF material is excluded from the shipped application and should not be used to describe Sukari.
 
 ## Quick Start
 
@@ -65,8 +65,8 @@ Optional environment variables:
 
 - `EXPO_PUBLIC_POSTHOG_KEY`: enables PostHog analytics.
 - `EXPO_PUBLIC_POSTHOG_HOST`: optional PostHog host override.
-- `EXPO_PUBLIC_LEADERBOARD_WORKER_URL`: legacy worker URL, currently used for coach and digest endpoints.
-- `EXPO_PUBLIC_APP_URL`: public app URL for generated digest/share links.
+- `EXPO_PUBLIC_SUKARI_API_URL`: optional coach and published-digest API URL.
+- `EXPO_PUBLIC_APP_URL`: public app URL for generated digest/share links; keep it as `https://glucosewars.netlify.app` through submission.
 
 The Expo slug and deep-link scheme remain `glucosewars` for compatibility with existing installs and OAuth redirect configuration. The user-facing product name is Sukari.
 

@@ -67,7 +67,7 @@ Keep event names stable for funnel continuity. Current key events are documented
 
 ## Worker
 
-The existing Cloudflare worker under `server/leaderboard-worker` still contains legacy naming because it originally served leaderboard functionality. In Sukari it is used for coach and digest endpoints where configured.
+The existing Cloudflare worker under `server/leaderboard-worker` retains its directory name for deployment compatibility. In Sukari it is used only for coach and digest endpoints where configured through `EXPO_PUBLIC_SUKARI_API_URL`.
 
 Do not add unauthenticated provider cohort access to this worker. A real care-team backend needs authenticated providers, patient consent, role-based access, and audit logging.
 
