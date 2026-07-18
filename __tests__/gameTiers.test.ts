@@ -10,8 +10,8 @@ describe('Game Tiers', () => {
   });
 
   it('getTierConfig returns correct config', () => {
-    expect(getTierConfig('tier1').name).toBe('Warm-up Round');
-    expect(getTierConfig('tier2').name).toBe('Challenge 1');
+    expect(getTierConfig('tier1').name).toBe('Warm-up');
+    expect(getTierConfig('tier2').name).toBe('Day in the field');
   });
 
   it('tier durations should increase progressively (excluding slowmo)', () => {

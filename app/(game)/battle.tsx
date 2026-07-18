@@ -149,6 +149,7 @@ export default function BattleScreenRoute() {
         tierConfig={tierConfig}
         onToggleControlMode={handleToggleControlMode}
         hasMechanic={hasMechanic}
+        missionAction={progress.activeMission?.realWorldAction}
       />
       {showCelebration && (
         <VictoryCelebration
@@ -161,28 +162,28 @@ export default function BattleScreenRoute() {
         />
       )}
       {toast && (
-        <View style={{ position: 'absolute', top: 100, left: 20, right: 20, zIndex: 200, backgroundColor: 'rgba(251,191,36,0.95)', padding: 12, borderRadius: 12, alignItems: 'center' }}>
-          <Text style={{ color: '#0a0a12', fontWeight: 'bold', fontSize: 13 }}>Mission: {toast.title}</Text>
-          <Text style={{ color: '#0a0a12', fontSize: 11 }}>+{toast.reward} Renown</Text>
+        <View style={{ position: 'absolute', top: 100, left: 20, right: 20, zIndex: 200, backgroundColor: 'rgba(18,26,23,0.96)', padding: 12, borderRadius: 2, borderWidth: 1, borderColor: '#3D9B7A', alignItems: 'center' }}>
+          <Text style={{ color: '#E8F0EB', fontWeight: '600', fontSize: 13 }}>{toast.title}</Text>
+          <Text style={{ color: '#8FA397', fontSize: 11, marginTop: 2 }}>Mission progress</Text>
         </View>
       )}
       {promotionToast && (
-        <View style={{ position: 'absolute', top: 100, left: 20, right: 20, zIndex: 200, backgroundColor: 'rgba(168,85,247,0.95)', padding: 14, borderRadius: 12, alignItems: 'center', borderWidth: 2, borderColor: '#c4b5fd' }}>
-          <Text style={{ color: 'white', fontWeight: 'bold', fontSize: 15 }}>{promotionToast.icon} PROMOTED!</Text>
-          <Text style={{ color: '#e9d5ff', fontSize: 12 }}>You are now a {promotionToast.title}</Text>
+        <View style={{ position: 'absolute', top: 100, left: 20, right: 20, zIndex: 200, backgroundColor: 'rgba(18,26,23,0.96)', padding: 14, borderRadius: 2, borderWidth: 1, borderColor: '#3D9B7A', alignItems: 'center' }}>
+          <Text style={{ color: '#E8F0EB', fontWeight: '600', fontSize: 14 }}>Progress milestone</Text>
+          <Text style={{ color: '#B7C7BC', fontSize: 12, marginTop: 2 }}>{promotionToast.title}</Text>
         </View>
       )}
       {loreToast && (
-        <View style={{ position: 'absolute', top: 100, left: 20, right: 20, zIndex: 200, backgroundColor: 'rgba(59,130,246,0.95)', padding: 12, borderRadius: 12, alignItems: 'center', borderWidth: 1, borderColor: '#93c5fd' }}>
-          <Text style={{ color: 'white', fontWeight: 'bold', fontSize: 12 }}>📜 Kingdom Lore Discovered! +50 Renown</Text>
+        <View style={{ position: 'absolute', top: 100, left: 20, right: 20, zIndex: 200, backgroundColor: 'rgba(18,26,23,0.96)', padding: 12, borderRadius: 2, borderWidth: 1, borderColor: 'rgba(180,210,195,0.2)', alignItems: 'center' }}>
+          <Text style={{ color: '#B7C7BC', fontWeight: '600', fontSize: 12 }}>Insight unlocked</Text>
         </View>
       )}
       {mechanicDiscoveryToast && (
         <>
         <NewPowerGlow />
-        <View style={{ position: 'absolute', top: 100, left: 20, right: 20, zIndex: 200, backgroundColor: 'rgba(34,197,94,0.95)', padding: 14, borderRadius: 12, alignItems: 'center', borderWidth: 2, borderColor: '#86efac' }}>
-          <Text style={{ color: 'white', fontWeight: 'bold', fontSize: 16 }}>{MECHANIC_DISCOVERY_MESSAGES[mechanicDiscoveryToast].emoji} {MECHANIC_DISCOVERY_MESSAGES[mechanicDiscoveryToast].title}</Text>
-          <Text style={{ color: '#dcfce7', fontSize: 11, marginTop: 2 }}>{MECHANIC_DISCOVERY_MESSAGES[mechanicDiscoveryToast].sub}</Text>
+        <View style={{ position: 'absolute', top: 100, left: 20, right: 20, zIndex: 200, backgroundColor: 'rgba(18,26,23,0.96)', padding: 14, borderRadius: 2, borderWidth: 1, borderColor: '#3D9B7A', alignItems: 'center' }}>
+          <Text style={{ color: '#E8F0EB', fontWeight: '600', fontSize: 14 }}>{MECHANIC_DISCOVERY_MESSAGES[mechanicDiscoveryToast].title}</Text>
+          <Text style={{ color: '#8FA397', fontSize: 11, marginTop: 2 }}>{MECHANIC_DISCOVERY_MESSAGES[mechanicDiscoveryToast].sub}</Text>
         </View>
         </>
       )}

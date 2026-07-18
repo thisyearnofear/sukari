@@ -183,6 +183,8 @@ interface BattleScreenProps {
   tierConfig?: TierConfig;
   onToggleControlMode?: () => void;
   hasMechanic?: (m: string) => boolean;
+  /** Real-world mission being rehearsed */
+  missionAction?: string | null;
 }
 
 
@@ -202,6 +204,7 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({
   tierConfig,
   onToggleControlMode,
   hasMechanic: hasMechanicProp,
+  missionAction = null,
 }) => {
   const hasMechanic = hasMechanicProp || (() => true); // Default: show everything
   const shakeAnim = useRef(new Animated.Value(0)).current;
@@ -579,7 +582,7 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({
         <View style={{ position: 'absolute', bottom: 220, left: 20, right: 20, zIndex: 10, alignItems: 'center' }}>
           <View style={{ backgroundColor: 'rgba(11,18,16,0.9)', paddingHorizontal: 12, paddingVertical: 8, borderRadius: 2, borderWidth: 1, borderColor: P.cool }}>
             <Text style={{ color: P.text, fontSize: 11, fontFamily: FONTS.bodyMedium, textAlign: 'center' }}>
-              Harmony low — swipe up on fuel to raise it
+              Field low — swipe up on steadying foods
             </Text>
           </View>
         </View>
@@ -724,6 +727,7 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({
           controlMode={controlMode}
           onToggleControlMode={onToggleControlMode}
           minimal={!hasMechanic('power_ups')}
+          missionAction={missionAction}
         />
       )}
       

@@ -33,5 +33,5 @@ export function supportInviteParams(payload: SupportInvitePayload): Record<strin
 export function supportShareMessage(payload: SupportInvitePayload, baseUrl?: string): string {
   const origin = (baseUrl || getAppBaseUrl()).replace(/\/$/, '');
   const link = `${origin}/invite/support?templateId=${encodeURIComponent(payload.templateId)}&invite=${encodeURIComponent(payload.inviteCode)}`;
-  return `Tonight’s support ask from my Glucose Wars Realm:\n${payload.supportAction}\n\nJoin as Guardian: ${link}`;
+  return `Could you help with today’s metabolic programme mission?\n${payload.supportAction}\n\nOpen support invite: ${link}`;
 }

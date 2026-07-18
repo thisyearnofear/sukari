@@ -29,18 +29,18 @@ interface OnboardingStep {
 function getModeIntroStep(userMode: UserMode | undefined): OnboardingStep {
   if (!userMode) {
     return {
-      title: 'A short warm-up',
-      subtitle: 'Get comfortable before today’s mission',
+      title: 'A short rehearsal',
+      subtitle: 'Warm up before today’s real-world mission',
       content:
-        'Foods move toward your field. Rally steadying choices up. Send spikes away down. Keep harmony in range.',
+        'Foods move toward your field. Rally steadying choices up. Send spikes away down. Stay in range — then take the habit into real life.',
     };
   }
 
   const modeConfig = USER_MODE_CONFIGS[userMode];
   const introTexts: Record<UserMode, string> = {
-    personal: 'This practice reflects your day — each choice is a small lesson in how your body responds.',
-    caregiver: 'Step into the decisions they face daily. Empathy through a short, shared practice.',
-    curious: 'Metabolic management is complex. This practice makes the trade-offs tangible.',
+    personal: 'This practice rehearses today’s mission — each choice is a small decision you’ll make between appointments.',
+    caregiver: 'Step into the decisions they face daily. Empathy through a short rehearsal tied to a real support ask.',
+    curious: 'See how pattern → mission → practice → action feels. The game is the engagement layer, not the whole product.',
   };
 
   return {
@@ -52,10 +52,10 @@ function getModeIntroStep(userMode: UserMode | undefined): OnboardingStep {
 
 const CLASSIC_STEPS: OnboardingStep[] = [
   {
-    title: 'How practice works',
+    title: 'How rehearsal works',
     subtitle: 'Two gestures. One goal.',
     content:
-      'Swipe up on allies that steady you.\nSwipe down on enemies that spike or crash.\nKeep the harmony bar in the middle.',
+      'Swipe up on allies that steady you.\nSwipe down on enemies that spike or crash.\nKeep the bar in range — then do the mission in real life.',
   },
   {
     title: 'Choose controls',

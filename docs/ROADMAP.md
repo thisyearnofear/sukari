@@ -1,6 +1,53 @@
-# GlucoseWars Roadmap: User-Centric Personalization
+# GlucoseWars Roadmap
 
-## ✅ What We've Built
+## Current north star (eMed / OpenAI hackathon)
+
+**Product:** AI adherence engine for continuous metabolic care.  
+**Tagline:** One mission today. Better evidence for tomorrow.  
+**Docs:** [`HACKATHON.md`](HACKATHON.md) · [`INVESTOR_ONEPAGER.md`](INVESTOR_ONEPAGER.md)
+
+### Shipped this cycle
+
+- Closed loop: pattern → mission → rehearse → act → measure → care-team digest  
+- Maya synthetic 14-day demo (Pattern / Measure / Outreach scenes)  
+- Mission ribbon in battle; transfer beat with Later today + quiet win  
+- Clinician exception digest (outreach + safety flags)  
+- Programme register: “steady the field” (game is engagement layer)  
+- Domain: `patterns`, `demo`; UI: `components/programme/*`
+
+### Next (post-hackathon / pilot)
+
+1. Design partner + clinical advisor; 8–12 week pilot (50–100)  
+2. HIPAA-ready backend, audit logs, role-based care-team access  
+3. Validated intervention library + alerting policy review  
+4. Outcomes exploration (TIR / excursion / weight) without overclaiming  
+
+---
+
+## Earlier phases (complete)
+
+Core game engine: tiered progression, classic/life modes, swipe/tap, combos, onboarding, health profiles.
+
+**User modes:** Living with it / Supporting someone / Learning the system.
+
+**Optional identity:** Beam sync and treasury remain demoted for healthcare pitches — not the lead story.
+
+---
+
+## Timeline (adherence OS)
+
+| Window | Deliverable | Status |
+|--------|-------------|--------|
+| Hackathon | Closed-loop demo + clinician digest + Maya fixture | ✅ |
+| +2–4 weeks | Design partner pilot instrumentation (WAP, mission metrics) | Next |
+| +1–3 months | Care-team workflow embed + governed mission library | Planned |
+| Later | Outcomes study design with partner | Planned |
+
+Legacy game/Beam milestones below remain historical context.
+
+---
+
+## ✅ What We've Built (game foundation)
 
 Core game engine complete: tiered progression (3 tiers × 30/60/90s), classic/life game modes, swipe/tap controls, combo system, player progression tracking, onboarding flows, health profile system, results screens with honest messaging.
 

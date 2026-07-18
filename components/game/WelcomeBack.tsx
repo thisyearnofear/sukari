@@ -26,10 +26,10 @@ export const WelcomeBack: React.FC<WelcomeBackProps> = ({
 }) => {
   const tiers: Exclude<GameTier, 'slowmo'>[] = ['tier1', 'tier2', 'tier3', 'weekly'];
   const tierDescriptions: Record<Exclude<GameTier, 'slowmo'>, string> = {
-    tier1: 'Learn the basics (30 seconds)',
-    tier2: 'Manage your health (60 seconds)',
-    tier3: 'Master advanced play (90 seconds)',
-    weekly: "Alchemist's Lab Weekly Challenge",
+    tier1: 'Warm-up · 30 seconds',
+    tier2: 'Day in the field · 60 seconds',
+    tier3: 'Pressure rehearsal · 90 seconds',
+    weekly: 'Weekly shared run',
   };
   const enter = useRef(new Animated.Value(0)).current;
 
@@ -67,8 +67,7 @@ export const WelcomeBack: React.FC<WelcomeBackProps> = ({
           <Text style={styles.brand}>Glucose Wars</Text>
           <Text style={styles.headline}>Welcome back</Text>
           <Text style={styles.sub}>
-            Unlocked through {GAME_TIERS[maxTierUnlocked].name}. One composition — resume or choose a
-            tier.
+            Continue your programme rehearsal — resume where you left off, or pick a length.
           </Text>
 
           <PressableScale onPress={onResume} accessibilityRole="button" style={styles.primary}>
@@ -105,7 +104,7 @@ export const WelcomeBack: React.FC<WelcomeBackProps> = ({
           })}
 
           <PressableScale onPress={onPlayAgain} accessibilityRole="button" style={styles.ghost}>
-            <Text style={styles.ghostText}>Back to Realm Home</Text>
+            <Text style={styles.ghostText}>Back home</Text>
           </PressableScale>
         </Animated.View>
       </ScrollView>

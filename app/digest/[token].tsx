@@ -1,5 +1,5 @@
 /**
- * Weekly care-team digest — shareable programme summary (no dosing advice).
+ * Care-team summary — exception-oriented clinical artifact (no kingdom lore).
  */
 import React, { useEffect, useRef, useState } from 'react';
 import {
@@ -17,7 +17,6 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { fetchWeeklyDigest, WeeklyDigestPayload } from '@/domain/digest';
 import { track } from '@/utils/analytics';
 import { COLORS, FONTS, ANIMATIONS } from '@/constants/designSystem';
-import { MetabolicField } from '@/components/atmosphere/MetabolicField';
 import { PressableScale } from '@/components/ui/PressableScale';
 
 const LOCAL_DIGEST_KEY = 'glucoseWars.lastDigest';
@@ -49,7 +48,7 @@ export default function WeeklyDigestScreen() {
           return;
         }
       }
-      setError('Digest not found or expired');
+      setError('Summary not found or expired');
     };
     load();
   }, [token]);
@@ -68,11 +67,10 @@ export default function WeeklyDigestScreen() {
   if (error) {
     return (
       <View style={styles.root}>
-        <MetabolicField band="unknown" intensity={0.25} />
         <SafeAreaView style={styles.centered}>
           <Text style={styles.errorText}>{error}</Text>
           <PressableScale onPress={() => router.replace('/')} style={styles.ghostBtn}>
-            <Text style={styles.ghostText}>Back to Realm</Text>
+            <Text style={styles.ghostText}>Back to programme</Text>
           </PressableScale>
         </SafeAreaView>
       </View>
@@ -82,10 +80,9 @@ export default function WeeklyDigestScreen() {
   if (!digest) {
     return (
       <View style={styles.root}>
-        <MetabolicField band="in_range" intensity={0.3} />
         <SafeAreaView style={styles.centered}>
           <Text style={styles.brand}>Glucose Wars</Text>
-          <Text style={styles.loading}>Opening weekly digest…</Text>
+          <Text style={styles.loading}>Opening care-team summary…</Text>
         </SafeAreaView>
       </View>
     );
@@ -93,10 +90,11 @@ export default function WeeklyDigestScreen() {
 
   const assigned = Math.max(digest.missionsAssigned, 1);
   const rate = Math.round((digest.missionsCompleted / assigned) * 100);
+  const outreach = digest.outreachRecommended === true;
+  const safety = digest.safetyFlags?.length ?? 0;
 
   return (
     <View style={styles.root}>
-      <MetabolicField band="in_range" intensity={0.4} />
       <SafeAreaView style={styles.flex}>
         <ScrollView
           contentContainerStyle={styles.scroll}
@@ -115,11 +113,26 @@ export default function WeeklyDigestScreen() {
               ],
             }}
           >
+            <Text style={styles.kicker}>Care team · exception summary</Text>
             <Text style={styles.brand}>Glucose Wars</Text>
-            <Text style={styles.headline}>Weekly digest</Text>
+            <Text style={styles.headline}>Weekly intelligence</Text>
             <Text style={styles.meta}>
-              Week of {digest.weekKey} · For care team review · Not medical advice
+              Week of {digest.weekKey}
+              {digest.patientLabel ? ` · ${digest.patientLabel}` : ''}
+              {'\n'}Not medical advice · Habits and adherence only · No dosing
             </Text>
+
+            <View style={[styles.outreachBanner, outreach ? styles.outreachOn : styles.outreachOff]}>
+              <Text style={styles.outreachLabel}>
+                {outreach ? 'Outreach suggested' : 'No outreach required'}
+              </Text>
+              <Text style={styles.outreachBody}>
+                {digest.outreachReason ||
+                  (outreach
+                    ? 'Human attention may improve adherence this week.'
+                    : 'Clinician does not need continuous monitoring — review only if useful.')}
+              </Text>
+            </View>
 
             <View style={styles.heroStat}>
               <Text style={styles.heroNumber}>
@@ -127,18 +140,53 @@ export default function WeeklyDigestScreen() {
               </Text>
               <Text style={styles.heroLabel}>missions completed · {rate}% of assigned</Text>
               <Text style={styles.heroSecondary}>
-                {digest.practiceSessions} practice sessions this week
+                {digest.practiceSessions} practice rehearsals this week
               </Text>
               {digest.adherence?.relapses != null && Number(digest.adherence.relapses) > 0 ? (
                 <Text style={styles.recoveryNote}>
-                  {String(digest.adherence.relapses)} recovery moments — coaching recommended, not
+                  {String(digest.adherence.relapses)} recovery moment(s) — coaching recommended, not
                   blame
                 </Text>
               ) : null}
             </View>
 
-            {digest.narrative ? (
-              <Text style={styles.narrative}>{digest.narrative}</Text>
+            {digest.dataCoverage ? (
+              <Section title="Data coverage">
+                <Text style={styles.bullet}>{digest.dataCoverage}</Text>
+              </Section>
+            ) : null}
+
+            {digest.recurringPatterns && digest.recurringPatterns.length > 0 ? (
+              <Section title="Recurring patterns">
+                {digest.recurringPatterns.map((p, i) => (
+                  <Text key={i} style={styles.bullet}>
+                    {p}
+                  </Text>
+                ))}
+              </Section>
+            ) : null}
+
+            {digest.experimentsTried && digest.experimentsTried.length > 0 ? (
+              <Section title="What the patient tried">
+                {digest.experimentsTried.map((ex, i) => (
+                  <View key={i} style={styles.experiment}>
+                    <Text style={styles.experimentAction}>{ex.action}</Text>
+                    <Text style={styles.bullet}>
+                      Completed {ex.completed}× · {ex.associatedNote}
+                    </Text>
+                  </View>
+                ))}
+              </Section>
+            ) : null}
+
+            {digest.changesSinceLastWeek && digest.changesSinceLastWeek.length > 0 ? (
+              <Section title="Changes since last week">
+                {digest.changesSinceLastWeek.map((c, i) => (
+                  <Text key={i} style={styles.bullet}>
+                    {c}
+                  </Text>
+                ))}
+              </Section>
             ) : null}
 
             <Section title="Wins">
@@ -159,16 +207,43 @@ export default function WeeklyDigestScreen() {
               </Section>
             ) : null}
 
-            {digest.topBehaviours.length > 0 ? (
-              <Section title="Focus behaviours">
-                <Text style={styles.behaviours}>{digest.topBehaviours.join(' · ')}</Text>
+            {digest.patientBarriers && digest.patientBarriers.length > 0 ? (
+              <Section title="Patient-reported barriers">
+                {digest.patientBarriers.map((b, i) => (
+                  <Text key={i} style={styles.bullet}>
+                    {b}
+                  </Text>
+                ))}
               </Section>
             ) : null}
+
+            <Section title="Safety flags">
+              {safety > 0 ? (
+                digest.safetyFlags!.map((f, i) => (
+                  <Text key={i} style={[styles.bullet, styles.safetyFlag]}>
+                    {f}
+                  </Text>
+                ))
+              ) : (
+                <Text style={styles.bullet}>None reported in-app this week</Text>
+              )}
+            </Section>
+
+            {digest.narrative ? (
+              <Section title="Summary">
+                <Text style={styles.narrative}>{digest.narrative}</Text>
+              </Section>
+            ) : null}
+
+            <Text style={styles.footerNote}>
+              The clinician does not receive another dashboard to monitor continuously. They receive
+              an exception-oriented summary when human attention can make a difference.
+            </Text>
 
             <PressableScale
               onPress={async () => {
                 await Share.share({
-                  message: `Glucose Wars weekly digest (${digest.weekKey}): ${digest.missionsCompleted} missions completed. ${digest.narrative || ''}`,
+                  message: `Glucose Wars care-team summary (${digest.weekKey}): ${digest.missionsCompleted}/${assigned} missions. Outreach: ${outreach ? 'suggested' : 'not required'}. ${digest.narrative || ''}`,
                 });
                 track('weekly_digest_shared', { week: digest.weekKey });
               }}
@@ -178,7 +253,7 @@ export default function WeeklyDigestScreen() {
             </PressableScale>
 
             <PressableScale onPress={() => router.replace('/')} style={styles.ghostBtn}>
-              <Text style={styles.ghostText}>Back to Realm</Text>
+              <Text style={styles.ghostText}>Back to programme</Text>
             </PressableScale>
           </Animated.View>
         </ScrollView>
@@ -199,123 +274,169 @@ function Section({ title, children }: { title: string; children: React.ReactNode
 const styles = StyleSheet.create({
   root: {
     flex: 1,
-    backgroundColor: P.ink,
+    backgroundColor: '#F4F6F5',
   },
-  flex: { flex: 1, zIndex: 10 },
+  flex: { flex: 1 },
   centered: {
     flex: 1,
-    zIndex: 10,
     justifyContent: 'center',
     alignItems: 'center',
     padding: 28,
   },
   scroll: {
     paddingHorizontal: 28,
-    paddingTop: 36,
+    paddingTop: 28,
     paddingBottom: 48,
-    maxWidth: 480,
+    maxWidth: 520,
     width: '100%',
     alignSelf: 'center',
   },
+  kicker: {
+    fontFamily: FONTS.bodyMedium,
+    color: '#5A6B62',
+    fontSize: 11,
+    letterSpacing: 1.5,
+    textTransform: 'uppercase',
+    marginBottom: 8,
+  },
   brand: {
     fontFamily: FONTS.display,
-    color: P.text,
+    color: '#14201B',
     fontSize: 28,
     letterSpacing: -0.3,
   },
   headline: {
     fontFamily: FONTS.display,
-    color: P.textSoft,
+    color: '#2A3A33',
     fontSize: 20,
-    marginTop: 6,
+    marginTop: 4,
   },
   meta: {
     fontFamily: FONTS.body,
-    color: P.textMuted,
+    color: '#5A6B62',
     fontSize: 12,
     lineHeight: 18,
     marginTop: 10,
-    marginBottom: 28,
+    marginBottom: 20,
+  },
+  outreachBanner: {
+    borderWidth: 1,
+    borderRadius: 2,
+    paddingVertical: 14,
+    paddingHorizontal: 14,
+    marginBottom: 18,
+  },
+  outreachOn: {
+    backgroundColor: 'rgba(196, 146, 58, 0.12)',
+    borderColor: '#C4923A',
+  },
+  outreachOff: {
+    backgroundColor: 'rgba(61, 155, 122, 0.1)',
+    borderColor: '#3D9B7A',
+  },
+  outreachLabel: {
+    fontFamily: FONTS.bodyBold,
+    color: '#14201B',
+    fontSize: 14,
+  },
+  outreachBody: {
+    fontFamily: FONTS.body,
+    color: '#2A3A33',
+    fontSize: 13,
+    lineHeight: 19,
+    marginTop: 4,
   },
   heroStat: {
     borderWidth: 1,
-    borderColor: P.line,
-    backgroundColor: P.mist,
+    borderColor: 'rgba(20, 32, 27, 0.12)',
+    backgroundColor: '#FFFFFF',
     borderRadius: 2,
-    paddingVertical: 22,
-    paddingHorizontal: 18,
-    marginBottom: 22,
+    paddingVertical: 20,
+    paddingHorizontal: 16,
+    marginBottom: 8,
   },
   heroNumber: {
     fontFamily: FONTS.display,
-    color: P.accent,
+    color: '#2F7A5E',
     fontSize: 40,
     letterSpacing: -1,
     lineHeight: 44,
   },
   heroLabel: {
     fontFamily: FONTS.bodyMedium,
-    color: P.text,
+    color: '#14201B',
     fontSize: 14,
     marginTop: 8,
   },
   heroSecondary: {
     fontFamily: FONTS.body,
-    color: P.textMuted,
+    color: '#5A6B62',
     fontSize: 13,
     marginTop: 4,
   },
   recoveryNote: {
     fontFamily: FONTS.body,
-    color: P.warn,
+    color: '#8A6A28',
     fontSize: 12,
     marginTop: 12,
     lineHeight: 18,
   },
-  narrative: {
-    fontFamily: FONTS.body,
-    color: P.textSoft,
-    fontSize: 15,
-    lineHeight: 24,
-    marginBottom: 24,
-  },
   section: {
-    marginBottom: 20,
-    paddingTop: 16,
+    marginBottom: 16,
+    paddingTop: 14,
     borderTopWidth: 1,
-    borderTopColor: P.line,
+    borderTopColor: 'rgba(20, 32, 27, 0.1)',
   },
   sectionTitle: {
     fontFamily: FONTS.bodyMedium,
-    color: P.accent,
+    color: '#2F7A5E',
     fontSize: 11,
     letterSpacing: 1.4,
     textTransform: 'uppercase',
-    marginBottom: 10,
+    marginBottom: 8,
   },
   bullet: {
     fontFamily: FONTS.body,
-    color: P.text,
+    color: '#14201B',
     fontSize: 14,
     lineHeight: 22,
-    marginBottom: 6,
+    marginBottom: 4,
   },
-  behaviours: {
+  experiment: {
+    marginBottom: 10,
+  },
+  experimentAction: {
+    fontFamily: FONTS.bodyBold,
+    color: '#14201B',
+    fontSize: 14,
+    marginBottom: 2,
+  },
+  safetyFlag: {
+    color: '#B54A4A',
+  },
+  narrative: {
     fontFamily: FONTS.body,
-    color: P.textSoft,
+    color: '#2A3A33',
     fontSize: 14,
     lineHeight: 22,
+  },
+  footerNote: {
+    fontFamily: FONTS.body,
+    color: '#5A6B62',
+    fontSize: 12,
+    lineHeight: 18,
+    marginTop: 8,
+    marginBottom: 18,
   },
   primaryBtn: {
-    backgroundColor: P.accent,
+    backgroundColor: '#2F7A5E',
     paddingVertical: 16,
     borderRadius: 2,
     alignItems: 'center',
-    marginTop: 8,
   },
   primaryText: {
     fontFamily: FONTS.bodyBold,
-    color: P.ink,
+    color: '#FFFFFF',
     fontSize: 15,
   },
   ghostBtn: {
@@ -323,12 +444,13 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: P.line,
+    borderColor: 'rgba(20, 32, 27, 0.16)',
     borderRadius: 2,
+    backgroundColor: '#FFFFFF',
   },
   ghostText: {
     fontFamily: FONTS.bodyMedium,
-    color: P.textSoft,
+    color: '#2A3A33',
     fontSize: 13,
   },
   errorText: {
@@ -341,7 +463,7 @@ const styles = StyleSheet.create({
   },
   loading: {
     fontFamily: FONTS.body,
-    color: P.textMuted,
+    color: '#5A6B62',
     marginTop: 10,
     fontSize: 13,
   },

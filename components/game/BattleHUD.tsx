@@ -1,6 +1,6 @@
 /**
  * InstrumentHUD — clinical-instrument battle chrome.
- * Harmony is the hero; score/timer/actions stay quiet.
+ * Field stability is the hero; score/timer/actions stay quiet.
  */
 import React, { useEffect, useRef, useState } from 'react';
 import { View, Text, Animated, Easing, StyleSheet } from 'react-native';
@@ -12,6 +12,7 @@ import { useAccessibility } from '@/hooks/useAccessibility';
 import { AnimatedCounter } from './AnimatedCounter';
 import { getStabilityZone } from '@/utils/gameLogic';
 import { PressableScale } from '@/components/ui/PressableScale';
+import { MissionRibbon } from '@/components/programme/MissionRibbon';
 
 const P = COLORS.PROGRAMME;
 
@@ -43,6 +44,8 @@ interface BattleHUDProps {
   controlMode?: 'swipe' | 'tap';
   onToggleControlMode?: () => void;
   minimal?: boolean;
+  /** Today's real-world mission — keeps play tied to adherence */
+  missionAction?: string | null;
 }
 
 function zoneAccent(zone: StabilityZone): string {
@@ -94,6 +97,7 @@ const BattleHUDComponent: React.FC<BattleHUDProps> = React.memo(
     controlMode = 'swipe',
     onToggleControlMode,
     minimal = false,
+    missionAction = null,
   }) => {
     const { getButtonLabel, getHUDLabel } = useAccessibility();
     const zone = getStabilityZone(stability);
@@ -236,6 +240,8 @@ const BattleHUDComponent: React.FC<BattleHUDProps> = React.memo(
             </View>
           </View>
 
+          {missionAction ? <MissionRibbon action={missionAction} compact /> : null}
+
           {!minimal ? (
             <View
               style={[styles.harmonyCard, isCritical && { borderColor: accent }]}
@@ -267,7 +273,7 @@ const BattleHUDComponent: React.FC<BattleHUDProps> = React.memo(
                   ]}
                 />
               </View>
-              <Text style={styles.harmonyCaption}>Harmony</Text>
+              <Text style={styles.harmonyCaption}>Steady the field</Text>
             </View>
           ) : null}
         </View>

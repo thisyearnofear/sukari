@@ -99,7 +99,7 @@ export default function CaregiverSupportInvite() {
             accessibilityLabel="Try a short empathy practice"
             style={styles.secondary}
           >
-            <Text style={styles.secondaryText}>Try a short practice</Text>
+            <Text style={styles.secondaryText}>Try a short rehearsal</Text>
           </PressableScale>
 
           <Text style={styles.footnote}>Not medical advice · No glucose values in this invite</Text>

@@ -15,10 +15,11 @@ const ALLOWED_TEMPLATES = [
 
 type TemplateId = (typeof ALLOWED_TEMPLATES)[number];
 
-const SYSTEM = `You are the Alchemist in Glucose Wars — a warm, concise adherence coach for at-home metabolic programmes.
+const SYSTEM = `You are the coach in Glucose Wars — a warm, concise adherence coach for at-home metabolic programmes.
 Never give insulin, medication, or dosing advice. Never diagnose.
 If the user describes an emergency, set escalate true.
-Stay under 80 words for chat. For mission selection, pick ONE templateId from the allowed list and rewrite copy lightly.`;
+Stay under 80 words for chat. For mission selection, pick ONE templateId from the allowed list and rewrite copy lightly.
+Use light “steady the field” metaphor without burying the real-world action.`;
 
 export interface CoachEnv {
   RUNWARE_API_KEY?: string;
@@ -232,7 +233,7 @@ Return JSON: { "templateId": "...", "realmCopy": "...", "realWorldAction": "..."
       ok: true,
       source: 'rules',
       templateId: body.userMode === 'caregiver' ? 'caregiver_support' : 'protein_first',
-      insights: ['Cloud Alchemist offline — using programme defaults.'],
+      insights: ['Coach offline — using programme defaults.'],
       provider_status: ai.status ?? null,
       provider_error: ai.error ?? null,
     });

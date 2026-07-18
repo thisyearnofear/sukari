@@ -1,91 +1,129 @@
 /**
- * VictoryCelebration — Brief overlay with confetti on victory, skull on defeat.
+ * Brief bridge between battle and transfer — same world, not arcade fanfare.
  */
 import React, { useEffect, useRef } from 'react';
-import { View, Text, Animated, StyleSheet, useWindowDimensions } from 'react-native';
+import { View, Text, Animated, StyleSheet, Easing } from 'react-native';
+import { COLORS, FONTS, ANIMATIONS } from '@/constants/designSystem';
+import { MetabolicField } from '@/components/atmosphere/MetabolicField';
 
-const CONFETTI = ['🎉', '✨', '⭐', '🏆', '👑', '💎', '🎊', '⚡'];
+const P = COLORS.PROGRAMME;
 
-const ConfettiPiece: React.FC<{ emoji: string; x: number; delay: number; screenH: number }> = ({ emoji, x, delay, screenH }) => {
-  const anim = useRef(new Animated.Value(0)).current;
-  useEffect(() => {
-    Animated.sequence([
-      Animated.delay(delay),
-      Animated.timing(anim, { toValue: 1, duration: 1200, useNativeDriver: true }),
-    ]).start();
-  }, [anim, delay]);
-
-  return (
-    <Animated.Text style={{
-      position: 'absolute', left: x, top: 0, fontSize: 24,
-      opacity: anim.interpolate({ inputRange: [0, 0.2, 0.8, 1], outputRange: [0, 1, 1, 0] }),
-      transform: [
-        { translateY: anim.interpolate({ inputRange: [0, 1], outputRange: [-20, screenH * 0.7] }) },
-        { rotate: anim.interpolate({ inputRange: [0, 1], outputRange: ['0deg', `${180 + Math.random() * 360}deg`] }) },
-      ],
-    }}>
-      {emoji}
-    </Animated.Text>
-  );
-};
-
-interface Props { result: 'victory' | 'defeat'; onComplete: () => void; isPersonalBest?: boolean }
+interface Props {
+  result: 'victory' | 'defeat';
+  onComplete: () => void;
+  isPersonalBest?: boolean;
+}
 
 export const VictoryCelebration: React.FC<Props> = ({ result, onComplete, isPersonalBest }) => {
-  const { width: viewportWidth, height } = useWindowDimensions();
-  const width = Math.min(viewportWidth, 500);
-  const scaleAnim = useRef(new Animated.Value(0)).current;
-  const fadeAnim = useRef(new Animated.Value(0)).current;
+  const opacity = useRef(new Animated.Value(0)).current;
+  const slide = useRef(new Animated.Value(10)).current;
   const isVictory = result === 'victory';
 
   useEffect(() => {
-    Animated.sequence([
+    const enter = ANIMATIONS.MOTION.enter;
+    const exit = ANIMATIONS.MOTION.exit;
+    const easeIn = Easing.bezier(enter.bezier[0], enter.bezier[1], enter.bezier[2], enter.bezier[3]);
+    const easeOut = Easing.bezier(exit.bezier[0], exit.bezier[1], exit.bezier[2], exit.bezier[3]);
+
+    Animated.parallel([
+      Animated.timing(opacity, {
+        toValue: 1,
+        duration: 200,
+        easing: easeIn,
+        useNativeDriver: true,
+      }),
+      Animated.timing(slide, {
+        toValue: 0,
+        duration: 200,
+        easing: easeIn,
+        useNativeDriver: true,
+      }),
+    ]).start();
+
+    const hold = setTimeout(() => {
       Animated.parallel([
-        Animated.spring(scaleAnim, { toValue: 1, friction: 4, tension: 80, useNativeDriver: true }),
-        Animated.timing(fadeAnim, { toValue: 1, duration: 200, useNativeDriver: true }),
-      ]),
-      Animated.delay(1000),
-      Animated.timing(fadeAnim, { toValue: 0, duration: 300, useNativeDriver: true }),
-    ]).start(onComplete);
-  }, [scaleAnim, fadeAnim, onComplete]);
+        Animated.timing(opacity, {
+          toValue: 0,
+          duration: 180,
+          easing: easeOut,
+          useNativeDriver: true,
+        }),
+        Animated.timing(slide, {
+          toValue: -8,
+          duration: 180,
+          easing: easeOut,
+          useNativeDriver: true,
+        }),
+      ]).start(onComplete);
+    }, 900);
+
+    return () => clearTimeout(hold);
+  }, [opacity, slide, onComplete]);
 
   return (
-    <Animated.View style={[styles.overlay, { opacity: fadeAnim }]}>
-      {/* #5: Golden sunrise glow for victory, dark vignette for defeat */}
-      <Animated.View style={{
-        position: 'absolute', width: 300, height: 300, borderRadius: 150,
-        backgroundColor: isVictory ? 'rgba(251,191,36,0.3)' : 'rgba(239,68,68,0.2)',
-        transform: [{ scale: scaleAnim.interpolate({ inputRange: [0, 1], outputRange: [0.5, 3] }) }],
-      }} />
-      {isVictory && Array.from({ length: 16 }).map((_, i) => (
-        <ConfettiPiece
-          key={i}
-          emoji={CONFETTI[i % CONFETTI.length]}
-          x={Math.random() * width}
-          delay={i * 60}
-          screenH={height}
-        />
-      ))}
-      <Animated.View style={{ transform: [{ scale: scaleAnim }], alignItems: 'center' }}>
-        <Text style={styles.emoji}>{isVictory ? '👑' : '💀'}</Text>
-        <Text style={[styles.title, { color: isVictory ? '#fbbf24' : '#ef4444' }]}>
-          {isVictory ? 'VICTORY!' : 'DEFEATED'}
+    <View style={styles.overlay} pointerEvents="none">
+      <MetabolicField band={isVictory ? 'in_range' : 'high'} intensity={isVictory ? 0.55 : 0.75} />
+      <Animated.View
+        style={[
+          styles.center,
+          {
+            opacity,
+            transform: [{ translateY: slide }, { scale: opacity.interpolate({
+              inputRange: [0, 1],
+              outputRange: [0.96, 1],
+            }) }],
+          },
+        ]}
+      >
+        <Text style={styles.brand}>Glucose Wars</Text>
+        <Text style={[styles.title, { color: isVictory ? P.accent : P.danger }]}>
+          {isVictory ? 'Field steadied' : 'Field collapsed'}
         </Text>
         <Text style={styles.sub}>
-          {isPersonalBest ? '⭐ NEW PERSONAL BEST!' : isVictory ? 'The Kingdom stands strong!' : 'The Horde prevails...'}
+          {isPersonalBest
+            ? 'Strongest rehearsal yet — now the real mission.'
+            : isVictory
+              ? 'Rehearsal complete. Take it into real life.'
+              : 'Tough round — the real-world ask still stands.'}
         </Text>
       </Animated.View>
-    </Animated.View>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
   overlay: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(0,0,0,0.85)',
-    justifyContent: 'center', alignItems: 'center', zIndex: 9999,
+    zIndex: 300,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: P.ink,
   },
-  emoji: { fontSize: 72, marginBottom: 12 },
-  title: { fontSize: 36, fontWeight: 'bold', letterSpacing: 4 },
-  sub: { color: '#9ca3af', fontSize: 14, marginTop: 8 },
+  center: {
+    zIndex: 10,
+    alignItems: 'center',
+    paddingHorizontal: 32,
+    maxWidth: 360,
+  },
+  brand: {
+    fontFamily: FONTS.display,
+    color: P.text,
+    fontSize: 18,
+    letterSpacing: -0.2,
+    marginBottom: 12,
+  },
+  title: {
+    fontFamily: FONTS.display,
+    fontSize: 28,
+    letterSpacing: -0.4,
+    textAlign: 'center',
+  },
+  sub: {
+    fontFamily: FONTS.body,
+    color: P.textSoft,
+    fontSize: 15,
+    lineHeight: 22,
+    textAlign: 'center',
+    marginTop: 10,
+  },
 });

@@ -30,8 +30,8 @@ export interface TierConfig {
 export const GAME_TIERS: Record<GameTier, TierConfig> = {
   tier1: {
     tier: 'tier1',
-    name: 'The Garden',
-    description: 'Defend your garden from the Sugar Horde',
+    name: 'Warm-up',
+    description: 'Learn the gestures — steady the field',
     duration: 30,
     foodSpawnRate: 1500,
     maxConcurrentFoods: 3,
@@ -52,8 +52,8 @@ export const GAME_TIERS: Record<GameTier, TierConfig> = {
   },
   tier2: {
     tier: 'tier2',
-    name: 'The Feast Hall',
-    description: 'Manage a full day of meals and choices',
+    name: 'Day in the field',
+    description: 'A fuller rehearsal — meals, timing, choices',
     duration: 60,
     foodSpawnRate: 1200,
     maxConcurrentFoods: 5,
@@ -74,8 +74,8 @@ export const GAME_TIERS: Record<GameTier, TierConfig> = {
   },
   tier3: {
     tier: 'tier3',
-    name: 'The Storm',
-    description: 'Survive chaos with plot twists and insulin',
+    name: 'Pressure rehearsal',
+    description: 'Harder pace — stay steady under noise',
     duration: 90,
     foodSpawnRate: 1000,
     maxConcurrentFoods: 7,
@@ -96,8 +96,8 @@ export const GAME_TIERS: Record<GameTier, TierConfig> = {
   },
   slowmo: {
     tier: 'slowmo',
-    name: 'Slow Mo Mode',
-    description: 'Educational glucose simulation',
+    name: 'Meal lab',
+    description: 'Educational simulation — not a personal forecast',
     duration: 0, // No time limit - deliberate gameplay
     foodSpawnRate: 0, // No random spawning - planned meals
     maxConcurrentFoods: 1, // One meal at a time
@@ -119,8 +119,8 @@ export const GAME_TIERS: Record<GameTier, TierConfig> = {
   },
   weekly: {
     tier: 'weekly',
-    name: "Alchemist's Lab",
-    description: 'Weekly Challenge: Same for everyone!',
+    name: 'Weekly shared run',
+    description: 'Same seeded rehearsal for everyone this week',
     duration: 120,
     foodSpawnRate: 900,
     maxConcurrentFoods: 8,

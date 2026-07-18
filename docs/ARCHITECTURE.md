@@ -1,5 +1,25 @@
 # GlucoseWars Architecture
 
+## Product shape (current)
+
+Adherence OS on top of a short rehearsal battle:
+
+```
+domain/patterns   → observational pattern → experiment framing
+domain/demo       → Maya synthetic timeline (hackathon demos)
+domain/programme  → missions, transfer, practice bias
+domain/signals    → CGM / snapshot
+domain/coach      → habit coach + CLINICAL_SCOPE
+domain/digest     → care-team exception summary
+domain/invite     → caregiver support asks
+```
+
+UI programme surfaces live under `components/programme/` (PatternMissionCard, TransferBeat, MissionRibbon, etc.). Battle remains the engagement layer; care-team digest is a separate clinical artifact.
+
+See [`HACKATHON.md`](HACKATHON.md) for positioning and demo path.
+
+---
+
 ## 🏗️ Core Principles
 
 ### 1. ENHANCEMENT FIRST

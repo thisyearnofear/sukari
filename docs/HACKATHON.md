@@ -1,242 +1,123 @@
-# GlucoseWars: Hackathon Submission
+# GlucoseWars — Reimagine Health with eMed & OpenAI
 
-## 🎯 Elevator Pitch
+## Positioning
 
-**Gamified health education with tiered progression and Scroll integration**
+**GlucoseWars is an AI adherence engine for continuous metabolic care.**
 
-GlucoseWars transforms complex diabetes management into an engaging game. Using a **tiered progression system**, players master health concepts gradually - from basic controls to advanced glucose management. With **Scroll blockchain integration**, achievements become ownable NFTs, creating meaningful connections between gaming and real-world health.
+The game is the engagement mechanism — not the whole product.
 
-## 🏆 What We Built
+> Continuous metabolic care fails between appointments. GlucoseWars gives each patient one personalized action at a time, makes adherence engaging through short rehearsal, learns from the response, and tells the care team when human attention is needed.
 
-### Tiered Progression System
+**Tagline:** One mission today. Better evidence for tomorrow.
+
+**Not:** Fruit Ninja for diabetes · gamified education · NFT achievements · AI doctor · digital twin.
+
+---
+
+## Progress (hackathon build)
+
+Shipped end-to-end closed loop for judging and investors:
+
+| Area | Status |
+|------|--------|
+| Pattern → mission card (mission-first, details on demand) | Done |
+| Maya 14-day synthetic demo + scene chips (Pattern / Measure / Outreach) | Done |
+| Accept / easier / another / not practical → assigns template | Done |
+| Mission ribbon in battle (rehearsal tied to real-world ask) | Done |
+| Transfer beat (I did it / Later today / invite) + deferred home state | Done |
+| Quiet win after real-world completion | Done |
+| Clinician exception digest (outreach on/off, safety flags) | Done |
+| Meal lab labeled educational simulation | Done |
+| Unified “steady the field” register across home / battle / coach | Done |
+| Investor leave-behind | [`INVESTOR_ONEPAGER.md`](INVESTOR_ONEPAGER.md) |
+
+**Domain additions:** `domain/patterns`, `domain/demo` (Maya fixture).  
+**UI additions:** `components/programme/*` (PatternMissionCard, TransferBeat, MissionRibbon, LoopStrip, RehearsalSummary, QuietWinBeat).
+
+---
+
+## The closed loop
+
 ```
-📱 Player Journey
-├── Tier 1: Tutorial (30s, learn controls)
-├── Tier 2: Challenge 1 (60s, health basics)
-└── Tier 3: Challenge 2 (90s, advanced play)
-```
-
-### Key Features
-1. **Zero Friction Onboarding** - Start playing immediately
-2. **Progressive Learning** - Concepts introduced at right time
-3. **Config-Driven** - Single source of truth (GAME_TIERS)
-4. **Returning Players** - Resume seamlessly with welcome screen
-5. **Dexcom Integration** - Contextual real data showcase
-
-### Technical Achievements
-- ✅ **Code Consolidation**: Removed 600+ lines (modal choice architecture)
-- ✅ **Complexity Reduction**: 75% less branching logic
-- ✅ **Performance**: 83% faster to first game
-- ✅ **Architecture**: Clean, maintainable, scalable
-
-## 🛠️ How We Built It
-
-### Tech Stack
-```
-Frontend: React Native + Expo
-State: Custom hooks (usePlayerProgress, useBattleGame)
-Config: TypeScript constants (GAME_TIERS)
-Blockchain: Scroll integration ready
-Storage: Local-first with Scroll sync
-```
-
-### Key Components
-
-#### 1. Tier Configuration
-```typescript
-// constants/gameTiers.ts
-export const GAME_TIERS = {
-  tier1: { duration: 30, showGlucose: false, ... },
-  tier2: { duration: 60, showGlucose: true, ... },
-  tier3: { duration: 90, showGlucose: true, ... }
-}
-```
-
-#### 2. Player Progress Hook
-```typescript
-// hooks/usePlayerProgress.ts
-export function usePlayerProgress() {
-  const [progress, setProgress] = useState(() => {
-    // Load from localStorage
-  });
-  
-  return { progress, unlockNextTier, updateBestScore };
-}
+CGM / wearables / context
+        ↓
+AI finds one actionable pattern
+        ↓
+One daily mission (patient can accept / ease / swap / decline)
+        ↓
+45-second rehearsal in battle
+        ↓
+Patient acts at home
+        ↓
+System observes subsequent response
+        ↓
+Coach adapts · care team gets exception summary
 ```
 
-#### 3. Config-Driven Battle Screen
-```typescript
-// components/game/BattleScreen.tsx
-<BattleScreen 
-  tierConfig={GAME_TIERS[currentTier]}
-  healthProfile={tierConfig.healthProfile ? healthProfile : undefined}
-/>
-```
+---
 
-## 🎮 User Experience
+## Demo script (≈3 minutes) — Maya
 
-### Before vs After
-| Metric | Before | After | Improvement |
-|--------|--------|-------|-------------|
-| Time to First Game | 60+ sec | 10 sec | **83% faster** |
-| Choice Complexity | 2 modes + 4 scenarios | 0 choices | **Simplified** |
-| Onboarding Steps | 5+ screens | 2-4 steps | **Streamlined** |
-| Code Complexity | High branching | Config-driven | **Reduced 75%** |
+1. **Meet Maya** (20s) — Tap **Judging? Start Maya demo** on home (not Settings).
+2. **Pattern detected** (35s) — Scene **1 · Pattern**. Evening excursion; open **Why this?** if asked.
+3. **One mission** (30s) — Accept / Easier / Another / Not now.
+4. **Rehearse** (40s) — “Rehearse in 45 seconds” → mission ribbon in battle → transfer beat (I did it / Later today).
+5. **Time jump** (35s) — Scene **2 · Measure** → associated response language (not “caused”).
+6. **Care team** (35s) — Scene **3 · Outreach** then **Care team** → outreach suggested + safety flag.
+7. **Commercial close** (20s) — Sell adherence layer to virtual metabolic / GLP-1 programmes. Leave [`INVESTOR_ONEPAGER.md`](INVESTOR_ONEPAGER.md).
 
-### Player Journey
-```
-New Player
-├── Launch App
-├── Tier 1 Onboarding (2 steps)
-├── Play Tier 1 (30s)
-├── Auto-advance to Tier 2
-├── Tier 2 Onboarding (3 steps)
-└── Play Tier 2 (60s)
+Live Dexcom remains available as technical proof; demos must not depend on OAuth succeeding.
 
-Returning Player
-├── Launch App
-├── Welcome Screen (resume options)
-└── Continue Journey
-```
+---
 
-## 🏆 Challenges & Solutions
+## What we built for this brief
 
-### Challenge 1: Modal Choice Complexity
-**Problem:** Players faced choice paralysis with game modes and health scenarios
+| Surface | Role |
+|--------|------|
+| Pattern → mission card | Observational insight + bounded experiment + collaborative controls |
+| Maya 14-day synthetic timeline | Deterministic demo with time jump + escalation day |
+| Rehearsal battle | Mission ribbon + field stability; transfer to real life |
+| Care-team summary | Exception-oriented weekly intelligence (no lore) |
+| Coach | Habits only — never dosing (`CLINICAL_SCOPE`) |
+| Meal lab | Clearly labeled educational simulation — not a personal forecast |
 
-**Solution:** Linear tiered progression with auto-advancement
+**Demoted / omit from pitch:** NFTs, VRF, leaderboards, blockchain privacy demos, multiplayer.
 
-### Challenge 2: Cognitive Overload
-**Problem:** All features explained upfront overwhelmed new players
+---
 
-**Solution:** Progressive disclosure - features introduced gradually
+## Commercial wedge
 
-### Challenge 3: Code Bloat
-**Problem:** Branching logic everywhere for different game modes
+**Buyer:** Virtual diabetes clinics, GLP-1 / weight-management programmes, employer metabolic programmes, CGM-supported nutrition — potentially eMed.
 
-**Solution:** Config-driven behavior with single source of truth
+**Model:** Per-enrolled-member-per-month + optional implementation. Later outcomes upside.
 
-## 🎯 What's Next
+**Beachhead:** Adults with T2D / prediabetes in a CGM-supported metabolic programme.
 
-### Immediate (2-4 weeks)
-- Privacy toggle with zkEVM encryption
-- VRF for provably fair plot twists
-- Healthcare provider data sharing
+**Moat (compounding):** Mapping of patient context → micro-intervention → adherence → subsequent response — plus clinical governance and workflow embed. Not the game art. Not “we use GPT.”
 
-### Short-term (3-6 months)
-- Full Scroll integration
-- Dexcom API connection
-- Multiplayer modes
+---
 
-### Long-term (6-12 months)
-- Healthcare partnership integrations
-- Clinical validation studies
-- Insurance program collaborations
+## Safety
 
-## 📊 Impact Metrics
+- No insulin or medication dose recommendations  
+- No diagnosis  
+- Constrained intervention library  
+- Patient can reject or modify every mission  
+- Escalation language for emergencies  
+- Prototype ≠ production HIPAA stack (call that out honestly)
 
-### Expected Outcomes
-- **Engagement:** 50%+ increase in session length
-- **Retention:** 30%+ higher return rate
-- **Education:** 40%+ better health concept understanding
-- **Adoption:** 20%+ Dexcom integration rate
+---
 
-### Success Stories
-> "I finally understand how food affects my glucose!"
-> "The game made learning about diabetes actually fun!"
-> "I can see my real Dexcom data in the game - amazing!"
+## Metrics we instrument toward
 
-## 🏅 Why We're Proud
+North star: **Weekly Adherent Patients (WAP)** — ≥1 real-world mission completed + ≥1 practice session in a week.
 
-1. **Innovative Architecture** - Tiered progression sets new standard
-2. **User-Centric Design** - Solves real problems for diabetics
-3. **Technical Excellence** - Clean, maintainable, scalable code
-4. **Blockchain Utility** - Meaningful use of Scroll primitives
-5. **Health Impact** - Makes complex concepts accessible
+Also: mission accept/complete, D7/D30 engagement, digest usefulness, staff minutes per enrolled patient.
 
-## 🎮 Try It Out
+Do not claim clinical efficacy before a pilot.
 
-```bash
-# Install dependencies
-npm install
+---
 
-# Start the app
-npx expo start
+## Closing line
 
-# Play through the tiers
-1. Complete Tier 1 (30s tutorial)
-2. Experience Tier 2 (60s health basics)
-3. Master Tier 3 (90s advanced gameplay)
-```
-
-## 🤝 Team
-
-**Architecture & Development:**
-- Tiered progression system
-- Config-driven design
-- Scroll integration foundation
-
-**Design & UX:**
-- Progressive onboarding
-- Returning player experience
-- Privacy/fairness UI
-
-**Health Integration:**
-- Glucose simulation
-- Dexcom showcase
-- Healthcare data models
-
-## 🏆 Judging Criteria
-
-### 🔬 Technology
-- **Innovation:** Tiered progression + Scroll primitives
-- **Implementation:** Clean architecture, TypeScript
-- **Scalability:** Modular, extensible design
-
-### 💡 Originality
-- **Novel Concept:** Gamified health with progressive learning
-- **Blockchain Use:** Meaningful zkEVM/VRF integration
-- **UX Innovation:** Privacy controls that don't disrupt gameplay
-
-### 🎨 Design
-- **User Experience:** Intuitive, engaging, educational
-- **Visual Design:** Clear, consistent, accessible
-- **Interaction:** Responsive, performant, delightful
-
-### 📈 Impact
-- **Health Education:** Teaches practical glucose management skills
-- **Behavior Change:** Reflective gameplay encourages real-world application
-- **Educational Value:** Slow Mo Mode bridges game learning to real life
-- **User-Centric:** Addresses actual player needs and feedback
-
-### 🔮 Future Potential
-- **zkEVM Privacy:** Private meal planning and pattern analysis
-- **Verifiable Learning:** Trustless educational achievement verification
-- **Healthcare Integration:** Provider access to patient learning progress
-- **Research Applications:** Privacy-preserving health data analysis
-
-## 🏅 Updated Conclusion
-
-**Strategic Evolution:** GlucoseWars has evolved from a "blockchain-first" to "education-first" approach based on user feedback and engagement data. We now focus on delivering immediate educational value through **Slow Mo Mode** while maintaining the foundation for meaningful zkEVM enhancements.
-
-### What We've Built
-- ✅ **Tiered Progression System** - 3 tiers of increasing complexity
-- ✅ **Multiple Game Modes** - Classic (fast), Life (simulation), Slow Mo (educational)
-- ✅ **User Personalization** - Role-based learning journeys (Personal/Caregiver/Curious)
-- ✅ **Educational Integration** - Diabetes management lessons embedded in gameplay
-- ✅ **Scroll Foundation** - Architecture ready for zkEVM enhancements
-
-### What We've Built
-- ✅ **Role Badge System** - Optional onchain credentials for learning commitments
-- 🔄 **Slow Mo Mode** - Deliberate, educational glucose simulation
-- 📊 **Pattern Recognition** - Personalized insights from gameplay data
-- 🎓 **Learning Analytics** - Track educational progress over time
-- 🔒 **Privacy-Ready** - Architecture prepared for zkEVM when valuable
-
-### Why This Approach Wins
-- ✅ **User-First:** Solves real problems, not technical novelty
-- ✅ **Practical:** Education that actually helps with diabetes management
-- ✅ **Iterative:** Build, measure, learn, improve based on real data
-- ✅ **Future-Proof:** zkEVM integration path when it adds proven value
-
-**The future of health education is practical, engaging, and user-centric - and we're building it step by step!** 🎮💉📚
+Healthcare does not need another dashboard telling patients what happened. It needs a system that helps them do the next right thing — and learns whether it worked.

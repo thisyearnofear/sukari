@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import {
   View,
   Text,
@@ -14,6 +14,7 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { ControlMode, UserMode } from '@/types/game';
 import { usePlayerProgressContext } from '@/context/PlayerProgressContext';
 import { USER_MODE_CONFIGS } from '@/constants/userModes';
@@ -23,8 +24,6 @@ import { useWeb3 } from '@/context/Web3Context';
 import { useBeam } from '@/context/BeamContext';
 import { RoleBadgeModal } from '@/components/game/RoleBadgeModal';
 import { COLORS, FONTS, ANIMATIONS } from '@/constants/designSystem';
-import { ProgressIndicator } from '@/components/game/ProgressIndicator';
-import { DailyQuests } from '@/components/game/DailyQuests';
 import { GrandLibrary } from '@/components/game/GrandLibrary';
 import { BeamAssets } from '@/components/game/BeamAssets';
 import { track } from '@/utils/analytics';
@@ -34,11 +33,28 @@ import { useCoach } from '@/hooks/useCoach';
 import { buildSignalSnapshot } from '@/domain/signals';
 import { buildLocalDigest, publishWeeklyDigest } from '@/domain/digest';
 import { buildSupportInvite, supportShareMessage } from '@/domain/invite';
+import { resolvePattern } from '@/domain/patterns';
+import {
+  MAYA_DEMO,
+  getMayaDay,
+  mayaLoopSteps,
+  buildMayaClinicianDigest,
+} from '@/domain/demo';
+import { selectMission } from '@/domain/programme';
 import { MetabolicField } from '@/components/atmosphere/MetabolicField';
 import { PressableScale } from '@/components/ui/PressableScale';
+import {
+  PatternMissionCard,
+  MissionEase,
+} from '@/components/programme/PatternMissionCard';
+import { LoopStrip } from '@/components/programme/LoopStrip';
+import { QuietWinBeat } from '@/components/programme/QuietWinBeat';
 
 const maxWidth = 400;
 const P = COLORS.PROGRAMME;
+const DEMO_KEY = 'glucoseWars.demoMaya';
+const DEMO_DAY_KEY = 'glucoseWars.demoMayaDay';
+const DEFERRED_KEY = 'glucoseWars.missionDeferred';
 
 interface MainMenuProps {
   onStartGame: (controlMode: ControlMode) => void;
@@ -62,12 +78,10 @@ export const MainMenu: React.FC<MainMenuProps> = ({
     setPrivacyMode,
     updatePrivacySettings,
     setSkipOnboarding,
-    getKingdomTitle,
     completeActiveMission,
     setDigestMeta,
     ensureTodayMission,
   } = usePlayerProgressContext();
-  const kingdomTitle = getKingdomTitle();
   const [showUserModeSelector, setShowUserModeSelector] = useState(userModeSelected === false);
   const [selectedRole, setSelectedRole] = useState<UserMode | null>(null);
   const [showMintModal, setShowMintModal] = useState(false);
@@ -77,6 +91,11 @@ export const MainMenu: React.FC<MainMenuProps> = ({
   const [showCGMDisclaimer, setShowCGMDisclaimer] = useState(false);
   const [showCoach, setShowCoach] = useState(false);
   const [coachInput, setCoachInput] = useState('');
+  const [demoMode, setDemoMode] = useState(false);
+  const [demoDay, setDemoDay] = useState<number>(MAYA_DEMO.defaultDayIndex);
+  const [missionChoice, setMissionChoice] = useState<MissionEase | null>(null);
+  const [missionDeferred, setMissionDeferred] = useState(false);
+  const [showQuietWin, setShowQuietWin] = useState(false);
   const cgm = useCGMConnection();
   const coach = useCoach();
   const { isConnected, address, connectWallet, disconnectWallet } = useWeb3();
@@ -96,21 +115,83 @@ export const MainMenu: React.FC<MainMenuProps> = ({
   });
 
   const band = signalSnapshot.minimized.band;
-  const isNewUser = progress.gamesPlayed === 0;
+  const maya = useMemo(() => (demoMode ? getMayaDay(demoDay) : null), [demoMode, demoDay]);
+  const pattern = useMemo(
+    () =>
+      resolvePattern({
+        readings: demoMode ? maya?.readings : cgm.readings,
+        snapshot: signalSnapshot,
+        useDemo: demoMode,
+        demoDayIndex: demoDay,
+      }),
+    // Depend on stable signal fields — snapshot object is rebuilt each render
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [
+      demoMode,
+      demoDay,
+      maya?.readings,
+      cgm.readings,
+      signalSnapshot.connected,
+      signalSnapshot.trend,
+      signalSnapshot.readingCount,
+      signalSnapshot.minimized.band,
+    ],
+  );
+  const displayMission = demoMode ? maya?.mission ?? null : progress.activeMission;
+  const loopSteps = useMemo(() => {
+    if (demoMode) return mayaLoopSteps(demoDay);
+    const status = progress.activeMission?.status;
+    const practiced = status === 'practiced' || status === 'completed';
+    const done = status === 'completed';
+    return [
+      { key: 'detect', title: 'Detect', done: true, active: false },
+      { key: 'mission', title: 'Mission', done: !!missionChoice || practiced, active: !missionChoice && !practiced },
+      { key: 'rehearse', title: 'Rehearse', done: practiced, active: !!missionChoice && !practiced },
+      { key: 'act', title: 'Act', done: done, active: practiced && !done },
+      { key: 'measure', title: 'Measure', done: false, active: done },
+      { key: 'adapt', title: 'Care team', done: false, active: false },
+    ];
+  }, [demoMode, demoDay, progress.activeMission?.status, missionChoice]);
 
   useEffect(() => {
-    if (!showUserModeSelector) {
+    AsyncStorage.multiGet([DEMO_KEY, DEMO_DAY_KEY, DEFERRED_KEY]).then((pairs) => {
+      const demoVal = pairs[0][1];
+      const dayVal = pairs[1][1];
+      const deferredVal = pairs[2][1];
+      if (demoVal === '1') setDemoMode(true);
+      if (dayVal != null) {
+        const n = Number(dayVal);
+        if (Number.isFinite(n)) setDemoDay(n);
+      }
+      if (deferredVal) {
+        try {
+          const parsed = JSON.parse(deferredVal) as { dateKey?: string };
+          const today = new Date();
+          const key = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+          if (parsed.dateKey === key) {
+            setMissionDeferred(true);
+            setMissionChoice('accept');
+          }
+        } catch {
+          /* ignore */
+        }
+      }
+    });
+  }, []);
+
+  useEffect(() => {
+    if (!showUserModeSelector && !demoMode) {
       ensureTodayMission(signalSnapshot);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [showUserModeSelector, cgm.connection.isConnected, progress.userMode]);
+  }, [showUserModeSelector, cgm.connection.isConnected, progress.userMode, demoMode]);
 
   useEffect(() => {
-    if (cgm.connection.isConnected) {
+    if (cgm.connection.isConnected && !demoMode) {
       cgm.syncReadings(180).catch(() => undefined);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [cgm.connection.isConnected]);
+  }, [cgm.connection.isConnected, demoMode]);
 
   useEffect(() => {
     if (showUserModeSelector) {
@@ -152,6 +233,52 @@ export const MainMenu: React.FC<MainMenuProps> = ({
     }).start();
   }, [enterAnim, showUserModeSelector]);
 
+  const setDemo = async (on: boolean, startDay?: number) => {
+    setDemoMode(on);
+    setMissionChoice(null);
+    await AsyncStorage.setItem(DEMO_KEY, on ? '1' : '0');
+    track('demo_maya_toggled', { on });
+    if (on) {
+      const day = startDay ?? MAYA_DEMO.scenes.pattern;
+      setDemoDay(day);
+      await AsyncStorage.setItem(DEMO_DAY_KEY, String(day));
+    }
+  };
+
+  const jumpDemoDay = async (next: number) => {
+    const clamped = Math.max(0, Math.min(MAYA_DEMO.totalDays - 1, next));
+    setDemoDay(clamped);
+    setMissionChoice(null);
+    await AsyncStorage.setItem(DEMO_DAY_KEY, String(clamped));
+    track('demo_maya_day_jump', { day: clamped });
+  };
+
+  const assignFromPattern = (templateId?: string) => {
+    if (demoMode) return;
+    ensureTodayMission(signalSnapshot, templateId || pattern.suggestedBehaviour);
+  };
+
+  const openCareTeamSummary = async () => {
+    const digest = demoMode
+      ? buildMayaClinicianDigest(demoDay)
+      : buildLocalDigest({
+          adherence: progress.adherenceWeek,
+          missionHistory: progress.missionHistory,
+          gamesPlayedThisWeekApprox: Math.min(progress.gamesPlayed, 14),
+          patientLabel: progress.userMode ? `Programme member · ${progress.userMode}` : 'Programme member',
+          recurringPatterns: [pattern.headline],
+          dataCoverage: signalSnapshot.connected
+            ? `CGM connected · ${signalSnapshot.readingCount} readings in snapshot`
+            : 'No CGM · adherence + practice only',
+        });
+    const published = await publishWeeklyDigest(digest);
+    if (published?.token) {
+      setDigestMeta(published.token);
+      track('weekly_digest_created', { week: digest.weekKey, mode: 'clinician' });
+      router.push({ pathname: '/digest/[token]' as any, params: { token: published.token } });
+    }
+  };
+
   if (showUserModeSelector) {
     return (
       <View style={styles.root}>
@@ -162,9 +289,9 @@ export const MainMenu: React.FC<MainMenuProps> = ({
           showsVerticalScrollIndicator={false}
         >
           <Text style={styles.brandMark}>Glucose Wars</Text>
-          <Text style={styles.roleHeadline}>How will you use the programme?</Text>
+          <Text style={styles.roleHeadline}>Who is this programme for?</Text>
           <Text style={styles.roleSub}>
-            One choice. You can change it later in settings.
+            One choice. Changes how missions and coaching are framed — you can change it later.
           </Text>
 
           <View style={styles.roleList}>
@@ -206,13 +333,33 @@ export const MainMenu: React.FC<MainMenuProps> = ({
     );
   }
 
-  const signalLine = signalSnapshot.connected
-    ? `CGM · ${band.replace('_', ' ')}${signalSnapshot.trend ? ` · ${signalSnapshot.trend}` : ''}`
-    : 'No CGM · missions use programme defaults';
+  const signalLine = demoMode
+    ? `${MAYA_DEMO.patientLabel} · ${maya?.label}`
+    : signalSnapshot.connected
+      ? `CGM · ${band.replace('_', ' ')}${signalSnapshot.trend ? ` · ${signalSnapshot.trend}` : ''}`
+      : 'No CGM · missions use programme defaults';
+
+  const homeBand =
+    demoMode
+      ? 'high'
+      : progress.activeMission?.status === 'completed'
+        ? 'in_range'
+        : missionDeferred
+          ? 'high'
+          : band;
+
+  const homeIntensity =
+    progress.activeMission?.status === 'completed'
+      ? 0.4
+      : missionDeferred
+        ? 0.7
+        : homeBand === 'unknown'
+          ? 0.4
+          : 0.6;
 
   return (
     <View style={styles.root}>
-      <MetabolicField band={band} intensity={band === 'unknown' ? 0.4 : 0.65} />
+      <MetabolicField band={homeBand} intensity={homeIntensity} />
 
       {showWelcome && (
         <Animated.View style={[styles.toast, { transform: [{ translateY: welcomeAnim }] }]}>
@@ -223,9 +370,9 @@ export const MainMenu: React.FC<MainMenuProps> = ({
 
       <View style={styles.topBar}>
         <View>
-          <Text style={styles.topEyebrow}>{kingdomTitle.title}</Text>
+          <Text style={styles.topEyebrow}>Metabolic programme</Text>
           <Text style={styles.topMeta}>
-            {progress.kingdomRenown} renown
+            {demoMode ? 'Demo timeline' : 'One mission a day'}
             {showSyncFeedback ? ' · synced' : ''}
           </Text>
         </View>
@@ -260,30 +407,155 @@ export const MainMenu: React.FC<MainMenuProps> = ({
           }}
         >
           <Text style={styles.brandMark}>Glucose Wars</Text>
-          <Text style={styles.tagline}>Practice that becomes the day.</Text>
+          <Text style={styles.tagline}>One mission today. Better evidence for tomorrow.</Text>
           <Text style={styles.signalLine}>{signalLine}</Text>
 
-          <View style={{ marginTop: 28, marginBottom: 20 }}>
-            <DailyQuests
-              mission={progress.activeMission}
-              adherenceWeek={progress.adherenceWeek}
-              renown={progress.kingdomRenown}
-              compact
-              onMarkDone={() => completeActiveMission()}
-              onAskCoach={() => {
-                setShowCoach(true);
-                coach.refreshMission(signalSnapshot);
+          {!demoMode ? (
+            <PressableScale
+              onPress={() => setDemo(true, MAYA_DEMO.scenes.pattern)}
+              style={styles.judgeBar}
+              accessibilityRole="button"
+              accessibilityLabel="Start Maya demo for judging"
+            >
+              <Text style={styles.judgeBarTitle}>Judging? Start Maya demo</Text>
+              <Text style={styles.judgeBarSub}>
+                Synthetic 14-day closed loop · no OAuth required →
+              </Text>
+            </PressableScale>
+          ) : (
+            <View style={styles.judgeScenes}>
+              <Text style={styles.judgeScenesLabel}>Demo scenes</Text>
+              <View style={styles.judgeSceneRow}>
+                <PressableScale
+                  onPress={() => jumpDemoDay(MAYA_DEMO.scenes.pattern)}
+                  style={[
+                    styles.sceneChip,
+                    demoDay === MAYA_DEMO.scenes.pattern && styles.sceneChipOn,
+                  ]}
+                >
+                  <Text style={styles.sceneChipText}>1 · Pattern</Text>
+                </PressableScale>
+                <PressableScale
+                  onPress={() => jumpDemoDay(MAYA_DEMO.scenes.measure)}
+                  style={[
+                    styles.sceneChip,
+                    demoDay === MAYA_DEMO.scenes.measure && styles.sceneChipOn,
+                  ]}
+                >
+                  <Text style={styles.sceneChipText}>2 · Measure</Text>
+                </PressableScale>
+                <PressableScale
+                  onPress={async () => {
+                    await jumpDemoDay(MAYA_DEMO.scenes.outreach);
+                  }}
+                  style={[
+                    styles.sceneChip,
+                    demoDay >= MAYA_DEMO.scenes.outreach && styles.sceneChipOn,
+                  ]}
+                >
+                  <Text style={styles.sceneChipText}>3 · Outreach</Text>
+                </PressableScale>
+                <PressableScale
+                  onPress={() => openCareTeamSummary()}
+                  style={styles.sceneChip}
+                >
+                  <Text style={styles.sceneChipText}>Care team</Text>
+                </PressableScale>
+              </View>
+              <PressableScale onPress={() => setDemo(false)} style={styles.exitDemo}>
+                <Text style={styles.exitDemoText}>Exit demo</Text>
+              </PressableScale>
+            </View>
+          )}
+
+          <View style={{ marginTop: demoMode ? 22 : 12 }}>
+            {demoMode ? <LoopStrip steps={loopSteps} /> : null}
+          </View>
+
+          {demoMode ? (
+            <View style={styles.demoControls}>
+              <Text style={styles.demoHint}>{MAYA_DEMO.disclaimer}</Text>
+              <View style={styles.demoRow}>
+                <PressableScale
+                  onPress={() => jumpDemoDay(demoDay - 1)}
+                  style={styles.demoChip}
+                  accessibilityRole="button"
+                >
+                  <Text style={styles.demoChipText}>← Prior day</Text>
+                </PressableScale>
+                <Text style={styles.demoDayLabel}>{maya?.label}</Text>
+                <PressableScale
+                  onPress={() => jumpDemoDay(demoDay + 1)}
+                  style={styles.demoChip}
+                  accessibilityRole="button"
+                >
+                  <Text style={styles.demoChipText}>Time jump →</Text>
+                </PressableScale>
+              </View>
+            </View>
+          ) : null}
+
+          <View style={{ marginTop: 8, marginBottom: 20 }}>
+            <PatternMissionCard
+              pattern={pattern}
+              mission={displayMission}
+              outcome={maya?.outcome}
+              reflection={maya?.reflection}
+              demoLabel={demoMode ? MAYA_DEMO.disclaimer : null}
+              missionChoice={missionChoice}
+              deferred={missionDeferred && !demoMode}
+              onAccept={() => {
+                setMissionChoice('accept');
+                setMissionDeferred(false);
+                assignFromPattern(pattern.suggestedBehaviour);
+                track('mission_accepted', { template: pattern.suggestedBehaviour, demo: demoMode });
+              }}
+              onMakeEasier={() => {
+                setMissionChoice('easier');
+                setMissionDeferred(false);
+                assignFromPattern(pattern.suggestedBehaviour);
+                track('mission_made_easier', { template: pattern.suggestedBehaviour });
+              }}
+              onChooseAnother={() => {
+                setMissionChoice('another');
+                setMissionDeferred(false);
+                assignFromPattern('protein_first');
+                track('mission_choose_another', { from: pattern.suggestedBehaviour });
+              }}
+              onNotPractical={() => {
+                setMissionChoice('not_practical');
+                track('mission_not_practical', { template: pattern.suggestedBehaviour });
+              }}
+              onMarkDone={() => {
+                if (!demoMode) completeActiveMission();
+                setMissionDeferred(false);
+                AsyncStorage.removeItem(DEFERRED_KEY);
+                setShowQuietWin(true);
+                track('mission_marked_done', { from: 'home_pattern_card', demo: demoMode });
               }}
             />
           </View>
 
           <PressableScale
-            onPress={() => onStartGame(selectedMode)}
-            accessibilityLabel="Practice today’s mission"
+            onPress={() => {
+              if (!missionChoice || missionChoice === 'not_practical') {
+                setMissionChoice('accept');
+              }
+              if (!demoMode) {
+                const template =
+                  missionChoice === 'another'
+                    ? 'protein_first'
+                    : pattern.suggestedBehaviour;
+                assignFromPattern(template);
+              }
+              onStartGame(selectedMode);
+            }}
+            accessibilityLabel="Rehearse today’s mission in a short battle"
             accessibilityRole="button"
             style={styles.primaryCta}
           >
-            <Text style={styles.primaryCtaText}>Practice</Text>
+            <Text style={styles.primaryCtaText}>Rehearse in 45 seconds</Text>
+            <Text style={styles.primaryCtaSub}>Practice the decision — then do it in real life</Text>
           </PressableScale>
 
           <View style={styles.secondaryRow}>
@@ -293,8 +565,14 @@ export const MainMenu: React.FC<MainMenuProps> = ({
             <Text style={styles.dot}>·</Text>
             <TouchableOpacity
               onPress={async () => {
-                if (!progress.activeMission) return;
-                const invite = buildSupportInvite(progress.activeMission);
+                const mission =
+                  displayMission ||
+                  selectMission({
+                    userMode: progress.userMode,
+                    forceTemplateId: pattern.suggestedBehaviour,
+                    activeMission: null,
+                  });
+                const invite = buildSupportInvite(mission);
                 track('caregiver_invite_shared', { from: 'home', template_id: invite.templateId });
                 await Share.share({ message: supportShareMessage(invite) });
               }}
@@ -303,52 +581,24 @@ export const MainMenu: React.FC<MainMenuProps> = ({
               <Text style={styles.link}>Invite support</Text>
             </TouchableOpacity>
             <Text style={styles.dot}>·</Text>
-            <TouchableOpacity
-              onPress={async () => {
-                const digest = buildLocalDigest({
-                  adherence: progress.adherenceWeek,
-                  missionHistory: progress.missionHistory,
-                  gamesPlayedThisWeekApprox: Math.min(progress.gamesPlayed, 14),
-                });
-                const published = await publishWeeklyDigest(digest);
-                if (published?.token) {
-                  setDigestMeta(published.token);
-                  track('weekly_digest_created', { week: digest.weekKey });
-                  router.push({ pathname: '/digest/[token]' as any, params: { token: published.token } });
-                }
-              }}
-              accessibilityRole="button"
-            >
-              <Text style={styles.link}>Weekly digest</Text>
+            <TouchableOpacity onPress={openCareTeamSummary} accessibilityRole="button">
+              <Text style={styles.link}>Care team summary</Text>
             </TouchableOpacity>
           </View>
 
-          {!isNewUser && progress.gamesPlayed > 0 && (
-            <View style={styles.progressBlock}>
-              <Text style={styles.weekNote}>
-                {progress.adherenceWeek.completed} missions completed this week
-              </Text>
-              <ProgressIndicator
-                currentTier={progress.currentTier || 'tier1'}
-                unlockedTiers={[
-                  ...(['tier1'] as const),
-                  ...(progress.maxTierUnlocked !== 'tier1' ? [progress.maxTierUnlocked] : []),
-                ]}
-                variant="detailed"
-                showLabel={true}
-              />
-            </View>
-          )}
-
           <Text style={styles.footerHint}>
-            {isNewUser
-              ? 'One mission a day. Practice, then do it in real life.'
-              : 'Practice trains the decision — the mission changes the day.'}
+            Habits only — never dosing or diagnosis. The game is rehearsal; the product is adherence.
           </Text>
         </Animated.View>
       </ScrollView>
 
-      {/* Settings sheet */}
+      {showQuietWin ? (
+        <QuietWinBeat
+          message="Logged. Come back tomorrow for the next experiment."
+          onDone={() => setShowQuietWin(false)}
+        />
+      ) : null}
+
       <Modal
         visible={showSettings}
         animationType="slide"
@@ -364,7 +614,81 @@ export const MainMenu: React.FC<MainMenuProps> = ({
               </TouchableOpacity>
             </View>
             <ScrollView showsVerticalScrollIndicator={false}>
-              <SettingsSection title="Care & growth">
+              <SettingsSection title="Demo (judges)">
+                <TouchableOpacity
+                  onPress={() => setDemo(!demoMode)}
+                  accessibilityRole="switch"
+                  style={styles.switchRow}
+                >
+                  <View>
+                    <Text style={styles.sheetBody}>
+                      {demoMode ? 'Maya demo on' : 'Maya demo off'}
+                    </Text>
+                    <Text style={styles.sheetMuted}>Synthetic 14-day closed-loop timeline</Text>
+                  </View>
+                  <View
+                    style={[
+                      styles.switchTrack,
+                      { backgroundColor: demoMode ? P.accent : P.line },
+                    ]}
+                  >
+                    <View
+                      style={[
+                        styles.switchThumb,
+                        demoMode ? { marginLeft: 18 } : { marginLeft: 2 },
+                      ]}
+                    />
+                  </View>
+                </TouchableOpacity>
+                {demoMode ? (
+                  <>
+                    <SheetButton
+                      label="Jump to measured-response day"
+                      onPress={() => {
+                        jumpDemoDay(MAYA_DEMO.scenes.measure);
+                        setShowSettings(false);
+                      }}
+                    />
+                    <SheetButton
+                      label="Jump to outreach / escalation day"
+                      onPress={() => {
+                        jumpDemoDay(MAYA_DEMO.scenes.outreach);
+                        setShowSettings(false);
+                      }}
+                    />
+                  </>
+                ) : null}
+              </SettingsSection>
+
+              <SettingsSection title="Signals">
+                {cgm.connection.isConnected ? (
+                  <View style={styles.switchRow}>
+                    <View>
+                      <Text style={styles.sheetBody}>
+                        {cgm.connection.provider === 'libre' ? 'Apple Health' : 'Dexcom'} connected
+                      </Text>
+                      {cgm.latestReading && (
+                        <Text style={styles.sheetMuted}>
+                          Latest {cgm.latestReading.value} mg/dL
+                        </Text>
+                      )}
+                    </View>
+                    <TouchableOpacity onPress={cgm.disconnect} accessibilityRole="button">
+                      <Text style={[styles.link, { color: P.danger }]}>Disconnect</Text>
+                    </TouchableOpacity>
+                  </View>
+                ) : (
+                  <>
+                    <SheetButton label="Connect Dexcom" onPress={() => setShowCGMDisclaimer(true)} />
+                    {cgm.healthKitAvailable && (
+                      <SheetButton label="Connect Apple Health" onPress={() => cgm.connect('libre')} />
+                    )}
+                    <Text style={styles.sheetMuted}>Fuels pattern → mission selection</Text>
+                  </>
+                )}
+              </SettingsSection>
+
+              <SettingsSection title="Practice">
                 <SheetButton
                   label="Customize practice"
                   onPress={() => {
@@ -372,27 +696,29 @@ export const MainMenu: React.FC<MainMenuProps> = ({
                     onSelectGame?.();
                   }}
                 />
-                <SheetButton
-                  label="Challenges"
-                  onPress={() => {
-                    setShowSettings(false);
-                    track('challenge_hub_viewed', { source: 'settings' });
-                    router.push('/challenge' as any);
-                  }}
-                />
-                <SheetButton label="Library" onPress={() => { setShowSettings(false); setShowLibrary(true); }} />
-                <SheetButton label="Slow Mo lab" onPress={() => { setShowSettings(false); router.push('/slowmo' as any); }} />
-              </SettingsSection>
-
-              <SettingsSection title="Privacy">
-                <PrivacyToggle
-                  currentMode={progress.privacyMode}
-                  onToggle={(mode) => setPrivacyMode(mode)}
-                />
-                <SheetButton label="Privacy details" onPress={() => setShowPrivacySettings(true)} />
-              </SettingsSection>
-
-              <SettingsSection title="Tutorial">
+                <View style={styles.controlRow}>
+                  {(['swipe', 'tap'] as ControlMode[]).map((mode) => (
+                    <PressableScale
+                      key={mode}
+                      onPress={() => setSelectedMode(mode)}
+                      accessibilityRole="radio"
+                      accessibilityState={{ selected: selectedMode === mode }}
+                      style={[
+                        styles.controlChip,
+                        selectedMode === mode && styles.controlChipOn,
+                      ]}
+                    >
+                      <Text
+                        style={[
+                          styles.controlChipText,
+                          selectedMode === mode && styles.controlChipTextOn,
+                        ]}
+                      >
+                        {mode === 'swipe' ? 'Swipe' : 'Tap'}
+                      </Text>
+                    </PressableScale>
+                  ))}
+                </View>
                 <TouchableOpacity
                   onPress={() => setSkipOnboarding(!progress.skipOnboarding)}
                   accessibilityRole="switch"
@@ -417,61 +743,37 @@ export const MainMenu: React.FC<MainMenuProps> = ({
                 </TouchableOpacity>
               </SettingsSection>
 
-              <SettingsSection title="Controls">
-                <View style={styles.controlRow}>
-                  {(['swipe', 'tap'] as ControlMode[]).map((mode) => (
-                    <PressableScale
-                      key={mode}
-                      onPress={() => setSelectedMode(mode)}
-                      accessibilityRole="radio"
-                      accessibilityState={{ selected: selectedMode === mode }}
-                      style={[
-                        styles.controlChip,
-                        selectedMode === mode && styles.controlChipOn,
-                      ]}
-                    >
-                      <Text
-                        style={[
-                          styles.controlChipText,
-                          selectedMode === mode && styles.controlChipTextOn,
-                        ]}
-                      >
-                        {mode === 'swipe' ? 'Swipe' : 'Tap'}
-                      </Text>
-                    </PressableScale>
-                  ))}
-                </View>
+              <SettingsSection title="Privacy">
+                <PrivacyToggle
+                  currentMode={progress.privacyMode}
+                  onToggle={(mode) => setPrivacyMode(mode)}
+                />
+                <SheetButton label="Privacy details" onPress={() => setShowPrivacySettings(true)} />
               </SettingsSection>
 
-              <SettingsSection title="CGM">
-                {cgm.connection.isConnected ? (
-                  <View style={styles.switchRow}>
-                    <View>
-                      <Text style={styles.sheetBody}>
-                        {cgm.connection.provider === 'libre' ? 'Apple Health' : 'Dexcom'} connected
-                      </Text>
-                      {cgm.latestReading && (
-                        <Text style={styles.sheetMuted}>
-                          Latest {cgm.latestReading.value} mg/dL
-                        </Text>
-                      )}
-                    </View>
-                    <TouchableOpacity onPress={cgm.disconnect} accessibilityRole="button">
-                      <Text style={[styles.link, { color: P.danger }]}>Disconnect</Text>
-                    </TouchableOpacity>
-                  </View>
-                ) : (
-                  <>
-                    <SheetButton label="Connect Dexcom" onPress={() => setShowCGMDisclaimer(true)} />
-                    {cgm.healthKitAvailable && (
-                      <SheetButton label="Connect Apple Health" onPress={() => cgm.connect('libre')} />
-                    )}
-                    <Text style={styles.sheetMuted}>Fuels today’s mission selection</Text>
-                  </>
-                )}
-              </SettingsSection>
-
-              <SettingsSection title="Optional identity">
+              <SettingsSection title="Optional / advanced">
+                <SheetButton
+                  label="Historical meal lab (educational)"
+                  onPress={() => {
+                    setShowSettings(false);
+                    router.push('/slowmo' as any);
+                  }}
+                />
+                <SheetButton
+                  label="Challenges"
+                  onPress={() => {
+                    setShowSettings(false);
+                    track('challenge_hub_viewed', { source: 'settings' });
+                    router.push('/challenge' as any);
+                  }}
+                />
+                <SheetButton
+                  label="Library"
+                  onPress={() => {
+                    setShowSettings(false);
+                    setShowLibrary(true);
+                  }}
+                />
                 <BeamWalletButton
                   isConnected={isConnected}
                   address={address}
@@ -479,7 +781,7 @@ export const MainMenu: React.FC<MainMenuProps> = ({
                   disconnectWallet={disconnectWallet}
                 />
                 <SheetButton
-                  label="Royal Treasury (optional)"
+                  label="Identity treasury (optional)"
                   onPress={() => {
                     setShowSettings(false);
                     setShowTreasury(true);
@@ -546,11 +848,12 @@ export const MainMenu: React.FC<MainMenuProps> = ({
               </TouchableOpacity>
             </View>
             <Text style={styles.sheetMuted}>Habit coach only — never dosing or medical advice.</Text>
-            {progress.activeMission && (
+            {displayMission && (
               <Text style={[styles.sheetBody, { marginTop: 10 }]}>
-                Today: {progress.activeMission.realWorldAction}
+                Today: {displayMission.realWorldAction}
               </Text>
             )}
+            <Text style={[styles.insight, { marginTop: 8 }]}>· {pattern.whyThisExperiment}</Text>
             {coach.insights.map((line, i) => (
               <Text key={i} style={styles.insight}>
                 · {line}
@@ -564,7 +867,7 @@ export const MainMenu: React.FC<MainMenuProps> = ({
             <TextInput
               value={coachInput}
               onChangeText={setCoachInput}
-              placeholder="Ask about today’s mission…"
+              placeholder="Why this mission? Or ask about barriers…"
               placeholderTextColor={P.textMuted}
               style={styles.input}
             />
@@ -620,7 +923,7 @@ const BeamWalletButton: React.FC<{
     const truncatedAddress = `${playerAccount.address.substring(0, 6)}...${playerAccount.address.substring(playerAccount.address.length - 4)}`;
     return (
       <TouchableOpacity onPress={logout} disabled={isLoading} style={styles.sheetBtn}>
-        <Text style={styles.sheetBody}>{truncatedAddress} (Beam)</Text>
+        <Text style={styles.sheetBody}>{truncatedAddress} (optional sync)</Text>
       </TouchableOpacity>
     );
   }
@@ -637,13 +940,13 @@ const BeamWalletButton: React.FC<{
   return (
     <View style={{ gap: 8 }}>
       <SheetButton
-        label={Platform.OS === 'web' ? 'Connect wallet' : 'Wallet'}
+        label={Platform.OS === 'web' ? 'Connect wallet (optional)' : 'Wallet (optional)'}
         onPress={() => {
           void connectWallet();
         }}
       />
       <SheetButton
-        label={isLoading ? '…' : 'Continue with social'}
+        label={isLoading ? '…' : 'Continue with social (optional)'}
         onPress={() => {
           if (login) void login();
         }}
@@ -692,7 +995,7 @@ const styles = StyleSheet.create({
   homeScroll: {
     alignItems: 'center',
     paddingHorizontal: 24,
-    paddingTop: 36,
+    paddingTop: 28,
     paddingBottom: 48,
   },
   brandMark: {
@@ -715,9 +1018,107 @@ const styles = StyleSheet.create({
     fontSize: 12,
     marginTop: 10,
   },
+  judgeBar: {
+    marginTop: 16,
+    borderWidth: 1,
+    borderColor: P.warn,
+    backgroundColor: P.warnSoft,
+    borderRadius: 2,
+    paddingVertical: 12,
+    paddingHorizontal: 14,
+  },
+  judgeBarTitle: {
+    fontFamily: FONTS.bodyBold,
+    color: P.warn,
+    fontSize: 13,
+  },
+  judgeBarSub: {
+    fontFamily: FONTS.body,
+    color: P.textSoft,
+    fontSize: 12,
+    marginTop: 3,
+    lineHeight: 17,
+  },
+  judgeScenes: {
+    marginTop: 14,
+    gap: 8,
+  },
+  judgeScenesLabel: {
+    fontFamily: FONTS.bodyMedium,
+    color: P.textMuted,
+    fontSize: 10,
+    letterSpacing: 1.3,
+    textTransform: 'uppercase',
+  },
+  judgeSceneRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 6,
+  },
+  sceneChip: {
+    borderWidth: 1,
+    borderColor: P.line,
+    backgroundColor: P.mist,
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+    borderRadius: 2,
+  },
+  sceneChipOn: {
+    borderColor: P.accent,
+    backgroundColor: P.accentSoft,
+  },
+  sceneChipText: {
+    fontFamily: FONTS.bodyMedium,
+    color: P.textSoft,
+    fontSize: 11,
+  },
+  exitDemo: {
+    alignSelf: 'flex-start',
+    paddingVertical: 4,
+  },
+  exitDemoText: {
+    fontFamily: FONTS.bodyMedium,
+    color: P.cool,
+    fontSize: 12,
+  },
+  demoControls: {
+    marginBottom: 12,
+    gap: 8,
+  },
+  demoHint: {
+    fontFamily: FONTS.body,
+    color: P.warn,
+    fontSize: 11,
+    lineHeight: 16,
+  },
+  demoRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 8,
+  },
+  demoChip: {
+    borderWidth: 1,
+    borderColor: P.line,
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+    borderRadius: 2,
+    backgroundColor: P.mist,
+  },
+  demoChipText: {
+    fontFamily: FONTS.bodyMedium,
+    color: P.textSoft,
+    fontSize: 12,
+  },
+  demoDayLabel: {
+    fontFamily: FONTS.bodyBold,
+    color: P.text,
+    fontSize: 12,
+  },
   primaryCta: {
     backgroundColor: P.accent,
     paddingVertical: 16,
+    paddingHorizontal: 16,
     borderRadius: 2,
     alignItems: 'center',
   },
@@ -727,40 +1128,40 @@ const styles = StyleSheet.create({
     fontSize: 16,
     letterSpacing: 0.2,
   },
+  primaryCtaSub: {
+    fontFamily: FONTS.body,
+    color: 'rgba(11, 18, 16, 0.7)',
+    fontSize: 12,
+    marginTop: 5,
+  },
   secondaryRow: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     justifyContent: 'center',
     alignItems: 'center',
     gap: 8,
-    marginTop: 18,
+    marginTop: 16,
+    paddingTop: 4,
   },
   link: {
     fontFamily: FONTS.bodyMedium,
     color: P.textSoft,
     fontSize: 13,
+    paddingVertical: 4,
   },
   dot: {
     color: P.textMuted,
     fontSize: 13,
-  },
-  progressBlock: {
-    marginTop: 28,
-    gap: 10,
-  },
-  weekNote: {
-    fontFamily: FONTS.body,
-    color: P.textMuted,
-    fontSize: 12,
-    textAlign: 'center',
   },
   footerHint: {
     fontFamily: FONTS.body,
     color: P.textMuted,
     fontSize: 12,
     textAlign: 'center',
-    marginTop: 28,
+    marginTop: 24,
     lineHeight: 18,
+    maxWidth: 320,
+    alignSelf: 'center',
   },
   toast: {
     position: 'absolute',

@@ -69,7 +69,7 @@ export function useCoach() {
           missionHistory: progress.missionHistory,
         });
         setInsights([
-          'Local Alchemist: mission chosen from your programme templates (offline-safe).',
+          'Coach offline — mission chosen from your programme templates.',
         ]);
         track('coach_mission_fallback', { template_id: local.templateId });
         return local;
@@ -110,7 +110,7 @@ export function useCoach() {
         }
         const mission = progress.activeMission;
         const fallback = mission
-          ? `Today’s ask: ${mission.realWorldAction} I can’t reach the cloud Alchemist right now — start with that one step.`
+          ? `Today’s ask: ${mission.realWorldAction} I can’t reach the cloud coach right now — start with that one step.`
           : 'Practice one short battle, then pick one real-world habit for tonight.';
         setChatReply(fallback);
         track('coach_chat_fallback');

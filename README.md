@@ -1,38 +1,28 @@
-# GlucoseWars: Defend the Realm
+# GlucoseWars — The adherence layer for continuous metabolic care
 
-GlucoseWars is an **Adherence OS** for at-home metabolic programmes — one daily mission, embodied practice (swipe battles / Slow Mo), caregiver invites, and a weekly care-team digest. The kingdom story makes long programmes stick; AI coaches habits (never dosing).
+GlucoseWars is an **AI adherence engine** for at-home metabolic programmes (type 2 diabetes, prediabetes, GLP-1-supported lifestyle care). It turns biomarker patterns into **one daily mission**, rehearses the decision in a short battle, measures the response, and sends the care team an **exception-oriented summary** — not another dashboard.
 
-It remains a ubiquitous, immersive kingdom-defense game that turns health management into an epic quest, using high-speed "Fruit Ninja" style mechanics to teach the laws of metabolic Harmony through play.
+The battle is the **engagement mechanism**, not the whole product — one metaphor: *steady the field*.
 
-## 🏰 The Premise
+> One mission today. Better evidence for tomorrow.
 
-In the Realm of Harmony, your body is your Kingdom. You must defend it against the **Sugar Horde** (Enemies) while rallying your **Allies** (Healthy Foods). Every swipe affects your Kingdom's **Vigor**, **Purity**, **Vitality**, and **Harmony**.
+**Not** an AI doctor, dosing tool, NFT toy, or symptom chatbot. Habits only — never insulin or medication advice.
 
-## ⚔️ Ubiquitous & User-Ready
+**Docs:** [`docs/HACKATHON.md`](docs/HACKATHON.md) (pitch + demo) · [`docs/INVESTOR_ONEPAGER.md`](docs/INVESTOR_ONEPAGER.md) · [`docs/ROADMAP.md`](docs/ROADMAP.md) · [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md)
 
-GlucoseWars is built for **ubiquity** and is now **User-Ready**:
-- **Kingdom-First Narrative**: No clinical friction. Medical concepts are wrapped in "Common Lore" and "Ancient Scrolls."
-- **Immersive Roles**: Choose your path as a **Protector**, **Guardian**, or **Alchemist**.
-- **Grand Library**: A discovery hub for educational "Kingdom Secrets" that rewards curiosity.
-- **Royal Treasury**: Secure your "Deeds of Valor" (Achievements) on-chain via the Beam network.
-- **Cross-Platform Mastery**: Precise touch controls for mobile and intuitive keyboard support for desktop.
-- **Universal Appeal**: High-paced gameplay that rewards skill, timing, and strategic thinking for all ages.
+## How the loop works
 
-## 🎓 The Grand Library
+1. **Detect** — CGM / programme signals → one observational pattern  
+2. **Mission** — Accept, make easier, swap, or decline  
+3. **Rehearse** — ~45s battle with mission ribbon; biased to today’s habit  
+4. **Act** — Mark done or “Later today” (persists on home)  
+5. **Measure & adapt** — Associated response + care-team digest when human attention helps  
 
-Discover the secrets of the Realm as you play. Unlock **Common Lore** to master the basics and delve into **Ancient Scrolls** for deeper wisdom regarding metabolic health, exercise, and sleep.
-
-## 💎 Onchain Persistence (Beam SDK)
-
-Your progress as a Hero is secured by the **Beam**.
-- **Social Onboarding**: Jump into the battle instantly with social login.
-- **Gasless Sessions**: Pure gameplay, no transaction friction.
-- **Persistent Renown**: Your achievements and "Kingdom Renown" are saved across devices.
+**Judges:** Tap **Judging? Start Maya demo** → scenes Pattern / Measure / Outreach → **Care team**.
 
 ---
-*GlucoseWars: One Realm. One Harmony. One Hero.*
 
-## 🚀 Quick Start
+## Quick Start
 
 ```bash
 cp .env.example .env   # never commit .env

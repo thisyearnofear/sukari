@@ -149,27 +149,24 @@ export const SlowMoMode: React.FC<SlowMoModeProps> = ({ onStartGame, onBack, onC
     
     if (healthyCount === total) {
       return [
-        `🌟 Excellent! Your meal plan has a variability score of ${variabilityScore}/100, indicating very stable glucose control.`,
-        'This balanced approach with minimal processed carbohydrates helps maintain steady glucose levels throughout the day.',
-        `Your predicted peak glucose is around ${Math.round(totalImpact * 0.8)} mg/dL, which is in the ideal range for most people.`,
-        'Consider adding 15-30 minutes of light exercise (like walking) after meals to further enhance insulin sensitivity.'
+        `Educational note: this meal plan has a variability score of ${variabilityScore}/100 in the simulation (lower tends to look steadier).`,
+        'Balanced choices with fewer refined carbs often produce flatter hypothetical curves in this lab.',
+        `Simulated illustrative peak around ${Math.round(totalImpact * 0.8)} mg/dL — not a personal prediction.`,
+        'In real programmes, a short walk after meals is a common next experiment — rehearse it in your daily mission.',
       ];
     } else if (healthyCount >= total / 2) {
       return [
-        `📊 Your meal plan has a variability score of ${variabilityScore}/100, showing good balance with room for improvement.`,
-        'You have some healthier choices mixed with higher-impact meals. This balance is common and manageable.',
-        `Your highest predicted spike is around ${Math.round(Math.max(...meals.map(m => m.glucoseImpact)) * 0.8)} mg/dL.`,
-        'To improve stability, try replacing one higher-impact meal with a lower-glycemic alternative (e.g., swap pancakes for oatmeal).'
+        `Educational note: variability score ${variabilityScore}/100 in this simulation — mixed impact meals.`,
+        'Healthier and higher-impact choices can coexist; the lab helps you notice tradeoffs.',
+        `Highest simulated impact in this plan is illustrative only (~${Math.round(Math.max(...meals.map(m => m.glucoseImpact)) * 0.8)} mg/dL).`,
+        'To explore stability, try swapping one higher-impact meal for a lower-glycemic alternative in the lab.',
       ];
     } else {
       return [
-        `⚠️ Your meal plan has a variability score of ${variabilityScore}/100, indicating potential for significant glucose fluctuations.`,
-        'Several high-impact meals may cause glucose spikes above 180 mg/dL, which can lead to fatigue and long-term complications.',
-        `Consider these strategies:
-        • Add protein/fiber to meals (e.g., nuts to pasta, veggies to burgers)
-        • Try the "plate method": ½ veggies, ¼ protein, ¼ carbs
-        • Space out carbohydrates throughout the day rather than all at once`,
-        'Small, consistent changes can significantly improve glucose stability over time.'
+        `Educational note: variability score ${variabilityScore}/100 — this simulated plan may swing more.`,
+        'High-impact meals in the lab often show larger swings; this is teaching, not your forecast.',
+        `Consider pairing carbs with protein/fiber, or using the plate method, as programme habits — not medical advice.`,
+        'Small, consistent real-world experiments beat perfect plans. Use today’s mission to rehearse one change.',
       ];
     }
   };
@@ -272,19 +269,27 @@ export const SlowMoMode: React.FC<SlowMoModeProps> = ({ onStartGame, onBack, onC
         <TouchableOpacity onPress={onBack} className="p-2">
           <Ionicons name="arrow-back" size={24} color="#fbbf24" />
         </TouchableOpacity>
-        <Text className="text-amber-400 text-lg font-bold">SLOW MO MODE</Text>
+        <Text className="text-amber-400 text-lg font-bold">MEAL LAB</Text>
         <View className="w-8" /> {/* Spacer for symmetry */}
       </View>
 
       {/* Phase Content */}
       <ScrollView className="flex-1 pt-16 pb-20">
+        <View className="mx-4 mb-4 p-3 border border-amber-700/60 bg-amber-950/40">
+          <Text className="text-amber-200 text-xs font-bold mb-1">Educational simulation</Text>
+          <Text className="text-amber-100/80 text-xs leading-5">
+            Curves here are hypothetical teaching tools — not a forecast of your physiology.
+            Prefer: “what similar meals tend to look like in general,” not “what will happen to you.”
+          </Text>
+        </View>
+
         {/* Morning Planning Phase */}
         {phase === 'morning' && (
           <View className="items-center px-4">
             <Text className="text-5xl mb-4">☀️</Text>
-            <Text className="text-amber-400 text-3xl font-bold mb-2">MORNING PLANNING</Text>
+            <Text className="text-amber-400 text-3xl font-bold mb-2">MEAL PLANNING</Text>
             <Text className="text-white text-xl text-center mb-6">
-              Plan your meals for today
+              Explore how meal choices can shape a hypothetical glucose curve
             </Text>
 
             {/* Meal Planning */}

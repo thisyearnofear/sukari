@@ -41,7 +41,7 @@ export const ShareCard: React.FC<Props> = ({
     <View style={styles.card}>
       <Text style={styles.brand}>Glucose Wars</Text>
       <Text style={[styles.result, { color: isVictory ? P.accent : P.danger }]}>
-        {isVictory ? 'Practice complete' : 'Field collapsed'}
+        {isVictory ? 'Rehearsal complete' : 'Rehearsal interrupted'}
       </Text>
 
       {missionLabel ? <Text style={styles.mission}>{missionLabel}</Text> : null}
@@ -49,7 +49,7 @@ export const ShareCard: React.FC<Props> = ({
       <View style={styles.statsRow}>
         <View style={styles.stat}>
           <Text style={styles.statValue}>{score.toLocaleString()}</Text>
-          <Text style={styles.statLabel}>Score</Text>
+          <Text style={styles.statLabel}>Rehearsal</Text>
         </View>
         <View style={styles.stat}>
           <Text style={[styles.gradeValue, { color: gradeColors[grade] || P.text }]}>
@@ -59,7 +59,7 @@ export const ShareCard: React.FC<Props> = ({
         </View>
         <View style={styles.stat}>
           <Text style={styles.statValue}>{accuracy}%</Text>
-          <Text style={styles.statLabel}>Accuracy</Text>
+          <Text style={styles.statLabel}>Decisions</Text>
         </View>
       </View>
 

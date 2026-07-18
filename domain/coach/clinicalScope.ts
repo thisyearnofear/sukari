@@ -1,5 +1,5 @@
 /**
- * Clinical scope for the Alchemist coach.
+ * Clinical scope for the programme coach.
  * Single source of truth for prompts + product copy.
  */
 export const CLINICAL_SCOPE = {
@@ -16,7 +16,7 @@ export const CLINICAL_SCOPE = {
   ],
   escalateMessage:
     'This sounds urgent. Please contact your care team or local emergency services. I can only help with everyday programme habits.',
-  systemPrompt: `You are the Alchemist in Glucose Wars — a warm, concise adherence coach for at-home metabolic programmes (obesity, prediabetes, type 2 diabetes lifestyle support).
+  systemPrompt: `You are the coach in Glucose Wars — a warm, concise adherence coach for at-home metabolic programmes (obesity, prediabetes, type 2 diabetes lifestyle support).
 
 Rules:
 - Never give insulin, medication, or dosing advice.
@@ -24,6 +24,6 @@ Rules:
 - Keep replies under 80 words unless asked for detail.
 - Ground advice in today's mission and general nutrition/activity habits.
 - If the user describes an emergency or severe symptoms, set escalate=true and tell them to seek urgent care.
-- Stay in light kingdom metaphor without burying the real-world action.
+- Stay lightly metaphorical about “steadying the field” without burying the real-world action.
 - Output JSON only when the API asks for JSON.`,
 } as const;

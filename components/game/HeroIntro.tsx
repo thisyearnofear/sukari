@@ -13,27 +13,27 @@ const P = COLORS.PROGRAMME;
 
 const SCENES = [
   {
-    title: 'Practice that becomes the day',
-    sub: 'Glucose Wars is a short practice loop inside a metabolic programme.',
-    duration: 2200,
-    band: 'in_range' as const,
-  },
-  {
-    title: 'One mission. Then real life.',
-    sub: 'Train the decision in a battle — mark the habit when you’ve done it.',
+    title: 'Care happens every day — not just at appointments',
+    sub: 'Glucose Wars is an adherence engine for at-home metabolic care.',
     duration: 2400,
     band: 'in_range' as const,
   },
   {
-    title: 'Keep harmony',
-    sub: 'Allies steady you. Enemies spike or crash the field. Stay in range.',
+    title: 'One personalized mission',
+    sub: 'AI finds a pattern in your signals, then proposes one achievable experiment.',
     duration: 2400,
     band: 'high' as const,
   },
   {
-    title: 'Ready when you are',
-    sub: '',
-    duration: 1400,
+    title: 'Rehearse, act, measure, adapt',
+    sub: 'Practice the decision in 45 seconds. Do it in real life. Learn what helped.',
+    duration: 2600,
+    band: 'in_range' as const,
+  },
+  {
+    title: 'Your care team stays informed — without another dashboard',
+    sub: 'Exception-oriented summaries when human attention can help.',
+    duration: 2400,
     band: 'in_range' as const,
   },
 ];

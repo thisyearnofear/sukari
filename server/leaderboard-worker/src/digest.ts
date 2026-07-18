@@ -16,6 +16,16 @@ export interface WeeklyDigestPayload {
   concerns: string[];
   narrative?: string;
   createdAt: number;
+  patientLabel?: string;
+  dataCoverage?: string;
+  recurringPatterns?: string[];
+  changesSinceLastWeek?: string[];
+  patientBarriers?: string[];
+  safetyFlags?: string[];
+  outreachRecommended?: boolean;
+  outreachReason?: string;
+  experimentsTried?: { action: string; completed: number; associatedNote: string }[];
+  mode?: 'patient' | 'clinician';
 }
 
 /** In-memory fallback when KV not bound (local/dev) */
@@ -37,7 +47,7 @@ export async function handleDigestCreate(req: Request, env: DigestEnv): Promise<
     return Response.json({ ok: false, error: 'Missing digest' }, { status: 400 });
   }
 
-  // Strip anything that looks like raw glucose
+  // Strip anything that looks like raw glucose; pass clinician fields through when present
   const safe: WeeklyDigestPayload = {
     weekKey: digest.weekKey,
     adherence: digest.adherence || {},
@@ -49,6 +59,26 @@ export async function handleDigestCreate(req: Request, env: DigestEnv): Promise<
     concerns: (digest.concerns || []).slice(0, 5),
     narrative: String(digest.narrative || '').slice(0, 800),
     createdAt: digest.createdAt || Date.now(),
+    patientLabel: digest.patientLabel ? String(digest.patientLabel).slice(0, 120) : undefined,
+    dataCoverage: digest.dataCoverage ? String(digest.dataCoverage).slice(0, 240) : undefined,
+    recurringPatterns: Array.isArray(digest.recurringPatterns)
+      ? digest.recurringPatterns.map(String).slice(0, 5)
+      : undefined,
+    changesSinceLastWeek: Array.isArray(digest.changesSinceLastWeek)
+      ? digest.changesSinceLastWeek.map(String).slice(0, 5)
+      : undefined,
+    patientBarriers: Array.isArray(digest.patientBarriers)
+      ? digest.patientBarriers.map(String).slice(0, 5)
+      : undefined,
+    safetyFlags: Array.isArray(digest.safetyFlags)
+      ? digest.safetyFlags.map(String).slice(0, 5)
+      : undefined,
+    outreachRecommended: Boolean(digest.outreachRecommended),
+    outreachReason: digest.outreachReason ? String(digest.outreachReason).slice(0, 400) : undefined,
+    experimentsTried: Array.isArray(digest.experimentsTried)
+      ? digest.experimentsTried.slice(0, 5)
+      : undefined,
+    mode: digest.mode === 'clinician' ? 'clinician' : 'patient',
   };
 
   const token = tokenFor(safe.weekKey);

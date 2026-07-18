@@ -38,13 +38,13 @@ export function buildTransfer(
 
   const headline =
     outcome.result === 'victory'
-      ? 'What this means for today’s mission'
-      : 'Practice counted — finish the real-world ask';
+      ? 'Rehearsal done — now the real mission'
+      : 'Tough rehearsal — the real-world ask still stands';
 
   const body =
     outcome.result === 'victory'
       ? mission.transferHint
-      : `${mission.transferHint} Even a tough battle still trains the decision.`;
+      : `${mission.transferHint} A hard practice still counts — mark the habit when you do it in life.`;
 
   return {
     mission: next,
