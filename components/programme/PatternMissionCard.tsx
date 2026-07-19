@@ -104,7 +104,7 @@ export function PatternMissionCard({
         <AgencyLaneTag lane="always" />
       </View>
       <View style={styles.miraPresence} accessibilityRole="summary">
-        <MiraOrb posture={mira.posture} onPress={onAskMira} />
+        <MiraOrb posture={mira.posture} presence={mira} onPress={onAskMira} />
         <View style={styles.miraCopy}>
           <Text style={styles.miraLabel}>{mira.label}</Text>
           <Text style={styles.miraMessage}>{mira.message}</Text>

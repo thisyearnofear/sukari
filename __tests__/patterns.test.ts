@@ -64,10 +64,19 @@ describe('patterns domain', () => {
 
   it('gives Mira a truthful, bounded posture for the current mission state', () => {
     const pattern = resolvePattern({ useDemo: true, demoDayIndex: 10 });
-    expect(buildMiraPresence(pattern, 'unselected', false).label).toBe('Mira noticed a pattern');
-    expect(buildMiraPresence(pattern, 'accepted', true).label).toBe('Mira adjusted this');
-    expect(buildMiraPresence(pattern, 'deferred', false).label).toBe('Mira is holding this');
-    expect(buildMiraPresence(pattern, 'completed', false).label).toBe('Mira logged this');
+    // 2nd-person voice per the network contract (famile/web/docs/MIRA.md).
+    expect(buildMiraPresence(pattern, 'unselected', false).label).toBe('I noticed a pattern');
+    expect(buildMiraPresence(pattern, 'accepted', true).label).toBe('Adjusted for you');
+    expect(buildMiraPresence(pattern, 'deferred', false).label).toBe('Holding this for you');
+    expect(buildMiraPresence(pattern, 'completed', false).label).toBe('Logged');
+    // Posture vocabulary aligns with the network contract.
+    expect(buildMiraPresence(pattern, 'unselected', false).posture).toBe('offering');
+    expect(buildMiraPresence(pattern, 'accepted', false).posture).toBe('watching');
+    expect(buildMiraPresence(pattern, 'accepted', true).posture).toBe('adapting');
+    expect(buildMiraPresence(pattern, 'deferred', false).posture).toBe('holding');
+    expect(buildMiraPresence(pattern, 'completed', false).posture).toBe('completed');
+    // Morph params are projected from the contract.
+    expect(buildMiraPresence(pattern, 'unselected', false).morph.bloom).toBeGreaterThan(0.4);
   });
 
   it('builds a bounded world state that changes presentation without retaining readings', () => {

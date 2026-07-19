@@ -7,6 +7,8 @@ import { View, Text, StyleSheet } from 'react-native';
 import { ProgrammeMission, AdherenceWeek } from '@/domain/programme';
 import { COLORS, FONTS } from '@/constants/designSystem';
 import { PressableScale } from '@/components/ui/PressableScale';
+import { MiraOrb } from '@/components/agent/MiraOrb';
+import { steadyPresence } from '@/domain/agent';
 
 interface TodayMissionProps {
   mission: ProgrammeMission | null;
@@ -29,10 +31,26 @@ export const DailyQuests: React.FC<TodayMissionProps> = ({
   compact = false,
 }) => {
   if (!mission) {
+    const presence = steadyPresence();
     return (
       <View style={styles.container}>
         <Text style={styles.eyebrow}>Today</Text>
-        <Text style={styles.empty}>Your next mission appears at dawn.</Text>
+        <View style={styles.emptyRow}>
+          {onAskCoach ? (
+            <MiraOrb
+              posture="steady"
+              presence={presence}
+              size={48}
+              onPress={onAskCoach}
+            />
+          ) : null}
+          <View style={{ flex: 1, marginLeft: onAskCoach ? 12 : 0 }}>
+            <Text style={styles.empty}>Your next mission appears at dawn.</Text>
+            {onAskCoach ? (
+              <Text style={styles.emptyHint}>Tap Mira to ask anything.</Text>
+            ) : null}
+          </View>
+        </View>
       </View>
     );
   }
@@ -85,14 +103,14 @@ export const DailyQuests: React.FC<TodayMissionProps> = ({
           </PressableScale>
         )}
         {onAskCoach && (
-          <PressableScale
-            onPress={onAskCoach}
-            accessibilityRole="button"
-            accessibilityLabel="Ask Mira"
-            style={styles.ghostBtn}
-          >
-            <Text style={styles.ghostBtnText}>Ask Mira</Text>
-          </PressableScale>
+          <View style={styles.orbAsk}>
+            <MiraOrb
+              posture="watching"
+              size={36}
+              onPress={onAskCoach}
+            />
+            <Text style={styles.orbAskLabel}>Ask Mira</Text>
+          </View>
         )}
       </View>
     </View>
@@ -131,6 +149,28 @@ const styles = StyleSheet.create({
     color: COLORS.PROGRAMME.textSoft,
     fontSize: 15,
     lineHeight: 22,
+  },
+  emptyRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 8,
+  },
+  emptyHint: {
+    fontFamily: FONTS.body,
+    color: COLORS.PROGRAMME.textMuted,
+    fontSize: 12,
+    lineHeight: 17,
+    marginTop: 4,
+  },
+  orbAsk: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  orbAskLabel: {
+    fontFamily: FONTS.bodyMedium,
+    color: COLORS.PROGRAMME.cool,
+    fontSize: 13,
   },
   realmCopy: {
     fontFamily: FONTS.display,
@@ -196,18 +236,6 @@ const styles = StyleSheet.create({
   secondaryBtnText: {
     fontFamily: FONTS.bodyBold,
     color: COLORS.PROGRAMME.text,
-    fontSize: 13,
-  },
-  ghostBtn: {
-    borderWidth: 1,
-    borderColor: COLORS.PROGRAMME.line,
-    paddingHorizontal: 14,
-    paddingVertical: 12,
-    borderRadius: 2,
-  },
-  ghostBtnText: {
-    fontFamily: FONTS.bodyMedium,
-    color: COLORS.PROGRAMME.textSoft,
     fontSize: 13,
   },
 });

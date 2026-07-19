@@ -7,7 +7,6 @@ import {
   Easing,
   ScrollView,
   Modal,
-  TextInput,
   Share,
   StyleSheet,
   Platform,
@@ -60,6 +59,8 @@ import {
 import { LoopStrip } from '@/components/programme/LoopStrip';
 import { AgencyLaneTag } from '@/components/programme/AgencyLaneTag';
 import { QuietWinBeat } from '@/components/programme/QuietWinBeat';
+import { CoachModal } from '@/components/agent/CoachModal';
+import { FloatingMiraOrb } from '@/components/agent/FloatingMiraOrb';
 
 const maxWidth = Platform.OS === 'web' ? 760 : 400;
 const P = COLORS.PROGRAMME;
@@ -438,6 +439,7 @@ export const MainMenu: React.FC<MainMenuProps> = ({
     return (
       <View style={styles.root}>
         <MetabolicField band="unknown" intensity={0.35} />
+        <FloatingMiraOrb onPress={() => setShowCoach(true)} />
         <ScrollView
           style={styles.zContent}
           contentContainerStyle={styles.roleScroll}
@@ -476,6 +478,18 @@ export const MainMenu: React.FC<MainMenuProps> = ({
             })}
           </View>
         </ScrollView>
+        <CoachModal
+          visible={showCoach}
+          onClose={() => setShowCoach(false)}
+          mission={null}
+          pattern={pattern}
+          insights={coach.insights}
+          chatReply={coach.chatReply}
+          isLoading={coach.isLoading}
+          input={coachInput}
+          setInput={setCoachInput}
+          onAsk={() => coach.ask(coachInput.trim(), signalSnapshot)}
+        />
       </View>
     );
   }
@@ -532,6 +546,7 @@ export const MainMenu: React.FC<MainMenuProps> = ({
     return (
       <View style={styles.root}>
         <MetabolicField band="unknown" intensity={0.3} />
+        <FloatingMiraOrb onPress={() => setShowCoach(true)} />
         <ScrollView style={styles.zContent} contentContainerStyle={styles.signalScroll}>
           {changingSignalSource ? (
             <TouchableOpacity
@@ -602,6 +617,22 @@ export const MainMenu: React.FC<MainMenuProps> = ({
             />
           </View>
         </Modal>
+        <CoachModal
+          visible={showCoach}
+          onClose={() => setShowCoach(false)}
+          mission={null}
+          pattern={undefined}
+          insights={[]}
+          chatReply={coach.chatReply}
+          isLoading={coach.isLoading}
+          input={coachInput}
+          setInput={setCoachInput}
+          onAsk={async () => {
+            const q = coachInput.trim();
+            setCoachInput('');
+            await coach.ask(q, signalSnapshot);
+          }}
+        />
       </View>
     );
   }
@@ -1155,53 +1186,22 @@ export const MainMenu: React.FC<MainMenuProps> = ({
         visible={showPrivacySettings}
       />
 
-      <Modal visible={showCoach} animationType="slide" transparent onRequestClose={() => setShowCoach(false)}>
-        <View style={styles.coachBackdrop}>
-          <View style={styles.coachSheet}>
-            <View style={styles.sheetHeader}>
-              <Text style={styles.sheetTitle}>Mira</Text>
-              <TouchableOpacity onPress={() => setShowCoach(false)} accessibilityRole="button">
-                <Text style={styles.link}>Close</Text>
-              </TouchableOpacity>
-            </View>
-            <Text style={styles.sheetMuted}>Mira supports habits only — never dosing or medical advice.</Text>
-            {displayMission && (
-              <Text style={[styles.sheetBody, { marginTop: 10 }]}>
-                Today: {displayMission.realWorldAction}
-              </Text>
-            )}
-            <Text style={[styles.insight, { marginTop: 8 }]}>· {pattern.whyThisExperiment}</Text>
-            {coach.insights.map((line, i) => (
-              <Text key={i} style={styles.insight}>
-                · {line}
-              </Text>
-            ))}
-            {coach.chatReply ? (
-              <View style={styles.coachReply}>
-                <Text style={styles.sheetBody}>{coach.chatReply}</Text>
-              </View>
-            ) : null}
-            <TextInput
-              value={coachInput}
-              onChangeText={setCoachInput}
-              placeholder="Ask Mira why, or name a barrier…"
-              placeholderTextColor={P.textMuted}
-              style={styles.input}
-            />
-            <PressableScale
-              disabled={coach.isLoading || !coachInput.trim()}
-              onPress={async () => {
-                const q = coachInput.trim();
-                setCoachInput('');
-                await coach.ask(q, signalSnapshot);
-              }}
-              style={[styles.primaryCta, { opacity: coach.isLoading || !coachInput.trim() ? 0.5 : 1 }]}
-            >
-              <Text style={styles.primaryCtaText}>{coach.isLoading ? 'Thinking…' : 'Ask Mira'}</Text>
-            </PressableScale>
-          </View>
-        </View>
-      </Modal>
+      <CoachModal
+        visible={showCoach}
+        onClose={() => setShowCoach(false)}
+        mission={displayMission}
+        pattern={pattern}
+        insights={coach.insights}
+        chatReply={coach.chatReply}
+        isLoading={coach.isLoading}
+        input={coachInput}
+        setInput={setCoachInput}
+        onAsk={async () => {
+          const q = coachInput.trim();
+          setCoachInput('');
+          await coach.ask(q, signalSnapshot);
+        }}
+      />
     </View>
   );
 };
@@ -1809,43 +1809,5 @@ const styles = StyleSheet.create({
     color: P.textSoft,
     fontSize: 14,
     lineHeight: 21,
-  },
-  coachBackdrop: {
-    flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.7)',
-    justifyContent: 'flex-end',
-  },
-  coachSheet: {
-    backgroundColor: P.inkElevated,
-    borderTopLeftRadius: 12,
-    borderTopRightRadius: 12,
-    padding: 20,
-    borderWidth: 1,
-    borderColor: P.line,
-    maxHeight: '75%',
-  },
-  insight: {
-    fontFamily: FONTS.body,
-    color: P.cool,
-    fontSize: 12,
-    marginTop: 4,
-  },
-  coachReply: {
-    backgroundColor: P.mist,
-    padding: 12,
-    borderRadius: 2,
-    marginVertical: 10,
-    borderWidth: 1,
-    borderColor: P.line,
-  },
-  input: {
-    backgroundColor: P.ink,
-    color: P.text,
-    borderRadius: 2,
-    padding: 12,
-    borderWidth: 1,
-    borderColor: P.line,
-    marginVertical: 12,
-    fontFamily: FONTS.body,
   },
 });
