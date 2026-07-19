@@ -14,6 +14,7 @@ import {
   buildMissionMediaBrief,
   type MissionAdaptation,
   type PersonalisedWorldState,
+  type SukariMiraPresence,
   buildMiraPresence,
   worldSceneLabel,
   worldToneCopy,
@@ -44,6 +45,10 @@ interface PatternMissionCardProps {
   /** Soft home state after “Later today” */
   deferred?: boolean;
   onAskMira?: () => void;
+  /** Proactive presence override from useProactivePresence. When provided,
+   *  the card uses this instead of computing its own — so the orb shifts
+   *  at transition moments (arrival, evening nudge) without user interaction. */
+  proactivePresence?: SukariMiraPresence | null;
 }
 
 export function PatternMissionCard({
@@ -63,6 +68,7 @@ export function PatternMissionCard({
   worldState,
   deferred = false,
   onAskMira,
+  proactivePresence = null,
 }: PatternMissionCardProps) {
   const [showDetails, setShowDetails] = useState(false);
   const done = mission?.status === 'completed';
@@ -71,7 +77,8 @@ export function PatternMissionCard({
   const canLogRealWorldAction = (accepted || practiced || deferred) && !done;
   const decisionState = done ? 'completed' : deferred ? 'deferred' : accepted || practiced ? 'accepted' : 'unselected';
   const trace = buildAgentDecisionTrace(pattern, mission, decisionState);
-  const mira = buildMiraPresence(pattern, decisionState, Boolean(adaptation));
+  const computedMira = buildMiraPresence(pattern, decisionState, Boolean(adaptation));
+  const mira = proactivePresence ?? computedMira;
   const mediaBrief = buildMissionMediaBrief(pattern, mission, worldState);
   const practiceCue = getPracticeCueForTemplate(mission?.templateId || pattern.suggestedBehaviour);
 

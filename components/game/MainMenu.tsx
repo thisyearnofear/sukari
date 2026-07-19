@@ -61,6 +61,7 @@ import { AgencyLaneTag } from '@/components/programme/AgencyLaneTag';
 import { QuietWinBeat } from '@/components/programme/QuietWinBeat';
 import { CoachModal } from '@/components/agent/CoachModal';
 import { FloatingMiraOrb } from '@/components/agent/FloatingMiraOrb';
+import { useProactivePresence } from '@/hooks/useProactivePresence';
 
 const maxWidth = Platform.OS === 'web' ? 760 : 400;
 const P = COLORS.PROGRAMME;
@@ -169,6 +170,13 @@ export const MainMenu: React.FC<MainMenuProps> = ({
     ],
   );
   const displayMission = demoMode ? amina?.mission ?? null : missionOverride || progress.activeMission;
+  const { presence: proactivePresence } = useProactivePresence({
+    pattern,
+    mission: displayMission,
+    missionChoice,
+    deferred: missionDeferred && !demoMode,
+    hasSeenMission: showCoach || !!missionChoice,
+  });
   const loopSteps = useMemo(() => {
     if (demoMode) return aminaLoopSteps(demoDay);
     const status = progress.activeMission?.status;
@@ -801,6 +809,7 @@ export const MainMenu: React.FC<MainMenuProps> = ({
               worldState={displayWorldState}
               deferred={missionDeferred && !demoMode}
               onAskMira={() => setShowCoach(true)}
+              proactivePresence={proactivePresence}
               onAccept={() => {
                 setMissionChoice('accept');
                 setMissionDeferred(false);

@@ -1,5 +1,5 @@
 import React, { useEffect, useId, useRef } from 'react';
-import { Animated, Easing, StyleSheet, View } from 'react-native';
+import { Animated, Easing, StyleSheet, View, Vibration } from 'react-native';
 import Svg, { Circle, Defs, RadialGradient, Stop } from 'react-native-svg';
 import { COLORS } from '@/constants/designSystem';
 import {
@@ -105,6 +105,8 @@ export function MiraOrb({ posture, morph, size = 54, onPress, presence }: Props)
   const gradientId = `mira-orb-${useId().replace(/:/g, '')}`;
 
   // Settle animation on posture change — 420ms ease-in (seek-safe).
+  // Also fires a subtle haptic on transition (not on first mount).
+  const prevPosture = useRef(effectivePosture);
   useEffect(() => {
     settle.setValue(0);
     Animated.timing(settle, {
@@ -113,6 +115,10 @@ export function MiraOrb({ posture, morph, size = 54, onPress, presence }: Props)
       easing: Easing.bezier(0.22, 1, 0.36, 1),
       useNativeDriver: true,
     }).start();
+    if (prevPosture.current !== effectivePosture) {
+      Vibration.vibrate(10);
+      prevPosture.current = effectivePosture;
+    }
   }, [effectivePosture, reducedMotion, settle]);
 
   // Breath loop — cadence from the contract, modulated by morph.speed.
