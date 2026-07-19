@@ -489,6 +489,8 @@ export const MainMenu: React.FC<MainMenuProps> = ({
           input={coachInput}
           setInput={setCoachInput}
           onAsk={() => coach.ask(coachInput.trim(), signalSnapshot)}
+          messages={coach.messages}
+          onClearChat={coach.clearChat}
         />
       </View>
     );
@@ -632,6 +634,8 @@ export const MainMenu: React.FC<MainMenuProps> = ({
             setCoachInput('');
             await coach.ask(q, signalSnapshot);
           }}
+          messages={coach.messages}
+          onClearChat={coach.clearChat}
         />
       </View>
     );
@@ -1201,6 +1205,8 @@ export const MainMenu: React.FC<MainMenuProps> = ({
           setCoachInput('');
           await coach.ask(q, signalSnapshot);
         }}
+        messages={coach.messages}
+        onClearChat={coach.clearChat}
       />
     </View>
   );

@@ -69,3 +69,48 @@ export async function fetchCoachChat(
 ): Promise<CoachChatResponse | null> {
   return postJson<CoachChatResponse>('/coach/chat', req, 6000);
 }
+
+export interface CoachChatStreamRequest extends CoachChatRequest {
+  history?: { role: string; content: string }[];
+}
+
+/**
+ * Stream a coach chat reply. Calls onChunk for each text fragment as it
+ * arrives. Returns the full accumulated reply when the stream ends, or
+ * null if the request fails.
+ */
+export async function fetchCoachChatStream(
+  req: CoachChatStreamRequest,
+  onChunk: (text: string) => void,
+  timeoutMs = 12000,
+): Promise<string | null> {
+  const base = getWorkerBaseUrl();
+  if (!base) return null;
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    const res = await fetch(`${base}/coach/chat/stream`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify(req),
+      signal: controller.signal,
+    });
+    if (!res.ok || !res.body) return null;
+
+    const reader = res.body.getReader();
+    const decoder = new TextDecoder();
+    let full = '';
+    for (;;) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      const chunk = decoder.decode(value, { stream: true });
+      full += chunk;
+      onChunk(chunk);
+    }
+    return full || null;
+  } catch {
+    return null;
+  } finally {
+    clearTimeout(timer);
+  }
+}

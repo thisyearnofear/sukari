@@ -1,4 +1,4 @@
-import { handleCoachChat, handleCoachMission } from './coach';
+import { handleCoachChat, handleCoachChatStream, handleCoachMission } from './coach';
 import { handleDigestCreate, handleDigestGet } from './digest';
 import { handleMissionImage } from './media';
 
@@ -211,6 +211,10 @@ export default {
     }
     if (req.method === "POST" && url.pathname === "/coach/chat") {
       const res = await handleCoachChat(req, env);
+      return withCors(req, env, res);
+    }
+    if (req.method === "POST" && url.pathname === "/coach/chat/stream") {
+      const res = await handleCoachChatStream(req, env);
       return withCors(req, env, res);
     }
     if (req.method === "POST" && url.pathname === "/media/mission-image") {

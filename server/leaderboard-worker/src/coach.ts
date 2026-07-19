@@ -340,8 +340,10 @@ export async function handleCoachChat(req: Request, env: CoachEnv): Promise<Resp
   const mission = body.mission
     ? `Active mission: ${body.mission.realWorldAction || body.mission.realmCopy}`
     : 'No active mission';
+  const history = Array.isArray(body.history) ? body.history.slice(-6) : [];
   const ai = await callLLM(env, [
     { role: 'system', content: SYSTEM },
+    ...history,
     {
       role: 'user',
       content: `${mission}\nSignal: ${JSON.stringify(body.signalMinimized || {})}\nUser: ${message}\nReply helpfully in under 80 words.`,
@@ -365,5 +367,161 @@ export async function handleCoachChat(req: Request, env: CoachEnv): Promise<Resp
     refused: false,
     escalate: false,
     provider: ai.provider,
+  });
+}
+
+/**
+ * Streaming chat endpoint — POST /coach/chat/stream.
+ *
+ * Streams text chunks as they arrive from the LLM so the client can render
+ * token-by-token. Falls back to Runware (non-streaming) if OpenAI is
+ * unavailable — in that case the full reply is sent as a single chunk.
+ *
+ * Accepts the same body as /coach/chat plus an optional `history` array of
+ * { role, content } messages for session memory (last 6 used).
+ *
+ * Wire format: text/plain chunked stream. The first byte arrives within
+ * ~500ms when OpenAI is primary. No SSE framing — just raw text chunks,
+ * which the client appends directly to the displayed reply.
+ */
+export async function handleCoachChatStream(req: Request, env: CoachEnv): Promise<Response> {
+  let body: any = {};
+  try {
+    body = await req.json();
+  } catch {
+    return Response.json({ ok: false, error: 'Invalid JSON' }, { status: 400 });
+  }
+
+  const message = String(body.message || '').slice(0, 500);
+  if (!message) {
+    return Response.json({ ok: false, error: 'Missing message' }, { status: 400 });
+  }
+
+  const lower = message.toLowerCase();
+  const dosingAsk =
+    /how much insulin|units of|dose my|bolus|basal rate|prescribe/.test(lower);
+  if (dosingAsk) {
+    return new Response(
+      'I can’t help with medication or insulin dosing. Ask your care team for that — I can only help with today’s habit mission.',
+      { headers: { 'content-type': 'text/plain; charset=utf-8', 'x-famile-live': 'true' } },
+    );
+  }
+
+  const emergency =
+    /chest pain|can't breathe|unconscious|seizure|suicide|overdose|severe hypo/.test(lower);
+  if (emergency) {
+    return new Response(
+      'This sounds urgent. Contact your care team or local emergency services now. I can only support everyday programme habits.',
+      { headers: { 'content-type': 'text/plain; charset=utf-8', 'x-famile-live': 'true', 'x-famile-escalate': 'true' } },
+    );
+  }
+
+  const mission = body.mission
+    ? `Active mission: ${body.mission.realWorldAction || body.mission.realmCopy}`
+    : 'No active mission';
+  const history = Array.isArray(body.history) ? body.history.slice(-6) : [];
+  const messages = [
+    { role: 'system', content: SYSTEM },
+    ...history,
+    {
+      role: 'user',
+      content: `${mission}\nSignal: ${JSON.stringify(body.signalMinimized || {})}\nUser: ${message}\nReply helpfully in under 80 words.`,
+    },
+  ];
+
+  // Try OpenAI streaming first.
+  if (env.OPENAI_API_KEY) {
+    try {
+      const stream = await streamOpenAI(env, messages);
+      if (stream) return stream;
+    } catch {
+      // fall through to Runware
+    }
+  }
+
+  // Fallback: Runware (non-streaming) — send the full reply as one chunk.
+  const ai = await callRunware(env, messages);
+  const reply =
+    ai.content ||
+    (body.mission?.realWorldAction
+      ? `Start with today’s ask: ${body.mission.realWorldAction}`
+      : 'Practice one short battle, then do one real-world habit tonight.');
+
+  return new Response(reply, {
+    headers: { 'content-type': 'text/plain; charset=utf-8', 'x-famile-live': 'true' },
+  });
+}
+
+/**
+ * Stream from OpenAI's chat completions API. Returns a Response with a
+ * ReadableStream body, or null if the request fails.
+ */
+async function streamOpenAI(
+  env: CoachEnv,
+  messages: { role: string; content: string }[],
+): Promise<Response | null> {
+  const model = env.OPENAI_MODEL || 'gpt-4o-mini';
+  const res = await fetch('https://api.openai.com/v1/chat/completions', {
+    method: 'POST',
+    headers: {
+      authorization: `Bearer ${env.OPENAI_API_KEY}`,
+      'content-type': 'application/json',
+    },
+    body: JSON.stringify({
+      model,
+      temperature: 0.4,
+      max_tokens: 220,
+      stream: true,
+      messages,
+    }),
+  });
+
+  if (!res.ok || !res.body) return null;
+
+  const encoder = new TextEncoder();
+  const decoder = new TextDecoder();
+
+  const stream = new ReadableStream({
+    async start(controller) {
+      const reader = res.body!.getReader();
+      let buffer = '';
+      try {
+        for (;;) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          buffer += decoder.decode(value, { stream: true });
+          const lines = buffer.split('\n');
+          buffer = lines.pop() || '';
+          for (const line of lines) {
+            const trimmed = line.trim();
+            if (!trimmed || !trimmed.startsWith('data: ')) continue;
+            const data = trimmed.slice(6);
+            if (data === '[DONE]') {
+              controller.close();
+              return;
+            }
+            try {
+              const json = JSON.parse(data);
+              const delta = json?.choices?.[0]?.delta?.content;
+              if (delta) controller.enqueue(encoder.encode(delta));
+            } catch {
+              // skip malformed lines
+            }
+          }
+        }
+      } catch {
+        // connection error — close gracefully
+      } finally {
+        controller.close();
+      }
+    },
+  });
+
+  return new Response(stream, {
+    headers: {
+      'content-type': 'text/plain; charset=utf-8',
+      'x-famile-live': 'true',
+      'transfer-encoding': 'chunked',
+    },
   });
 }

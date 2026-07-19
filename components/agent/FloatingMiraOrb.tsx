@@ -6,11 +6,15 @@
  * Posture is `steady` — Mira is present and available, not actively doing
  * anything. This is the "I'm nearby" signal from the tier-transition
  * vocabulary in famile/web/docs/MIRA.md §3.
+ *
+ * On press, the orb briefly grows (inline → standard tier transition)
+ * before the modal opens — a 200ms "leaning in" signal.
  */
-import React from 'react';
-import { View, StyleSheet } from 'react-native';
+import React, { useRef } from 'react';
+import { View, StyleSheet, Animated, Easing } from 'react-native';
 import { MiraOrb } from './MiraOrb';
 import { steadyPresence } from '@/domain/agent';
+import { useReducedMotion } from '@/hooks/useReducedMotion';
 
 interface FloatingMiraOrbProps {
   onPress: () => void;
@@ -19,14 +23,40 @@ interface FloatingMiraOrbProps {
 
 export const FloatingMiraOrb: React.FC<FloatingMiraOrbProps> = ({ onPress, size = 44 }) => {
   const presence = steadyPresence();
+  const reducedMotion = useReducedMotion();
+  const scaleAnim = useRef(new Animated.Value(1)).current;
+
+  const handlePress = () => {
+    // Brief "leaning in" tier transition — grow 10% then settle as modal opens.
+    if (!reducedMotion) {
+      Animated.sequence([
+        Animated.timing(scaleAnim, {
+          toValue: 1.15,
+          duration: 200,
+          easing: Easing.bezier(0.22, 1, 0.36, 1),
+          useNativeDriver: true,
+        }),
+        Animated.timing(scaleAnim, {
+          toValue: 1,
+          duration: 300,
+          easing: Easing.inOut(Easing.quad),
+          useNativeDriver: true,
+        }),
+      ]).start();
+    }
+    onPress();
+  };
+
   return (
     <View style={styles.floating} pointerEvents="box-none">
-      <MiraOrb
-        posture="steady"
-        presence={presence}
-        size={size}
-        onPress={onPress}
-      />
+      <Animated.View style={{ transform: [{ scale: scaleAnim }] }}>
+        <MiraOrb
+          posture="steady"
+          presence={presence}
+          size={size}
+          onPress={handlePress}
+        />
+      </Animated.View>
     </View>
   );
 };
