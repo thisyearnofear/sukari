@@ -4,7 +4,7 @@
 
 **Weekly Adherent Patients (WAP):** enrolled patients who complete at least one real-world mission in a week.
 
-This reflects the product thesis: adherence per minute of attention should improve over time. Rehearsal is a supporting nudge metric, not a requirement.
+This reflects the product thesis: adherence per minute of attention should improve over time.
 
 ## Funnel
 
@@ -19,9 +19,7 @@ This reflects the product thesis: adherence per minute of attention should impro
 | Mission response selected | `mission_response_selected` with `choice` and `input_source` |
 | Mission made easier | `mission_made_easier` |
 | Mission deferred | `mission_deferred` |
-| Mission-tuned rehearsal started | `mission_accepted_to_rehearsal_started` with `practice_personalisation` |
-| Real-world action completed or deferred | `rehearsal_to_real_world_completion` |
-| Measured response shown | `completion_to_measured_response` |
+| Real-world action completed | `completion_to_measured_response` |
 | Care-team exception created | `measured_response_to_care_team_exception` |
 | Care panel opened | `care_panel_opened` |
 | Outreach rationale reviewed | `care_outreach_reviewed` |
@@ -33,9 +31,7 @@ This reflects the product thesis: adherence per minute of attention should impro
 - signal import vs labelled demo pattern vs private check-in use;
 - selected mission input vs current source changes;
 - mission accept/ease/defer/decline rate;
-- direct completion vs elective rehearsal, segmented by input source;
-- rehearsal start and real-world completion, segmented by approved mission template;
-- rehearsal completion rate;
+- direct completion rate, segmented by input source;
 - done-now vs later-today split;
 - later-today eventual completion rate;
 - weekly mission completion frequency.
@@ -59,7 +55,7 @@ Primary metric: value screen -> role selection.
 
 ### 2. Demo Pattern Honesty
 
-Hypothesis: clearly labelling demo evidence increases trust without reducing rehearsal start.
+Hypothesis: clearly labelling demo evidence increases trust without reducing mission acceptance.
 
 Primary metric: role -> mission accepted.
 
@@ -75,19 +71,13 @@ Hypothesis: a private local check-in offers a more useful path than a generic mi
 
 Review after the first 5-10 sessions: `signal_path_selected`, `manual_signal_started`, `manual_signal_submitted`, and `mission_response_selected`, split by `input_source`. Do not use free-form check-in text in analytics.
 
-### 5. Transfer Beat
+### 5. Later-Today Recovery
 
-Hypothesis: the done/later choice drives real-world completion better than ending at rehearsal results.
+Hypothesis: the later-today promise drives eventual completion better than a single do-now-or-drop choice.
 
-Primary metric: rehearsal -> real-world completion/later.
+Primary metric: mission deferred -> eventual completion within the week.
 
-### 6. Mission-Tuned Practice
-
-Hypothesis: making the practice focus visibly reflect today's approved mission improves rehearsal-to-real-world completion compared with an otherwise identical generic rehearsal.
-
-Primary metric: rehearsal -> real-world completion/later, split by `practice_personalisation`. Do not interpret a game score as a health outcome.
-
-### 7. Care-Team Exception Value
+### 6. Care-Team Exception Value
 
 Hypothesis: operators care about concise exception rationale more than raw dashboards.
 

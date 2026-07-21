@@ -2,22 +2,22 @@
 
 ## Current Status
 
-Sukari has moved from a game-first GlucoseWars prototype to a mission-first adherence product powered by Mira, Famile's shared health and wellness agent identity.
+Sukari has moved from a game-first GlucoseWars prototype to a mission-first adherence product powered by Mira, Famile's shared health and wellness agent identity. The combat/kingdom game layer and rehearsal mechanic have been fully removed; the product is now a calm, adult, action-oriented adherence loop with no game layer.
 
 Shipped this cycle:
 
 - Sukari name and product register.
 - Value proposition before role selection.
 - First-minute signal choice: labelled demo, read-only connection, private local check-in, or general habit mission.
-- First mission card before rehearsal.
+- Mission-first flow: the patient sees the mission card and can act immediately.
 - Approved "Adjusted for you" mission adaptation after easier/later choices.
 - Mira presence on the mission card, with a small orb that reflects the current agent posture.
 - Clearly labelled demo pattern path.
 - Amina established as the deterministic synthetic demo patient, separate from Mira.
 - Deployed optional Runware mission-media worker with local fallback.
 - Local-first digest history and care-team panel.
-- Desktop programme-operator surface: exceptions, outreach rationale, weekly outcomes.
-- Legacy Beam/Web3/NFT/leaderboard/challenge shipped surfaces removed or redirected.
+- Desktop programme-operator surface: exceptions, outreach rationale, weekly outcomes, and estimated staff minutes saved.
+- Legacy Beam/Web3/NFT/leaderboard/challenge and combat/kingdom game surfaces removed.
 - Funnel instrumentation from value screen through care-team outreach.
 - Green lint, TypeScript, Jest, and web export gates.
 
@@ -44,7 +44,7 @@ Shipped this cycle:
 
 4. **Personalised nudge media**
    - Generate mission visuals only from approved template IDs and visual intents.
-   - Let the signal-derived context tune practice scenarios, speech, image, or video support.
+   - Let the signal-derived context tune image or video support.
    - Keep generated media optional, explainable, and subordinate to the real-world action.
 
 5. **Pilot readiness**
@@ -67,8 +67,7 @@ Funnel:
 - value screen -> role selection;
 - role -> mission accepted;
 - mission -> easier/later adaptation;
-- mission accepted -> rehearsal started;
-- rehearsal -> real-world completion or later;
+- mission accepted -> real-world completion or later;
 - completion -> measurable response;
 - care-team exception -> outreach reviewed.
 
@@ -87,4 +86,4 @@ Do not broaden into generic wellness, open-ended coaching, provider dashboards, 
 
 ## Archive
 
-Earlier GlucoseWars milestones included tiered progression, battle mechanics, Beam/Web3 experiments, challenge links, VRF fairness, and educational lore. Those are historical assets, not active Sukari roadmap items.
+Earlier GlucoseWars milestones included tiered progression, battle mechanics, Beam/Web3 experiments, challenge links, VRF fairness, educational lore, and the rehearsal/kingdom game layer. Those are historical assets, not active Sukari roadmap items.

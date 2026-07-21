@@ -51,7 +51,7 @@ export interface MissionTemplate {
   modes?: ('personal' | 'caregiver' | 'curious')[];
   /** Prefer when CGM connected and trend matches */
   signalHints?: ('rising' | 'falling' | 'stable' | 'high' | 'low' | 'disconnected')[];
-  /** Battle spawn bias keys consumed by practice personalization */
+  /** Practice personalization bias keys */
   practiceBias?: {
     allyWeightBonus?: number;
     enemyWeightBonus?: number;

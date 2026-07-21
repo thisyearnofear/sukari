@@ -1,11 +1,9 @@
 import React from 'react';
 import { View, Text, Animated, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useRouter } from 'expo-router';
 import { MainMenu } from '@/components/game/MainMenu';
 import { HeroIntro } from '@/components/game/HeroIntro';
 import { usePlayerProgressContext } from '@/context/PlayerProgressContext';
-import { ControlMode } from '@/types/game';
 import { track } from '@/utils/analytics';
 import { COLORS, FONTS } from '@/constants/designSystem';
 
@@ -18,7 +16,6 @@ function getAmbientColor(): string {
 }
 
 export default function MenuScreen() {
-  const router = useRouter();
   const { progress, hydrated } = usePlayerProgressContext();
   const [showIntro, setShowIntro] = React.useState(false);
 
@@ -54,13 +51,6 @@ export default function MenuScreen() {
     <View style={{ flex: 1, backgroundColor: ambientBg, alignItems: 'center' }}>
     <SafeAreaView style={{ flex: 1, width: '100%', maxWidth: Platform.OS === 'web' ? 960 : 500 }}>
       <MainMenu
-        onStartPractice={(controlMode: ControlMode) => {
-          track('practice_started', { from: 'mission_home', control_mode: controlMode, privacy_mode: progress.privacyMode });
-          router.push({
-            pathname: '/(game)/onboarding',
-            params: { controlMode },
-          });
-        }}
         onUserModeSelected={() => {
           track('value_to_role_completed', { privacy_mode: progress.privacyMode });
         }}

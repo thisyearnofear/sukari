@@ -88,8 +88,3 @@ export function getPracticeBiasForMission(
     ...template.practiceBias,
   };
 }
-
-/** Protein-leaning ally food types from gameConfig */
-export const PROTEIN_ALLY_TYPES = new Set(['protein', 'dairy', 'nuts']);
-
-export const SUGARY_DRINK_TYPES = new Set(['soda', 'energy_drink']);

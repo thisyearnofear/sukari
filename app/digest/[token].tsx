@@ -14,7 +14,7 @@ import {
 import { router, useLocalSearchParams } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { fetchWeeklyDigest, listLocalWeeklyDigests, WeeklyDigestPayload } from '@/domain/digest';
+import { fetchWeeklyDigest, listLocalWeeklyDigests, WeeklyDigestPayload, estimateStaffMinutesSaved } from '@/domain/digest';
 import { track } from '@/utils/analytics';
 import { COLORS, FONTS, ANIMATIONS } from '@/constants/designSystem';
 import { PressableScale } from '@/components/ui/PressableScale';
@@ -77,10 +77,17 @@ export default function WeeklyDigestScreen() {
 
   useEffect(() => {
     if (!digest) return;
+    const { minutes } = estimateStaffMinutesSaved(digest);
     track('measured_response_to_care_team_exception', {
       outreach_recommended: digest.outreachRecommended === true,
       safety_flags: digest.safetyFlags?.length ?? 0,
       week: digest.weekKey,
+    });
+    track('staff_minutes_saved_viewed', {
+      week: digest.weekKey,
+      outreach_recommended: digest.outreachRecommended === true,
+      missions_completed: digest.missionsCompleted,
+      estimated_minutes_saved: minutes,
     });
   }, [digest]);
 
@@ -112,6 +119,7 @@ export default function WeeklyDigestScreen() {
   const rate = Math.round((digest.missionsCompleted / assigned) * 100);
   const outreach = digest.outreachRecommended === true;
   const safety = digest.safetyFlags?.length ?? 0;
+  const staffMinutes = estimateStaffMinutesSaved(digest);
 
 
   return (
@@ -160,15 +168,22 @@ export default function WeeklyDigestScreen() {
                 {digest.missionsCompleted}/{assigned}
               </Text>
               <Text style={styles.heroLabel}>missions completed · {rate}% of assigned</Text>
-              <Text style={styles.heroSecondary}>
-                {digest.practiceSessions} practice rehearsals this week
-              </Text>
               {digest.adherence?.relapses != null && Number(digest.adherence.relapses) > 0 ? (
                 <Text style={styles.recoveryNote}>
                   {String(digest.adherence.relapses)} recovery moment(s) — coaching recommended, not
                   blame
                 </Text>
               ) : null}
+            </View>
+
+            <View style={styles.staffMinutesBlock}>
+              <Text style={styles.staffMinutesNumber}>{staffMinutes.minutes}</Text>
+              <Text style={styles.staffMinutesLabel}>est. staff minutes saved this week</Text>
+              <Text style={styles.staffMinutesModel}>{staffMinutes.model}</Text>
+              <Text style={styles.staffMinutesFootnote}>
+                Per-patient estimate. Aggregate across the cohort for the programme-level business
+                metric.
+              </Text>
             </View>
 
             {digest.dataCoverage ? (
@@ -396,6 +411,43 @@ const styles = StyleSheet.create({
     fontSize: 12,
     marginTop: 12,
     lineHeight: 18,
+  },
+  staffMinutesBlock: {
+    borderWidth: 1,
+    borderColor: 'rgba(20, 32, 27, 0.12)',
+    backgroundColor: '#FFFFFF',
+    borderRadius: 2,
+    paddingVertical: 16,
+    paddingHorizontal: 16,
+    marginBottom: 16,
+  },
+  staffMinutesNumber: {
+    fontFamily: FONTS.display,
+    color: '#2F7A5E',
+    fontSize: 32,
+    letterSpacing: -0.5,
+    lineHeight: 36,
+  },
+  staffMinutesLabel: {
+    fontFamily: FONTS.bodyMedium,
+    color: '#14201B',
+    fontSize: 13,
+    marginTop: 4,
+  },
+  staffMinutesModel: {
+    fontFamily: FONTS.body,
+    color: '#5A6B62',
+    fontSize: 12,
+    lineHeight: 18,
+    marginTop: 8,
+  },
+  staffMinutesFootnote: {
+    fontFamily: FONTS.body,
+    color: '#7A8B82',
+    fontSize: 11,
+    lineHeight: 16,
+    marginTop: 6,
+    fontStyle: 'italic',
   },
   section: {
     marginBottom: 16,

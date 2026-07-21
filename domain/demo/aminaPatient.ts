@@ -199,7 +199,6 @@ export function buildAminaClinicianDigest(dayIndex: number = AMINA_DEMO.defaultD
       adherence,
       missionsCompleted: completed,
       missionsAssigned: assigned,
-      practiceSessions: 3,
       topBehaviours: ['post_meal_walk'],
       wins: ['Opened programme after a soft week', 'Asked coach about barriers once'],
       concerns: [
@@ -242,7 +241,6 @@ export function buildAminaClinicianDigest(dayIndex: number = AMINA_DEMO.defaultD
     adherence,
     missionsCompleted: completed,
     missionsAssigned: assigned,
-    practiceSessions: 6,
     topBehaviours: ['post_meal_walk', 'protein_first'],
     wins: [
       'Completed post-dinner walk on 3 of 4 attempted evenings',

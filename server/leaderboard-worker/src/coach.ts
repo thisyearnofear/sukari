@@ -355,7 +355,7 @@ export async function handleCoachChat(req: Request, env: CoachEnv): Promise<Resp
       ok: true,
       reply: body.mission?.realWorldAction
         ? `Start with today’s ask: ${body.mission.realWorldAction}`
-        : 'Practice one short battle, then do one real-world habit tonight.',
+        : 'Pick one real-world habit for tonight and try it after your next meal.',
       provider_status: ai.status ?? null,
       provider_error: ai.error ?? null,
     });
@@ -445,7 +445,7 @@ export async function handleCoachChatStream(req: Request, env: CoachEnv): Promis
     ai.content ||
     (body.mission?.realWorldAction
       ? `Start with today’s ask: ${body.mission.realWorldAction}`
-      : 'Practice one short battle, then do one real-world habit tonight.');
+      : 'Pick one real-world habit for tonight and try it after your next meal.');
 
   return new Response(reply, {
     headers: { 'content-type': 'text/plain; charset=utf-8', 'x-famile-live': 'true' },

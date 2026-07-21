@@ -2,17 +2,17 @@
 
 Sukari is a decision-time adherence product for continuous metabolic care. It exists because chronic metabolic care usually fails in the small moment between intention and action: after dinner, during a craving, when the patient already knows the advice but needs the next choice to feel doable.
 
-The old name, GlucoseWars, implied a broad game or combat metaphor. Sukari is softer, more mature, and better aligned with the intended audience: adults living with metabolic risk, supporters, and programme operators who need adherence evidence without another dashboard.
+The earlier prototype (GlucoseWars) used a combat/kingdom game metaphor. That metaphor did not fit the audience — adults with T2D or prediabetes in CGM-supported programmes — and has been fully removed. Sukari is now a calm, adult, action-oriented product with no game layer.
 
 ## Positioning
 
-**Category:** personalised action-and-play adherence layer for continuous metabolic care.
+**Category:** personalised action adherence layer for continuous metabolic care.
 
 **Tagline:** One mission today. Better evidence for tomorrow.
 
-**10-second pitch:** Sukari turns a metabolic signal into one winnable real-world experiment, then adapts the optional practice, visual cue, and follow-up around that choice. It tells the care team only when human attention can change the week.
+**10-second pitch:** Sukari turns a metabolic signal into one winnable real-world experiment, then adapts the mission, visual cue, and follow-up around that choice. It tells the care team only when human attention can change the week.
 
-**Explicitly not:** AI doctor, symptom chatbot, dosing assistant, game-first education app, NFT product, leaderboard, or consumer wellness toy.
+**Explicitly not:** AI doctor, symptom chatbot, dosing assistant, game, NFT product, leaderboard, consumer wellness toy, or generic dashboard.
 
 ## Product Thesis
 
@@ -20,45 +20,42 @@ Patients do not need more explanation first. They need the next right thing made
 
 This is the Paul Graham lens: adherence is the unglamorous schlep in digital health, which is why it is underbuilt. Do the unscalable thing first: hand-tune missions, make one patient arc feel real, and learn the messy conversion from advice to action.
 
-This is the Peter Thiel lens: do not start as a general wellness app. Dominate a narrow beachhead: adults with T2D or prediabetes in CGM-supported metabolic programmes. The wedge is not "AI plus game"; it is a personalised action-and-play loop that turns a real pattern into a practical choice, a relevant rehearsal, and closed-loop adherence evidence for operators who already have patients.
+This is the Peter Thiel lens: do not start as a general wellness app. Dominate a narrow beachhead: adults with T2D or prediabetes in CGM-supported metabolic programmes. The wedge is not "AI plus game"; it is a personalised action loop that turns a real pattern into a practical choice and closed-loop adherence evidence for operators who already have patients.
 
-## Personalised World State
-
-The game is not a reward layer beside care. It is the optional, low-stakes practice interface for the decision a person is facing now.
+## Product Loop
 
 ```text
 approved signal pattern or local moment
   -> deterministic, in-scope mission family
-  -> bounded world state: mission, approved scene, tone, practice intensity, visual intent
+  -> bounded world state: mission, approved scene, tone, response state
   -> real-world choice and outcome
   -> next approved adaptation
 ```
 
-Every game and media element must earn its place by helping a real-world action happen. A post-meal movement mission creates an after-meal path scene and calmer movement rehearsal; a drink mission shows more drink decisions; a protein-first mission favours relevant ally choices. When a person chooses "make it easier," the world state moves to a gentle, unhurried field. This is visible as a concise field note, not a new dashboard.
+Every element must earn its place by helping a real-world action happen. A post-meal movement mission creates an after-meal path scene; a drink mission surfaces the drink decision; a protein-first mission favours relevant protein choices. When a person chooses "make it easier," the world state moves to a gentle, unhurried field. This is visible as a concise field note, not a new dashboard.
 
 The LLM may personalise wording, offer an approved smaller variant, or summarise the bounded decision trace. Deterministic logic owns pattern detection, mission eligibility, safety boundaries, and escalation. Generative media receives only an approved template ID, visual intent, and allowlisted scene, never raw CGM readings, patient identity, or free-form health notes.
 
 ## Experience Architecture
 
-Sukari has one loop and three surfaces.
+Sukari has one loop and two surfaces.
 
 1. **Patient home:** value proposition, role selection, current signal, one mission, and patient governance.
-2. **Optional rehearsal:** a short, mission-tuned practice session tied to today's real-world decision, never a gate before action.
-3. **Care team:** desktop-first programme-operator view with exceptions, outreach rationale, and weekly outcomes.
+2. **Care team:** desktop-first programme-operator view with exceptions, outreach rationale, and weekly outcomes.
 
-The first mission flow now prioritizes evidence:
+The first mission flow:
 
 1. Lead with the pain and value proposition.
 2. Ask who the product is helping: patient, supporter, or care team.
 3. Connect/import a signal or use a clearly labelled demo pattern.
-4. Show the mission card before any rehearsal.
-5. The patient can act now, make it easier, save it for later, or choose a short optional practice.
+4. Show the mission card.
+5. The patient can act now, make it easier, save it for later, or mark it not practical.
 6. If the patient says the mission is too much or poorly timed, show a concise "Adjusted for you" moment before asking for more.
 
 ## Mira, The Famile Agent
 
 > **Network contract:** `famile/web/docs/MIRA.md` is the canonical persona,
-> posture vocabulary, orb spec, and tier-transition semantics. This section
+> posture vocabulary, orb spec, and transition semantics. This section
 > describes Sukari's implementation against that contract. Where the two
 > disagree, the network doc wins; update this file to match.
 
@@ -91,7 +88,7 @@ Avoid:
 
 ## Design Register
 
-Patient surfaces should feel calm, adult, and action-oriented. Rehearsal uses one stable metabolic field and a compact HUD across phone and desktop; it does not change theme, flash the whole screen, shake, or introduce unrelated game lore.
+Patient surfaces should feel calm, adult, and action-oriented. The home uses one stable metabolic field as ambient background; it does not change theme, flash the whole screen, shake, or introduce unrelated lore.
 
 Care-team desktop surfaces should feel operational: dense enough to scan, restrained, and built for repeated use. They should not be enlarged patient screens.
 
@@ -109,36 +106,32 @@ Mira may autonomously detect patterns, select one in-scope mission, remember res
 - First-minute signal choice added: labelled demo, read-only connection, private local check-in, or general habit mission.
 - Live signal access is capability-gated; unavailable integrations are labelled as preview rather than implied to work.
 - Settings lets a person change mission input later without resetting role or programme progress.
-- Mission-first flow added before rehearsal.
-- Real-world action is now the default after mission acceptance; rehearsal is elective.
-- Approved smaller mission variants now create a visible "Adjusted for you" agent moment.
-- Rehearsal now uses a single compact, responsive HUD with no full-screen flashes, shakes, or time-of-day theme changes.
-- Rehearsal mechanics and the visible practice focus now derive from the approved mission template, so play reflects the day's real-world action rather than a generic mini-game.
-- A local, mission-bound world state now carries approved scene, tone, response, and practice intensity across home, generated media, and rehearsal; it resets when the mission changes.
+- Mission-first flow: the patient sees the mission card and can act immediately.
+- Approved smaller mission variants create a visible "Adjusted for you" agent moment.
+- A local, mission-bound world state carries approved scene, tone, and response state across home and generated media; it resets when the mission changes.
 - Mission cards expose an agent decision trace: observed evidence, proposal, and next patient-controlled step.
 - Demo patterns are labelled as demo evidence.
 - Mission-specific visuals use the deployed optional Runware worker when configured, with local fallback; only approved visual intents leave the app.
-- Desktop care surface now emphasizes operator value: exceptions, rationale, outcomes.
+- Desktop care surface emphasizes operator value: exceptions, rationale, outcomes, and estimated staff minutes saved.
 - Local digest history powers the care surface instead of fixture-only data.
 - Demo cohort remains available as an explicit toggle.
-- Legacy Web3, Beam, NFT, leaderboard, and challenge-era primary surfaces were removed or redirected.
-- Funnel instrumentation now covers the patient and care-team conversion path.
+- Legacy Web3, Beam, NFT, leaderboard, challenge-era, and combat/kingdom game surfaces were removed.
+- Funnel instrumentation covers the patient and care-team conversion path.
 - Engineering gates are green.
 
 ## Metrics
 
-North star: **Weekly Adherent Patients (WAP)**, defined as at least one real-world mission completion in a week. Rehearsal is a supporting engagement signal, never a prerequisite.
+North star: **Weekly Adherent Patients (WAP)**, defined as at least one real-world mission completion in a week.
 
 Supporting metrics:
 
 - Value screen to role selection.
 - Role selection to mission accepted.
-- Mission accepted to direct action, later-today promise, or elective rehearsal.
-- Elective rehearsal to real-world completion.
+- Mission accepted to direct action, later-today promise, or decline.
 - Completion to measurable response.
 - Care-team exception to outreach reviewed.
 - Staff minutes per enrolled patient.
 
 ## Anti-Goals
 
-No feeds, generic dashboards, streak shame, leaderboard-first loops, Web3-first identity, causal overclaiming, dosing, diagnosis, or clinician chart sprawl.
+No feeds, generic dashboards, streak shame, leaderboard-first loops, Web3-first identity, causal overclaiming, dosing, diagnosis, clinician chart sprawl, or game/combat/kingdom mechanics.

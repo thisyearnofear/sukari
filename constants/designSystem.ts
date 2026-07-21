@@ -12,23 +12,9 @@
  */
 
 // ============================================
-// COLORS - Glucose Zone Mapping
+// COLORS
 // ============================================
 export const COLORS = {
-  // Stability Zones (from gameConfig)
-  ZONES: {
-    balanced: '#10b981',      // Green - healthy glucose
-    warningLow: '#38bdf8',    // Sky blue - low blood sugar
-    warningHigh: '#f59e0b',   // Amber - high blood sugar
-    criticalLow: '#06b6d4',   // Cyan - dangerously low
-    criticalHigh: '#ef4444',  // Red - dangerously high
-  },
-
-  // Food Factions
-  ALLY: '#22c55e',            // Bright green for healthy foods
-  ENEMY: '#ef4444',           // Red for junk foods
-  CONTEXTUAL: '#8b5cf6',      // Purple for contextual foods
-
   // UI Elements
   PRIMARY: '#3b82f6',         // Blue - primary actions
   SECONDARY: '#6b7280',       // Gray - secondary actions
@@ -38,8 +24,6 @@ export const COLORS = {
   INFO: '#06b6d4',            // Cyan - info
 
   // Background & Text
-  BG_DARK: '#0a0a12',         // Dark navy - main background (legacy game)
-  BG_DARKER: '#000000',       // Black - overlay background
   TEXT_PRIMARY: '#ffffff',    // White - primary text
   TEXT_SECONDARY: '#d1d5db',  // Light gray - secondary text
   TEXT_MUTED: '#9ca3af',      // Gray - muted text
@@ -342,43 +326,3 @@ export const BORDER_RADIUS = {
   XL: 20,
   FULL: 9999,
 } as const;
-
-// ============================================
-// HELPER FUNCTIONS
-// ============================================
-
-/**
- * Get stability zone color by value (0-100)
- */
-export function getStabilityColor(stability: number): string {
-  if (stability >= 40 && stability <= 60) return COLORS.ZONES.balanced;
-  if (stability >= 25 && stability < 40) return COLORS.ZONES.warningLow;
-  if (stability > 60 && stability <= 75) return COLORS.ZONES.warningHigh;
-  if (stability < 25) return COLORS.ZONES.criticalLow;
-  return COLORS.ZONES.criticalHigh;
-}
-
-/**
- * Get zone label for stability value
- */
-export function getStabilityLabel(stability: number): string {
-  if (stability >= 40 && stability <= 60) return '⚖️ BALANCED';
-  if (stability >= 25 && stability < 40) return '❄️ LOW';
-  if (stability > 60 && stability <= 75) return '🔥 HIGH';
-  if (stability < 25) return '💀 CRITICAL';
-  return '💀 CRITICAL';
-}
-
-/**
- * Convert design token spacing to pixel value
- */
-export function getSpacing(multiplier: keyof typeof SPACING): number {
-  return SPACING[multiplier];
-}
-
-/**
- * Get animation duration as number
- */
-export function getAnimationDuration(key: keyof typeof ANIMATIONS.DURATION): number {
-  return ANIMATIONS.DURATION[key];
-}

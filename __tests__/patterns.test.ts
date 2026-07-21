@@ -146,7 +146,6 @@ describe('clinician digest builder', () => {
     const digest = buildLocalDigest({
       adherence: { ...emptyAdherenceWeek(), assigned: 5, completed: 1, relapses: 2 },
       missionHistory: [],
-      gamesPlayedThisWeekApprox: 3,
       patientLabel: 'Test member',
       recurringPatterns: ['Evening elevation'],
     });

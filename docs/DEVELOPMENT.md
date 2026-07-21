@@ -30,10 +30,9 @@ Run `npm run build:web` when routing, Expo config, or web rendering changes.
 
 - The user-facing product name is Sukari.
 - The mission is the primary action on home.
-- A patient must see the mission card before rehearsal.
 - Demo patterns must be clearly labelled.
 - Desktop care is an operator surface, not a stretched patient view.
-- Legacy Beam/Web3/NFT/leaderboard/challenge language should not appear in shipped navigation or primary copy.
+- Legacy Beam/Web3/NFT/leaderboard/challenge and combat/kingdom game language should not appear in shipped navigation or primary copy.
 - Mira remains habit-scope only in Sukari. Never dosing, diagnosis, urgent-care substitution, or implied access to another Famile product.
 
 ## Repo Map
@@ -43,15 +42,14 @@ app/
   index.tsx            value-first entry and home
   care.tsx             programme-operator care surface
   digest/[token].tsx   weekly digest view
-  (game)/              rehearsal flow
 components/
-  game/                battle, intro, home composition
-  programme/           mission, ribbon, transfer, quiet win
+  game/                intro, home composition (legacy folder name)
+  programme/           mission card, loop strip, quiet win
 domain/
   coach/               Mira's habit-scope capability and clinical boundary
   digest/              weekly digest client/types
   patterns/            signal patterns and field state
-  programme/           mission templates and transfer logic
+  programme/           mission templates and selection
 hooks/
   usePlayerProgress.ts local progress and programme persistence
 ```

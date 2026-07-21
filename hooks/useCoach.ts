@@ -151,7 +151,7 @@ export function useCoach() {
         const mission = progress.activeMission;
         const fallback = mission
           ? `Today's ask: ${mission.realWorldAction} I can't reach the cloud coach right now — start with that one step.`
-          : 'Practice one short battle, then pick one real-world habit for tonight.';
+          : 'Pick one real-world habit for tonight and try it after your next meal.';
         setChatReply(fallback);
         const fallbackMsg: ChatMessage = { role: 'assistant', content: fallback };
         const withFallback = [...messagesRef.current, fallbackMsg];

@@ -11,7 +11,6 @@ export interface WeeklyDigestPayload {
   adherence: AdherenceWeek;
   missionsCompleted: number;
   missionsAssigned: number;
-  practiceSessions: number;
   topBehaviours: string[];
   wins: string[];
   concerns: string[];
@@ -52,7 +51,6 @@ export interface StoredWeeklyDigest extends WeeklyDigestPayload {
 export function buildLocalDigest(input: {
   adherence: AdherenceWeek;
   missionHistory: ProgrammeMission[];
-  gamesPlayedThisWeekApprox: number;
   patientLabel?: string;
   recurringPatterns?: string[];
   dataCoverage?: string;
@@ -83,18 +81,16 @@ export function buildLocalDigest(input: {
     adherence: input.adherence,
     missionsCompleted: done,
     missionsAssigned: assigned,
-    practiceSessions: input.gamesPlayedThisWeekApprox,
     topBehaviours,
     wins,
     concerns,
     narrative: `Week of ${input.adherence.weekKey}: ${done}/${Math.max(assigned, 1)} missions completed (${completionRate}%). Focus stayed on everyday metabolic habits — no dosing guidance included.`,
     createdAt: Date.now(),
     patientLabel: input.patientLabel,
-    dataCoverage: input.dataCoverage ?? 'Programme adherence + practice sessions (no raw glucose series shared)',
+    dataCoverage: input.dataCoverage ?? 'Programme adherence (no raw glucose series shared)',
     recurringPatterns: input.recurringPatterns ?? topBehaviours.map((b) => `Focus behaviour: ${b.replace(/_/g, ' ')}`),
     changesSinceLastWeek: [
       `${done} missions completed this week`,
-      `${input.gamesPlayedThisWeekApprox} practice sessions`,
     ],
     patientBarriers: input.adherence.relapses > 0 ? ['Missed evenings — recovery mission offered'] : [],
     safetyFlags: [],
@@ -105,8 +101,50 @@ export function buildLocalDigest(input: {
     experimentsTried: completed.slice(-3).map((m) => ({
       action: m.realWorldAction,
       completed: 1,
-      associatedNote: 'Patient marked complete after practice — outcome association pending more days.',
+      associatedNote: 'Patient marked complete — outcome association pending more days.',
     })),
     mode: 'clinician',
+  };
+}
+
+/**
+ * Estimated staff minutes saved by exception-oriented review this week.
+ *
+ * The model is deliberately conservative and explainable, not a precise
+ * accounting — it exists so an operator can see the budget-holder's language
+ * ("minutes saved") next to the clinical language ("outreach recommended").
+ *
+ *   - When outreach is NOT recommended: the care team avoided one ~10-minute
+ *     proactive check-in call for this patient this week.
+ *   - Each mission the patient completed without coach involvement avoids a
+ *     ~2-minute "did they do it?" follow-up. Capped at 5 so a high-volume
+ *     week doesn't inflate the number.
+ *   - When outreach IS recommended: 0 saved — the call is needed, and that
+ *     time is well-spent, not saved.
+ *
+ * This is a per-patient estimate. Aggregate it across a cohort for the
+ * operator-level business metric.
+ */
+export const STAFF_MINUTES_AVOIDED_CHECKIN = 10;
+export const STAFF_MINUTES_AVOIDED_PER_COMPLETED_MISSION = 2;
+export const STAFF_MINUTES_COMPLETED_MISSION_CAP = 5;
+
+export function estimateStaffMinutesSaved(digest: WeeklyDigestPayload): {
+  minutes: number;
+  model: string;
+} {
+  if (digest.outreachRecommended === true) {
+    return {
+      minutes: 0,
+      model: 'Outreach recommended — staff time is needed this week, not saved.',
+    };
+  }
+  const completed = Math.max(0, Math.min(digest.missionsCompleted, STAFF_MINUTES_COMPLETED_MISSION_CAP));
+  const minutes =
+    STAFF_MINUTES_AVOIDED_CHECKIN +
+    completed * STAFF_MINUTES_AVOIDED_PER_COMPLETED_MISSION;
+  return {
+    minutes,
+    model: `${STAFF_MINUTES_AVOIDED_CHECKIN} min avoided check-in + ${completed} completed mission(s) × ${STAFF_MINUTES_AVOIDED_PER_COMPLETED_MISSION} min follow-up avoided.`,
   };
 }

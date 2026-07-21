@@ -27,7 +27,6 @@ export default function CarePanelScreen() {
       patientLabel: 'Programme member · sample (synthetic)',
       missionsCompleted: 6,
       missionsAssigned: 7,
-      practiceSessions: 4,
       outreachRecommended: false,
       outreachReason: 'Adherence is holding. No review needed this week.',
       concerns: [],
@@ -153,7 +152,7 @@ function ExceptionCard({ digest }: { digest: WeeklyDigestPayload & { token?: str
       </View>
       <Text style={styles.reason}>{digest.outreachReason}</Text>
       <Text style={styles.detail}>
-        {digest.missionsCompleted}/{digest.missionsAssigned} missions completed · {digest.practiceSessions} rehearsals
+        {digest.missionsCompleted}/{digest.missionsAssigned} missions completed
       </Text>
       {digest.patientBarriers?.length ? <Text style={styles.detail}>Barriers: {digest.patientBarriers.join(' · ')}</Text> : null}
       <PressableScale

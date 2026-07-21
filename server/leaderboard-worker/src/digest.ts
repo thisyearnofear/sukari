@@ -10,7 +10,6 @@ export interface WeeklyDigestPayload {
   adherence: Record<string, unknown>;
   missionsCompleted: number;
   missionsAssigned: number;
-  practiceSessions: number;
   topBehaviours: string[];
   wins: string[];
   concerns: string[];
@@ -53,7 +52,6 @@ export async function handleDigestCreate(req: Request, env: DigestEnv): Promise<
     adherence: digest.adherence || {},
     missionsCompleted: digest.missionsCompleted || 0,
     missionsAssigned: digest.missionsAssigned || 0,
-    practiceSessions: digest.practiceSessions || 0,
     topBehaviours: (digest.topBehaviours || []).slice(0, 5),
     wins: (digest.wins || []).slice(0, 5),
     concerns: (digest.concerns || []).slice(0, 5),

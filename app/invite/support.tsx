@@ -88,20 +88,6 @@ export default function CaregiverSupportInvite() {
             <Text style={styles.primaryText}>Enter as support</Text>
           </PressableScale>
 
-          <PressableScale
-            onPress={() =>
-              router.push({
-                pathname: '/(game)/onboarding',
-                params: { controlMode: 'swipe' },
-              })
-            }
-            accessibilityRole="button"
-            accessibilityLabel="Try a short empathy practice"
-            style={styles.secondary}
-          >
-            <Text style={styles.secondaryText}>Try a short rehearsal</Text>
-          </PressableScale>
-
           <Text style={styles.footnote}>Not medical advice · No glucose values in this invite</Text>
         </Animated.View>
       </SafeAreaView>
@@ -181,18 +167,6 @@ const styles = StyleSheet.create({
     fontFamily: FONTS.bodyBold,
     color: P.ink,
     fontSize: 15,
-  },
-  secondary: {
-    borderWidth: 1,
-    borderColor: P.line,
-    paddingVertical: 14,
-    borderRadius: 2,
-    alignItems: 'center',
-  },
-  secondaryText: {
-    fontFamily: FONTS.bodyMedium,
-    color: P.textSoft,
-    fontSize: 14,
   },
   footnote: {
     fontFamily: FONTS.body,
