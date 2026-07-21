@@ -37,12 +37,15 @@ import { COLORS, FONTS } from '@/constants/designSystem';
 import { MiraOrb } from '@/components/agent/MiraOrb';
 import { PressableScale } from '@/components/ui/PressableScale';
 import { WelcomeScene } from '@/components/home/WelcomeScene';
-import type { ConversationPhase ,
+import { MissionVisual } from '@/components/programme/MissionVisual';
+import {
   processIntent,
   generateOpeningLine,
   initialConversationState,
   type ConversationState,
+  type ConversationPhase,
 } from '@/domain/agent/conversationEngine';
+import { buildMissionMediaBrief } from '@/domain/agent';
 import { useCoach } from '@/hooks/useCoach';
 import { track } from '@/utils/analytics';
 import type { ProgrammeMission, PatientReportedOutcome } from '@/domain/programme/types';
@@ -484,6 +487,18 @@ export const ConversationHome: React.FC<ConversationHomeProps> = ({
               {recentMessages.map((msg) => (
                 <MessageBubble key={msg.id} message={msg} />
               ))}
+
+              {/* Mission visual — appears inline when a mission is
+                  being offered or is active. The glyph gives the
+                  mission visual weight in the conversation — it's not
+                  just text, it's an artifact. */}
+              {convState.mission && convState.pattern &&
+                (convState.phase === 'offering' || convState.phase === 'accepted' || convState.phase === 'adapted') && (
+                  <MissionVisual
+                    brief={buildMissionMediaBrief(convState.pattern, convState.mission)}
+                  />
+                )}
+
               {isLoading && !coach.chatReply ? (
                 <ThinkingIndicator />
               ) : null}
