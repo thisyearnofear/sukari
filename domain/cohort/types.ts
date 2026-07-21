@@ -35,6 +35,10 @@ export interface CohortPatientSummary {
   priorityReason: string;
   /** Estimated staff minutes saved this week (0 when outreach is needed). */
   staffMinutesSaved: number;
+  /** This patient's primary behaviourTarget this week, for archetype context. */
+  primaryBehaviour?: string;
+  /** Cohort median completion rate for this patient's primaryBehaviour this week. */
+  cohortMedianForArchetype?: number;
 }
 
 /**
@@ -55,6 +59,8 @@ export interface CohortAggregate {
   totalStaffMinutesSaved: number;
   /** Patients with at least one completed mission this week (WAP). */
   weeklyAdherentPatients: number;
+  /** Completion rate broken down by behaviourTarget, e.g. { post_meal_walk: { rate: 73, count: 12 } }. */
+  archetypeCompletion?: Record<string, { rate: number; count: number }>;
 }
 
 /**

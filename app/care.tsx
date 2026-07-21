@@ -22,6 +22,8 @@ import {
   statusCounts,
   generateMiraFlags,
   topFlagForPatient,
+  computeArchetypeCompletion,
+  stampArchetypeContext,
 } from '@/domain/cohort';
 import { listLocalWeeklyDigests, type StoredWeeklyDigest } from '@/domain/digest';
 import { FONTS } from '@/constants/designSystem';
@@ -110,6 +112,8 @@ export default function CarePanelScreen() {
         staffMinutesSaved: 0,
       };
     });
+    const archetypeCompletion = computeArchetypeCompletion(patients);
+    stampArchetypeContext(patients, archetypeCompletion);
     return {
       weekKey: localDigests[0]?.weekKey || '',
       aggregate: {
@@ -124,6 +128,7 @@ export default function CarePanelScreen() {
         ),
         totalStaffMinutesSaved: 0,
         weeklyAdherentPatients: patients.filter((p) => p.missionsCompleted > 0).length,
+        archetypeCompletion,
       },
       patients: patients.sort((a, b) => a.priority - b.priority),
       source: 'local' as const,
@@ -336,31 +341,56 @@ function AggregateHeader({
   compact: boolean;
 }) {
   return (
-    <View style={[styles.aggregateGrid, compact && styles.aggregateGridCompact]}>
-      <Metric
-        value={String(counts.open)}
-        label="open items"
-        accent={counts.open > 0 ? '#C4923A' : '#2F7A5E'}
-        compact={compact}
-      />
-      <Metric
-        value={`${aggregate.weeklyAdherentPatients}/${aggregate.enrolled}`}
-        label="weekly adherent"
-        accent="#2F7A5E"
-        compact={compact}
-      />
-      <Metric
-        value={`${aggregate.cohortCompletionRate}%`}
-        label="cohort completion"
-        accent="#2A3A33"
-        compact={compact}
-      />
-      <Metric
-        value={String(aggregate.totalStaffMinutesSaved)}
-        label="min saved this week"
-        accent="#2F7A5E"
-        compact={compact}
-      />
+    <View style={styles.aggregateBlock}>
+      <View style={[styles.aggregateGrid, compact && styles.aggregateGridCompact]}>
+        <Metric
+          value={String(counts.open)}
+          label="open items"
+          accent={counts.open > 0 ? '#C4923A' : '#2F7A5E'}
+          compact={compact}
+        />
+        <Metric
+          value={`${aggregate.weeklyAdherentPatients}/${aggregate.enrolled}`}
+          label="weekly adherent"
+          accent="#2F7A5E"
+          compact={compact}
+        />
+        <Metric
+          value={`${aggregate.cohortCompletionRate}%`}
+          label="cohort completion"
+          accent="#2A3A33"
+          compact={compact}
+        />
+        <Metric
+          value={String(aggregate.totalStaffMinutesSaved)}
+          label="min saved this week"
+          accent="#2F7A5E"
+          compact={compact}
+        />
+      </View>
+      {aggregate.archetypeCompletion
+        ? (() => {
+            const entries = Object.entries(aggregate.archetypeCompletion).sort(
+              ([, a], [, b]) => b.count - a.count,
+            );
+            if (entries.length === 0) return null;
+            return (
+              <View style={[styles.archetypeLine, compact && styles.archetypeLineCompact]}>
+                <Text style={styles.archetypeLabel}>By mission type this week:</Text>
+                <View style={styles.archetypeChips}>
+                  {entries.slice(0, 4).map(([behaviour, stats]) => (
+                    <View key={behaviour} style={styles.archetypeChip}>
+                      <Text style={styles.archetypeChipText}>
+                        {behaviour.replace(/_/g, ' ')} · {stats.rate}% · {stats.count}{' '}
+                        {stats.count === 1 ? 'patient' : 'patients'}
+                      </Text>
+                    </View>
+                  ))}
+                </View>
+              </View>
+            );
+          })()
+        : null}
     </View>
   );
 }
@@ -478,6 +508,12 @@ function WorkQueueRow({
           {patient.digest?.wins?.length ? (
             <Text style={styles.detailLine}>Wins: {patient.digest.wins[0]}</Text>
           ) : null}
+          {patient.cohortMedianForArchetype != null && patient.primaryBehaviour ? (
+            <Text style={styles.detailLine}>
+              Cohort median for {patient.primaryBehaviour.replace(/_/g, ' ')} this week:{' '}
+              {patient.cohortMedianForArchetype}% completion
+            </Text>
+          ) : null}
           {patient.staffMinutesSaved > 0 ? (
             <Text style={styles.detailLine}>{patient.staffMinutesSaved} min saved this week</Text>
           ) : null}
@@ -569,8 +605,15 @@ const styles = StyleSheet.create({
   sourceButton: { borderWidth: 1, borderColor: 'rgba(20,32,27,0.16)', backgroundColor: '#FFF', paddingHorizontal: 12, paddingVertical: 9 },
   sourceButtonText: { fontFamily: FONTS.bodyMedium, color: '#2A3A33', fontSize: 12 },
   loading: { fontFamily: FONTS.body, color: '#5A6B62', fontSize: 14, marginTop: 28 },
-  aggregateGrid: { flexDirection: 'row', gap: 10, marginTop: 24, marginBottom: 30 },
+  aggregateGrid: { flexDirection: 'row', gap: 10, marginTop: 24 },
   aggregateGridCompact: { flexWrap: 'wrap' },
+  aggregateBlock: { marginBottom: 30 },
+  archetypeLine: { marginTop: 14, backgroundColor: '#FFF', borderWidth: 1, borderColor: 'rgba(20,32,27,0.10)', padding: 14 },
+  archetypeLineCompact: { padding: 12 },
+  archetypeLabel: { fontFamily: FONTS.bodyMedium, color: '#5A6B62', fontSize: 11, letterSpacing: 0.6, textTransform: 'uppercase', marginBottom: 8 },
+  archetypeChips: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+  archetypeChip: { backgroundColor: 'rgba(47,122,94,0.08)', borderWidth: 1, borderColor: 'rgba(47,122,94,0.20)', paddingHorizontal: 10, paddingVertical: 6, borderRadius: 2 },
+  archetypeChipText: { fontFamily: FONTS.bodyMedium, color: '#2F634F', fontSize: 12 },
   metric: { flex: 1, backgroundColor: '#FFF', borderWidth: 1, borderColor: 'rgba(20,32,27,0.12)', padding: 16, minHeight: 96 },
   metricCompact: { flexBasis: '46%', flexGrow: 1, flexShrink: 0, maxWidth: '48%', minHeight: 104 },
   metricValue: { fontFamily: FONTS.display, fontSize: 30, lineHeight: 36 },

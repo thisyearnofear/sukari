@@ -12,7 +12,7 @@ import type { CohortOverview } from './types';
 export * from './types';
 export * from './workQueue';
 export * from './miraFlags';
-export { buildSyntheticCohortOverview } from './synthetic';
+export { buildSyntheticCohortOverview, computeArchetypeCompletion, stampArchetypeContext } from './synthetic';
 
 /**
  * Get the cohort overview for the current week.

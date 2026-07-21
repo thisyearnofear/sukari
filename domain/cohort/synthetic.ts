@@ -260,6 +260,7 @@ function buildAggregate(patients: CohortPatientSummary[]): CohortAggregate {
   const cohortCompletionRate = Math.round((totalCompleted / totalAssigned) * 100);
   const totalStaffMinutesSaved = patients.reduce((sum, p) => sum + p.staffMinutesSaved, 0);
   const weeklyAdherentPatients = patients.filter((p) => p.missionsCompleted > 0).length;
+  const archetypeCompletion = computeArchetypeCompletion(patients);
 
   return {
     enrolled,
@@ -269,7 +270,55 @@ function buildAggregate(patients: CohortPatientSummary[]): CohortAggregate {
     cohortCompletionRate,
     totalStaffMinutesSaved,
     weeklyAdherentPatients,
+    archetypeCompletion,
   };
+}
+
+/**
+ * Group completion by each patient's primary behaviourTarget (digest.topBehaviours[0]).
+ * Returns per-archetype completion rate and patient count. Used by the operator
+ * aggregate header so a care team can see "post_meal_walk: 73% across 12 patients"
+ * without any new data capture.
+ */
+export function computeArchetypeCompletion(
+  patients: CohortPatientSummary[],
+): Record<string, { rate: number; count: number }> {
+  const map = new Map<string, { completed: number; assigned: number; count: number }>();
+  for (const p of patients) {
+    const behaviour = p.digest?.topBehaviours?.[0];
+    if (!behaviour) continue;
+    const entry = map.get(behaviour) ?? { completed: 0, assigned: 0, count: 0 };
+    entry.completed += p.missionsCompleted;
+    entry.assigned += p.missionsAssigned;
+    entry.count += 1;
+    map.set(behaviour, entry);
+  }
+  const out: Record<string, { rate: number; count: number }> = {};
+  for (const [behaviour, entry] of map) {
+    out[behaviour] = {
+      rate: Math.round((entry.completed / Math.max(entry.assigned, 1)) * 100),
+      count: entry.count,
+    };
+  }
+  return out;
+}
+
+/**
+ * Stamp each patient with their primary behaviour and the cohort median completion
+ * for that archetype, so the work queue row can show "cohort median for
+ * post_meal_walk this week is 5/7" without recomputing per row.
+ */
+export function stampArchetypeContext(
+  patients: CohortPatientSummary[],
+  archetypeCompletion: Record<string, { rate: number; count: number }>,
+): void {
+  for (const p of patients) {
+    const behaviour = p.digest?.topBehaviours?.[0];
+    if (behaviour && archetypeCompletion[behaviour]) {
+      p.primaryBehaviour = behaviour;
+      p.cohortMedianForArchetype = archetypeCompletion[behaviour].rate;
+    }
+  }
 }
 
 /**
@@ -282,10 +331,12 @@ export function buildSyntheticCohortOverview(): CohortOverview {
   const patients = Array.from({ length: COHORT_SIZE }, (_, i) => buildPatientSummary(i)).sort(
     (a, b) => a.priority - b.priority,
   );
+  const aggregate = buildAggregate(patients);
+  stampArchetypeContext(patients, aggregate.archetypeCompletion ?? {});
 
   return {
     weekKey: WEEK_KEY,
-    aggregate: buildAggregate(patients),
+    aggregate,
     patients,
     source: 'synthetic',
   };
