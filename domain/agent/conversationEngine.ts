@@ -401,37 +401,3 @@ function pickResponse(responses: string[], intent: ConversationIntent): string {
   const seed = intent.kind.length + (intent.kind === 'chat' ? 0 : intent.kind === 'done' ? 1 : 2);
   return responses[seed % responses.length];
 }
-
-/**
- * Build a context string for the LLM when escalating chat intents.
- * This gives the LLM the conversation history and current mission
- * context so its responses are grounded.
- */
-export function buildLLMContext(
-  state: ConversationState,
-  memory: ConversationMemory,
-): string {
-  const ctx = contextSummary(memory);
-  const parts: string[] = [];
-
-  parts.push('Current conversation context:');
-  if (state.mission) {
-    parts.push(`- Active mission: ${state.mission.realWorldAction}`);
-    parts.push(`- Mission status: ${state.mission.status}`);
-    parts.push(`- Conversation phase: ${state.phase}`);
-  }
-  if (state.pattern) {
-    parts.push(`- Pattern detected: ${state.pattern.headline}`);
-    parts.push(`- Pattern explanation: ${state.pattern.explanation}`);
-  }
-  if (ctx.completionCount > 0) {
-    parts.push(`- Patient has completed ${ctx.completionCount} missions total.`);
-  }
-  if (ctx.lastBarrier) {
-    parts.push(`- Patient's last stated barrier: ${ctx.lastBarrier}`);
-  }
-  parts.push('- Safety: habits only. Never dosing, diagnosis, or causal claims.');
-  parts.push('- Voice: warm, restrained, second person. Short sentences. One idea per line.');
-
-  return parts.join('\n');
-}

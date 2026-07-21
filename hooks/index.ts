@@ -1,5 +1,5 @@
 // Central export point for all hooks
-export { useAccessibility } from './useAccessibility';
-export { useHealthProfile } from './useHealthProfile';
 export { usePlayerProgress } from './usePlayerProgress';
-export { usePrivacyService } from './usePrivacyService';
+export { useCoach } from './useCoach';
+export { useReducedMotion } from './useReducedMotion';
+export { useCGMConnection } from './useCGMConnection';

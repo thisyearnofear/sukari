@@ -1,8 +1,8 @@
 /**
  * useCGMConnection — Manages real CGM device connection.
- * Enhances useHealthProfile with real glucose data when available.
+ * Connects to Dexcom/Libre when configured and returns glucose readings.
  *
- * MODULAR: Independent hook, composable with useHealthProfile.
+ * MODULAR: Independent hook, no dependencies on other hooks.
  * CLEAN: Separates CGM concerns from game simulation.
  */
 import { useState, useCallback, useEffect } from 'react';

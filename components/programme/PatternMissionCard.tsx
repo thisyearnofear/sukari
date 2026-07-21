@@ -22,10 +22,9 @@ import {
 import { MissionVisual } from '@/components/programme/MissionVisual';
 import { MiraOrb } from '@/components/agent/MiraOrb';
 import { getPracticeCueForTemplate } from '@/domain/programme';
+import type { MissionEase } from '@/domain/agent/intentParser';
 
 const P = COLORS.PROGRAMME;
-
-export type MissionEase = 'accept' | 'easier' | 'not_practical';
 
 interface PatternMissionCardProps {
   pattern: MetabolicPattern;
@@ -45,9 +44,9 @@ interface PatternMissionCardProps {
   /** Soft home state after “Later today” */
   deferred?: boolean;
   onAskMira?: () => void;
-  /** Proactive presence override from useProactivePresence. When provided,
-   *  the card uses this instead of computing its own — so the orb shifts
-   *  at transition moments (arrival, evening nudge) without user interaction. */
+  /** Proactive presence override. When provided, the card uses this
+   *  instead of computing its own — so the orb shifts at transition
+   *  moments (arrival, evening nudge) without user interaction. */
   proactivePresence?: SukariMiraPresence | null;
 }
 

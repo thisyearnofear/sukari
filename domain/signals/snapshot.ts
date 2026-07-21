@@ -103,7 +103,7 @@ export function buildSignalSnapshot(input: BuildSnapshotInput): SignalSnapshot {
       trend,
       timeInRangeProxy: privacy
         ? null
-        : profile.dailyHistory?.[0]?.timeInRange ?? null,
+        : null,
       readingCount: profile.recentReadings?.length || 0,
       capturedAt: now,
       source: 'simulated',
