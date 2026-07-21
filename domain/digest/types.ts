@@ -26,6 +26,15 @@ export interface WeeklyDigestPayload {
   outreachRecommended?: boolean;
   outreachReason?: string;
   experimentsTried?: DigestExperimentTried[];
+  /** Longitudinal patient-reported outcome summary across recent completed missions. */
+  outcomeTrend?: {
+    totalReported: number;
+    noticedDifference: number;
+    feltEasier: number;
+    feltHarder: number;
+    /** Plain-language summary for the clinician. */
+    summary: string;
+  };
   mode?: 'patient' | 'clinician';
 }
 
@@ -75,6 +84,26 @@ export function buildLocalDigest(input: {
   const done = completed.length || input.adherence.completed;
   const completionRate = Math.round((done / Math.max(assigned, 1)) * 100);
   const outreachRecommended = concerns.length > 0 && completionRate < 40;
+
+  // Longitudinal outcome trend — look at all completed missions with PROs
+  // in history (not just this week) so the clinician sees the arc.
+  const withOutcomes = input.missionHistory.filter(
+    (m) => m.status === 'completed' && m.reportedOutcome,
+  );
+  const totalReported = withOutcomes.length;
+  const noticedDifference = withOutcomes.filter(
+    (m) => m.reportedOutcome!.noticedDifference === 'yes',
+  ).length;
+  const feltEasier = withOutcomes.filter(
+    (m) => m.reportedOutcome!.feltDifficulty === 'easier',
+  ).length;
+  const feltHarder = withOutcomes.filter(
+    (m) => m.reportedOutcome!.feltDifficulty === 'harder',
+  ).length;
+  const outcomeTrendSummary =
+    totalReported === 0
+      ? 'No patient-reported outcomes captured yet.'
+      : `Across ${totalReported} completed mission(s) with reported outcomes: ${noticedDifference} noticed a difference, ${feltEasier} felt easier than expected, ${feltHarder} felt harder than expected (patient-reported, observational).`;
 
   return {
     weekKey: input.adherence.weekKey,
@@ -126,6 +155,13 @@ export function buildLocalDigest(input: {
       };
     }),
     mode: 'clinician',
+    outcomeTrend: {
+      totalReported,
+      noticedDifference,
+      feltEasier,
+      feltHarder,
+      summary: outcomeTrendSummary,
+    },
   };
 }
 

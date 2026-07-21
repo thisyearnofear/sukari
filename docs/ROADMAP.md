@@ -59,6 +59,7 @@ Shipped this cycle:
    - Mira proactive flags shipped (safety, completion drop, barrier pattern, recovery, streak, re-engagement).
    - Shipped: archetype-level completion in the cohort aggregate (group existing completion data by `behaviourTarget`). Per-patient cohort context in the work queue row expansion ("cohort median for this archetype this week is N%").
    - Shipped: patient-reported outcome capture — after completing a mission, Mira asks how it went. Patient response parsed into `PatientReportedOutcome` (felt difficulty + noticed difference) + free-form reflection. Persisted on the mission, flows into the clinician digest, and aggregates into cohort response rate on the operator surface.
+   - Shipped: closed-loop adaptation — past PROs inform mission selection (avoid templates reported "harder" 2+ times, prefer templates with "easier" + "noticed difference"). Outcome-aware Mira flags (struggle + positive signal). Longitudinal outcome trend in clinician digest.
    - Next: operator assignment to specific care team members, weekly team report, export/integration path.
    - Next: Mira flags enriched with conversation memory (reference specific past missions, not just barriers and counts).
    - Gated: curated external evidence library keyed by `behaviourTarget`, surfaced in the clinician digest only. Human-reviewed before it reaches operators. Never patient-facing.

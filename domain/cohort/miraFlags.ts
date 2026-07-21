@@ -23,7 +23,9 @@ export type FlagKind =
   | 'barrier_pattern'
   | 'recovery_signal'
   | 'streak_building'
-  | 're_engagement';
+  | 're_engagement'
+  | 'outcome_struggle'
+  | 'outcome_positive';
 
 export type FlagSeverity = 'urgent' | 'worth_a_conversation' | 'positive';
 
@@ -130,6 +132,44 @@ function flagsForPatient(
       severity: 'worth_a_conversation',
       message: `Patient re-opened the app and completed ${patient.missionsCompleted} mission(s) this week after a quiet period.`,
       suggestion: 'A welcome-back message could reinforce the re-engagement. No safety concern.',
+      miraActed: false,
+    });
+  }
+
+  // Outcome-aware flags — derived from patient-reported outcomes in experimentsTried.
+  // These parse the associatedNote text that buildLocalDigest generates from PRO data.
+  const experiments = digest?.experimentsTried ?? [];
+  let harderReported = 0;
+  let noticedReported = 0;
+  let totalReported = 0;
+  for (const exp of experiments) {
+    const note = exp.associatedNote.toLowerCase();
+    if (!note.includes('patient reported')) continue;
+    totalReported += 1;
+    if (note.includes('felt harder than expected')) harderReported += 1;
+    if (note.includes('noticed a difference') && !note.includes('did not notice')) noticedReported += 1;
+  }
+
+  // Outcome struggle — patient reported missions felt harder multiple times
+  if (harderReported >= 2 && !patient.hasSafetyFlag) {
+    flags.push({
+      patientLabel: patient.patientLabel,
+      kind: 'outcome_struggle',
+      severity: 'worth_a_conversation',
+      message: `Patient reported ${harderReported} mission(s) as harder than expected this week. They're completing but finding it difficult.`,
+      suggestion: "A conversation about what's making it hard could help. I'll suggest easier variants going forward.",
+      miraActed: true,
+    });
+  }
+
+  // Outcome positive — patient consistently noticing a difference
+  if (noticedReported >= 2 && totalReported >= 2 && patient.priority >= 2) {
+    flags.push({
+      patientLabel: patient.patientLabel,
+      kind: 'outcome_positive',
+      severity: 'positive',
+      message: `Patient reported noticing a difference on ${noticedReported} of ${totalReported} completed mission(s) this week. Positive engagement signal.`,
+      suggestion: 'No action needed. This is a good moment to acknowledge their progress if you reach out.',
       miraActed: false,
     });
   }

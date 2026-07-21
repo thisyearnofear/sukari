@@ -271,6 +271,12 @@ export default function WeeklyDigestScreen() {
               </Section>
             ) : null}
 
+            {digest.outcomeTrend && digest.outcomeTrend.totalReported > 0 ? (
+              <Section title="Outcome trend (patient-reported)">
+                <Text style={styles.narrative}>{digest.outcomeTrend.summary}</Text>
+              </Section>
+            ) : null}
+
             <Text style={styles.footerNote}>
               The clinician does not receive another dashboard to monitor continuously. They receive
               an exception-oriented summary when human attention can make a difference.

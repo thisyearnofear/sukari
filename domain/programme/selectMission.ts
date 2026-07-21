@@ -6,6 +6,7 @@ import {
   MissionSource,
   MissionTemplate,
   ProgrammeMission,
+  PatientReportedOutcome,
 } from './types';
 
 export function dateKeyFrom(ts: number = Date.now()): string {
@@ -37,11 +38,43 @@ function signalTags(snapshot: SignalSnapshot | null | undefined): string[] {
   return tags.length ? tags : ['disconnected'];
 }
 
+/**
+ * Summarize a patient's past reported outcomes for a given template.
+ * Returns how many times they reported harder/easier and whether they
+ * noticed a difference. Used by scoreTemplate to close the adapt loop:
+ * if a mission felt harder multiple times, avoid it; if it felt easier
+ * and they noticed a difference, that's signal to build on.
+ */
+interface OutcomeSummary {
+  harderCount: number;
+  easierCount: number;
+  noticedCount: number;
+  reportedCount: number;
+}
+
+function outcomeSummaryFor(
+  history: ProgrammeMission[],
+  templateId: string,
+): OutcomeSummary {
+  const summary: OutcomeSummary = { harderCount: 0, easierCount: 0, noticedCount: 0, reportedCount: 0 };
+  for (const m of history) {
+    if (m.templateId !== templateId) continue;
+    const pro = m.reportedOutcome;
+    if (!pro) continue;
+    summary.reportedCount += 1;
+    if (pro.feltDifficulty === 'harder') summary.harderCount += 1;
+    if (pro.feltDifficulty === 'easier') summary.easierCount += 1;
+    if (pro.noticedDifference === 'yes') summary.noticedCount += 1;
+  }
+  return summary;
+}
+
 function scoreTemplate(
   template: MissionTemplate,
   userMode: UserMode | null,
   snapshot: SignalSnapshot | null | undefined,
   recentTemplateIds: string[],
+  outcomeSummary?: OutcomeSummary,
 ): number {
   let score = 1;
   if (template.modes?.length) {
@@ -54,6 +87,21 @@ function scoreTemplate(
     score += hits * 2;
   }
   if (recentTemplateIds.includes(template.id)) score -= 3;
+
+  // Outcome-informed adaptation (the "adapt" phase of the closed loop).
+  // If the patient reported this template as "harder" 2+ times, strongly
+  // avoid it — they've told us it doesn't fit yet. If they reported it
+  // "easier" and noticed a difference, give a small bonus: repetition
+  // with positive signal builds habit. If they reported "harder" once,
+  // a small deduction — try something else but don't ban it entirely.
+  if (outcomeSummary) {
+    if (outcomeSummary.harderCount >= 2) score -= 4;
+    else if (outcomeSummary.harderCount === 1) score -= 1;
+    if (outcomeSummary.easierCount > 0 && outcomeSummary.noticedCount > 0) {
+      score += 2;
+    }
+  }
+
   return score;
 }
 
@@ -89,15 +137,15 @@ export function selectMission(input: SelectMissionInput): ProgrammeMission {
     if (forced) return missionFromTemplate(forced, dateKey, input.source ?? 'rules', now);
   }
 
-  const recent = (input.missionHistory || [])
-    .slice(-5)
-    .map((m) => m.templateId);
+  const history = input.missionHistory || [];
+  const recent = history.slice(-5).map((m) => m.templateId);
 
   let best: MissionTemplate | null = null;
   let bestScore = -Infinity;
 
   for (const template of MISSION_TEMPLATES) {
-    const s = scoreTemplate(template, input.userMode, input.snapshot, recent);
+    const outcomeSummary = outcomeSummaryFor(history, template.id);
+    const s = scoreTemplate(template, input.userMode, input.snapshot, recent, outcomeSummary);
     if (s > bestScore) {
       bestScore = s;
       best = template;
