@@ -61,6 +61,7 @@ export const MainMenu: React.FC<MainMenuProps> = ({
     setPrivacyMode,
     updatePrivacySettings,
     completeActiveMission,
+    captureMissionOutcome,
     relapseActiveMission,
     setDigestMeta,
     ensureTodayMission,
@@ -479,6 +480,9 @@ export const MainMenu: React.FC<MainMenuProps> = ({
         onRelapse={() => {
           if (!demoMode) relapseActiveMission();
           setMissionDeferred(false);
+        }}
+        onCaptureOutcome={(outcome, reflection) => {
+          if (!demoMode) captureMissionOutcome(outcome, reflection);
         }}
       />
 

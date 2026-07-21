@@ -16,6 +16,29 @@ export type MissionStatus = 'assigned' | 'practiced' | 'completed' | 'skipped' |
 
 export type MissionSource = 'rules' | 'coach' | 'caregiver_invite';
 
+/**
+ * Patient-reported outcome captured after mission completion.
+ *
+ * This is the "measure" phase of the closed loop. It is deliberately
+ * patient-reported, not CGM-derived — no causal claims, no clinical
+ * measurement. The patient tells Mira how it felt and whether they
+ * noticed a difference. This feeds the cohort evidence on the operator
+ * surface ("of 12 patients who completed post_meal_walk, 8 reported
+ * noticing a difference") without crossing the "no causal overclaiming"
+ * boundary.
+ *
+ * A future CGM-derived response classifier is a separate, gated step
+ * that requires clinical validation.
+ */
+export interface PatientReportedOutcome {
+  /** How the mission felt relative to expectation. */
+  feltDifficulty: 'easier' | 'about_right' | 'harder';
+  /** Whether the patient noticed a difference after completing. */
+  noticedDifference: 'yes' | 'no' | 'not_sure';
+  /** When the outcome was reported (epoch ms). */
+  reportedAt: number;
+}
+
 export interface ProgrammeMission {
   id: string;
   dateKey: string; // YYYY-MM-DD
@@ -29,6 +52,10 @@ export interface ProgrammeMission {
   source: MissionSource;
   practicedAt?: number;
   completedAt?: number;
+  /** Patient-reported outcome captured after completion (the "measure" phase). */
+  reportedOutcome?: PatientReportedOutcome | null;
+  /** Free-form reflection text captured with the outcome. */
+  reflection?: string | null;
 }
 
 export interface AdherenceWeek {

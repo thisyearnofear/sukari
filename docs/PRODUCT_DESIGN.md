@@ -119,9 +119,11 @@ The operator work queue is the commercial wedge. Care teams managing metabolic p
 
 **Now (no new data capture):** Archetype-level completion in the cohort aggregate — "post_meal_walk: 73% completion across N patients this week." The data already exists: `ProgrammeMission.behaviourTarget` is captured for every mission. Grouping the existing completion computation by `behaviourTarget` gives per-archetype rates with zero new infrastructure. Per-patient cohort context in the work queue row expansion — "Completion 3/7 — cohort median for post_meal_walk this week is 5/7" — tells the care team whether this patient is an exception or typical.
 
+**Shipped (patient-reported outcomes):** After completing a mission, Mira asks how it went. The patient's response is parsed into a `PatientReportedOutcome` (felt difficulty: easier/about right/harder; noticed a difference: yes/no/not sure) plus a free-form reflection. This is the "measure" phase of the closed loop — patient-reported, not CGM-derived, no causal claims. The outcome is persisted on the mission, flows into the clinician digest's `experimentsTried` ("Patient reported: felt easier than expected and noticed a difference"), and aggregates into the cohort response rate on the operator surface ("of 9 patients who reported, 64% noticed a difference"). This is the first version of closed-loop evidence: it's honest, it's contract-compatible, and it's the data that will eventually feed a stronger CGM-derived classifier.
+
 **Next (operator-only, needs curation):** An optional `externalEvidence` field on the clinician digest, populated from a curated evidence library keyed by `behaviourTarget`. External research tooling (firecrawl, exa, tinyfish) can help build the library, but the output must be human-reviewed before it reaches operators. Framed as "context for clinical judgment," not as recommendation. Never shown to patients.
 
-**Gated (the real moat):** A response classifier that looks at CGM/self-report data after a mission completes and classifies whether there was a measurable response. This unlocks the response-rate version of the cohort beat — "of 30 patients who held this mission archetype, 22 completed, 14 showed measurable response" — and is what makes the "closed-loop adherence evidence" claim in the thesis actually true. It is the core data moat: every completed mission with a measured response makes the cohort evidence stronger and the operator surface more defensible. It is also the hardest for competitors to copy because it requires the longitudinal mission-to-outcome data they do not have.
+**Gated (the real moat):** A CGM-derived response classifier that looks at glucose data before and after a mission completes and classifies whether there was a measurable metabolic response. This is distinct from the patient-reported outcome (which is already shipped) — it would add an objective signal alongside the subjective one. It requires clinical validation and touches the "no causal overclaiming" boundary, so it's gated. When it ships, it unlocks the full response-rate version of the cohort beat — "of 30 patients who held this mission archetype, 22 completed, 14 showed measurable response" — and makes the "closed-loop adherence evidence" claim in the thesis fully true. It is the core data moat: every completed mission with a measured response makes the cohort evidence stronger and the operator surface more defensible. It is also the hardest for competitors to copy because it requires the longitudinal mission-to-outcome data they do not have.
 
 ### The through-line
 
@@ -132,9 +134,10 @@ The patient surface stays exactly as it is: one mission, one conversation, no co
 - Name and visible brand changed to Sukari.
 - Mira established as the shared Famile agent identity; Amina is the labelled synthetic demo patient.
 - Conversation-first patient interface: the patient opens into a conversation with Mira, not a form or mission card. Mira initiates with a contextual opening line.
-- Intent parser maps natural language ("sure", "too hard", "I did it") to structured mission intents — no buttons required.
+- Intent parser maps natural language ("sure", "too hard", "I did it", "it went well") to structured mission intents — no buttons required.
 - Conversation memory persists across sessions in AsyncStorage. Mira references past context: "Last time you mentioned evenings were hard."
 - Conversation engine drives Mira's responses deterministically for mission actions; free-form chat escalates to the LLM.
+- Patient-reported outcome capture: after completing a mission, Mira asks how it went. The patient's response is parsed into a `PatientReportedOutcome` (felt difficulty + noticed difference) plus free-form reflection, persisted on the mission, and flows into the clinician digest and cohort response rate.
 - Mira's posture updates with each conversation state transition, reflected in the orb.
 - Live signal access is capability-gated; unavailable integrations are labelled as preview rather than implied to work.
 - Settings lets a person change mission input later without resetting role or programme progress.
@@ -146,6 +149,7 @@ The patient surface stays exactly as it is: one mission, one conversation, no co
 - Care-team surface is now Mira's work queue: active status lifecycle (open, contacted, snoozed, resolved), filter/sort, quick actions, and Mira-generated proactive flags.
 - Work queue state persists in AsyncStorage; expired snoozes auto-reopen.
 - Local digest history powers the care surface instead of fixture-only data.
+- Cohort evidence on the operator surface: archetype-level completion rates ("post_meal_walk: 73% across 12 patients"), per-patient cohort context in the work queue row, and patient-reported response rates ("64% noticed a difference").
 - Demo cohort remains available as an explicit toggle.
 - Legacy Web3, Beam, NFT, leaderboard, challenge-era, and combat/kingdom game surfaces were removed.
 - Funnel instrumentation covers the patient and care-team conversion path.

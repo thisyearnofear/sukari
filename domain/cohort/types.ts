@@ -61,6 +61,9 @@ export interface CohortAggregate {
   weeklyAdherentPatients: number;
   /** Completion rate broken down by behaviourTarget, e.g. { post_meal_walk: { rate: 73, count: 12 } }. */
   archetypeCompletion?: Record<string, { rate: number; count: number }>;
+  /** Patient-reported response rate by behaviourTarget. Of patients who completed
+   *  and reported, how many noticed a difference. e.g. { post_meal_walk: { responseRate: 64, reported: 9, noticed: 5 } }. */
+  archetypeResponseRate?: Record<string, { responseRate: number; reported: number; noticed: number }>;
 }
 
 /**

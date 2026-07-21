@@ -35,7 +35,7 @@ import { MiraOrb } from '@/components/agent/MiraOrb';
 import { PressableScale } from '@/components/ui/PressableScale';
 import { useCoach } from '@/hooks/useCoach';
 import { track } from '@/utils/analytics';
-import type { ProgrammeMission } from '@/domain/programme/types';
+import type { ProgrammeMission, PatientReportedOutcome } from '@/domain/programme/types';
 import type { MetabolicPattern } from '@/domain/patterns/types';
 import type { SignalSnapshot } from '@/domain/signals';
 import type { UserMode } from '@/types/game';
@@ -72,6 +72,7 @@ interface ConversationHomeProps {
   onNotPractical: () => void;
   onMarkDone: () => void;
   onRelapse: () => void;
+  onCaptureOutcome: (outcome: PatientReportedOutcome, reflection?: string) => void;
   onOpenSettings: () => void;
   onOpenCharter: () => void;
   onOpenCareTeamSummary: () => void;
@@ -102,6 +103,7 @@ export const ConversationHome: React.FC<ConversationHomeProps> = ({
   onNotPractical,
   onMarkDone,
   onRelapse,
+  onCaptureOutcome,
   onOpenSettings,
   onOpenCharter,
   onOpenCareTeamSummary,
@@ -276,6 +278,9 @@ export const ConversationHome: React.FC<ConversationHomeProps> = ({
         case 'complete':
           onMarkDone();
           break;
+        case 'capture_outcome':
+          onCaptureOutcome(response.missionAction.outcome, response.missionAction.reflection);
+          break;
         case 'relapse':
           onRelapse();
           break;
@@ -319,6 +324,7 @@ export const ConversationHome: React.FC<ConversationHomeProps> = ({
     onLater,
     onMarkDone,
     onRelapse,
+    onCaptureOutcome,
     persistTurns,
   ]);
 

@@ -261,6 +261,7 @@ function buildAggregate(patients: CohortPatientSummary[]): CohortAggregate {
   const totalStaffMinutesSaved = patients.reduce((sum, p) => sum + p.staffMinutesSaved, 0);
   const weeklyAdherentPatients = patients.filter((p) => p.missionsCompleted > 0).length;
   const archetypeCompletion = computeArchetypeCompletion(patients);
+  const archetypeResponseRate = computeArchetypeResponseRate(patients);
 
   return {
     enrolled,
@@ -271,6 +272,7 @@ function buildAggregate(patients: CohortPatientSummary[]): CohortAggregate {
     totalStaffMinutesSaved,
     weeklyAdherentPatients,
     archetypeCompletion,
+    archetypeResponseRate,
   };
 }
 
@@ -298,6 +300,48 @@ export function computeArchetypeCompletion(
     out[behaviour] = {
       rate: Math.round((entry.completed / Math.max(entry.assigned, 1)) * 100),
       count: entry.count,
+    };
+  }
+  return out;
+}
+
+/**
+ * Compute patient-reported response rate by behaviourTarget.
+ *
+ * Reads from digest.experimentsTried — each entry's associatedNote is checked
+ * for PRO signal. This is deliberately simple: it counts missions where the
+ * patient reported noticing a difference vs. those where they didn't or were
+ * uncertain. The rate is "of those who reported, what fraction noticed a
+ * difference" — not "of those who completed" (that would conflate completion
+ * with response).
+ */
+export function computeArchetypeResponseRate(
+  patients: CohortPatientSummary[],
+): Record<string, { responseRate: number; reported: number; noticed: number }> {
+  const map = new Map<string, { reported: number; noticed: number }>();
+  for (const p of patients) {
+    const behaviour = p.digest?.topBehaviours?.[0];
+    if (!behaviour) continue;
+    const experiments = p.digest?.experimentsTried ?? [];
+    for (const exp of experiments) {
+      const note = exp.associatedNote.toLowerCase();
+      // Only count if a PRO was actually reported (not "outcome not yet reported")
+      if (note.includes('patient reported')) {
+        const entry = map.get(behaviour) ?? { reported: 0, noticed: 0 };
+        entry.reported += 1;
+        if (note.includes('noticed a difference') && !note.includes('did not notice')) {
+          entry.noticed += 1;
+        }
+        map.set(behaviour, entry);
+      }
+    }
+  }
+  const out: Record<string, { responseRate: number; reported: number; noticed: number }> = {};
+  for (const [behaviour, entry] of map) {
+    out[behaviour] = {
+      responseRate: entry.reported > 0 ? Math.round((entry.noticed / entry.reported) * 100) : 0,
+      reported: entry.reported,
+      noticed: entry.noticed,
     };
   }
   return out;

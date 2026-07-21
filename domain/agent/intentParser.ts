@@ -23,6 +23,7 @@ export type ConversationIntent =
   | { kind: 'later' }
   | { kind: 'done'; detail?: string }
   | { kind: 'not_done'; reason?: string }
+  | { kind: 'report_outcome'; feltDifficulty: 'easier' | 'about_right' | 'harder'; noticedDifference: 'yes' | 'no' | 'not_sure'; reflection: string }
   | { kind: 'how_was_it'; detail?: string }
   | { kind: 'chat'; text: string };
 
@@ -70,6 +71,35 @@ const HOW_WAS_IT_PATTERNS = [
   /^(my (glucose|sugar|reading|cgm|numbers))\b/,
 ];
 
+// Outcome reporting patterns — patient tells Mira how it went after completing.
+// These are checked BEFORE easier patterns so "felt easier" is parsed as
+// an outcome report, not a make_easier request. The patterns are anchored
+// at the start and use phrases that don't collide with mission intents.
+const OUTCOME_EASIER_PATTERNS = [
+  /^(it went (well|good|great|fine|ok|okay)|went (well|good|great|fine))\b/,
+  /^(felt (good|great|fine|easy|easier|doable|manageable))\b/,
+  /^(easier than (i thought|expected|imagined))\b/,
+  /^(no problem|was fine|pretty good|all good)\b/,
+];
+
+const OUTCOME_HARDER_PATTERNS = [
+  /^(it was (hard|difficult|tough|challenging|rough)|was (hard|difficult|tough|challenging|rough))\b/,
+  /^(felt (hard|difficult|tough|challenging|rough|like too much))\b/,
+  /^(struggled|struggle|didn'?t go well|not great|rough one)\b/,
+  /^(harder than (i thought|expected|imagined))\b/,
+];
+
+const NOTICED_DIFFERENCE_PATTERNS = [
+  /^(i (noticed|could tell|saw)|noticed|could tell|saw a difference|made a difference)\b/,
+  /^(glucose|sugar|numbers|readings?) (was|were|seemed|felt) (lower|better|steadier|less|improved|calmer)\b/,
+  /^(my (glucose|sugar|numbers|readings?) (was|were) (lower|better|steadier))\b/,
+];
+
+const NO_DIFFERENCE_PATTERNS = [
+  /^(didn'?t notice|no difference|didn'?t see (any )?difference|nothing changed|same as (usual|before))\b/,
+  /^(hard to tell|can'?t tell|not sure if|didn'?t really notice)\b/,
+];
+
 function matches(text: string, patterns: RegExp[]): string | null {
   const lower = LOWER(text);
   for (const p of patterns) {
@@ -107,6 +137,29 @@ export function parseIntent(input: string): ConversationIntent {
     const reasonMatch = lower.match(/(?:didn'?t|forgot|couldn'?t)\b(.*)/);
     const reason = reasonMatch ? reasonMatch[1].trim() : undefined;
     return { kind: 'not_done', reason };
+  }
+
+  // Outcome reporting — checked before easier patterns so "felt easier"
+  // is parsed as an outcome, not a make_easier request.
+  if (
+    matches(text, OUTCOME_EASIER_PATTERNS) ||
+    matches(text, OUTCOME_HARDER_PATTERNS) ||
+    matches(text, NOTICED_DIFFERENCE_PATTERNS) ||
+    matches(text, NO_DIFFERENCE_PATTERNS)
+  ) {
+    const feltDifficulty: 'easier' | 'about_right' | 'harder' = matches(text, OUTCOME_EASIER_PATTERNS)
+      ? 'easier'
+      : matches(text, OUTCOME_HARDER_PATTERNS)
+        ? 'harder'
+        : 'about_right';
+    const noticedDifference: 'yes' | 'no' | 'not_sure' = matches(text, NOTICED_DIFFERENCE_PATTERNS)
+      ? 'yes'
+      : matches(text, NO_DIFFERENCE_PATTERNS)
+        ? matches(text, [/^(hard to tell|can'?t tell|not sure if)/])
+          ? 'not_sure'
+          : 'no'
+        : 'not_sure';
+    return { kind: 'report_outcome', feltDifficulty, noticedDifference, reflection: text };
   }
 
   if (matches(text, EASIER_PATTERNS)) {

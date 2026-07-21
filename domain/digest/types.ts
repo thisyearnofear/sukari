@@ -98,11 +98,33 @@ export function buildLocalDigest(input: {
     outreachReason: outreachRecommended
       ? 'Low mission completion with recovery moments — brief human check-in may help.'
       : 'No safety exceptions. Exception-oriented summary only.',
-    experimentsTried: completed.slice(-3).map((m) => ({
-      action: m.realWorldAction,
-      completed: 1,
-      associatedNote: 'Patient marked complete — outcome association pending more days.',
-    })),
+    experimentsTried: completed.slice(-3).map((m) => {
+      const pro = m.reportedOutcome;
+      let associatedNote: string;
+      if (pro) {
+        const difficulty =
+          pro.feltDifficulty === 'easier'
+            ? 'felt easier than expected'
+            : pro.feltDifficulty === 'harder'
+              ? 'felt harder than expected'
+              : 'felt about right';
+        const difference =
+          pro.noticedDifference === 'yes'
+            ? ' and noticed a difference'
+            : pro.noticedDifference === 'no'
+              ? ' but did not notice a difference yet'
+              : ' (uncertain if they noticed a difference)';
+        const reflectionPart = m.reflection ? ` — "${m.reflection}"` : '';
+        associatedNote = `Patient reported: ${difficulty}${difference} (patient-reported, observational).${reflectionPart}`;
+      } else {
+        associatedNote = 'Patient marked complete — outcome not yet reported.';
+      }
+      return {
+        action: m.realWorldAction,
+        completed: 1,
+        associatedNote,
+      };
+    }),
     mode: 'clinician',
   };
 }

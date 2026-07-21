@@ -23,6 +23,7 @@ import {
   generateMiraFlags,
   topFlagForPatient,
   computeArchetypeCompletion,
+  computeArchetypeResponseRate,
   stampArchetypeContext,
 } from '@/domain/cohort';
 import { listLocalWeeklyDigests, type StoredWeeklyDigest } from '@/domain/digest';
@@ -113,6 +114,7 @@ export default function CarePanelScreen() {
       };
     });
     const archetypeCompletion = computeArchetypeCompletion(patients);
+    const archetypeResponseRate = computeArchetypeResponseRate(patients);
     stampArchetypeContext(patients, archetypeCompletion);
     return {
       weekKey: localDigests[0]?.weekKey || '',
@@ -129,6 +131,7 @@ export default function CarePanelScreen() {
         totalStaffMinutesSaved: 0,
         weeklyAdherentPatients: patients.filter((p) => p.missionsCompleted > 0).length,
         archetypeCompletion,
+        archetypeResponseRate,
       },
       patients: patients.sort((a, b) => a.priority - b.priority),
       source: 'local' as const,
@@ -378,14 +381,20 @@ function AggregateHeader({
               <View style={[styles.archetypeLine, compact && styles.archetypeLineCompact]}>
                 <Text style={styles.archetypeLabel}>By mission type this week:</Text>
                 <View style={styles.archetypeChips}>
-                  {entries.slice(0, 4).map(([behaviour, stats]) => (
-                    <View key={behaviour} style={styles.archetypeChip}>
-                      <Text style={styles.archetypeChipText}>
-                        {behaviour.replace(/_/g, ' ')} · {stats.rate}% · {stats.count}{' '}
-                        {stats.count === 1 ? 'patient' : 'patients'}
-                      </Text>
-                    </View>
-                  ))}
+                  {entries.slice(0, 4).map(([behaviour, stats]) => {
+                    const response = aggregate.archetypeResponseRate?.[behaviour];
+                    return (
+                      <View key={behaviour} style={styles.archetypeChip}>
+                        <Text style={styles.archetypeChipText}>
+                          {behaviour.replace(/_/g, ' ')} · {stats.rate}% · {stats.count}{' '}
+                          {stats.count === 1 ? 'patient' : 'patients'}
+                          {response && response.reported > 0
+                            ? ` · ${response.responseRate}% noticed difference (${response.reported} reported)`
+                            : ''}
+                        </Text>
+                      </View>
+                    );
+                  })}
                 </View>
               </View>
             );

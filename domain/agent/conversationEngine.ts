@@ -17,7 +17,7 @@
  * "Welcome to Sukari" — it's a contextual observation that references
  * what happened before.
  */
-import type { ProgrammeMission } from '@/domain/programme/types';
+import type { ProgrammeMission, PatientReportedOutcome } from '@/domain/programme/types';
 import type { MetabolicPattern } from '@/domain/patterns/types';
 import type { SukariMiraPresence } from '@/domain/agent/miraPresence';
 import { buildMiraPresence, steadyPresence } from '@/domain/agent/miraPresence';
@@ -60,7 +60,8 @@ export type MissionAction =
   | { kind: 'make_easier' }
   | { kind: 'later' }
   | { kind: 'complete' }
-  | { kind: 'relapse' };
+  | { kind: 'relapse' }
+  | { kind: 'capture_outcome'; outcome: PatientReportedOutcome; reflection: string };
 
 /**
  * Build the initial conversation state from the current mission/pattern.
@@ -265,6 +266,49 @@ export function processIntent(
         presence,
         shouldEscalateToLLM: false,
         missionAction: { kind: 'relapse' },
+      };
+    }
+
+    case 'report_outcome': {
+      const newState: ConversationState = { ...state, phase: 'checking_in' };
+      const presence = state.pattern
+        ? buildMiraPresence(state.pattern, 'completed', false)
+        : steadyPresence();
+
+      const outcome: PatientReportedOutcome = {
+        feltDifficulty: intent.feltDifficulty,
+        noticedDifference: intent.noticedDifference,
+        reportedAt: Date.now(),
+      };
+
+      // Deterministic acknowledgment that references the outcome without
+      // making causal claims. Stays observational: "you noticed" not "it caused."
+      const difficultyAck =
+        intent.feltDifficulty === 'easier'
+          ? "That's encouraging — easier than expected is a good sign it fits."
+          : intent.feltDifficulty === 'harder'
+            ? "Harder than expected is useful to know. I'll factor that into what I suggest next."
+            : "Good to know it felt about right.";
+
+      const differenceAck =
+        intent.noticedDifference === 'yes'
+          ? " You noticed a difference — I'll remember that."
+          : intent.noticedDifference === 'no'
+            ? " No difference noticed yet — that's normal early on. The pattern matters more over time."
+            : " Hard to tell so far. That's honest.";
+
+      const responses = [
+        `${difficultyAck}${differenceAck} I've logged this.`,
+        `${difficultyAck}${differenceAck} Thank you for telling me — this helps me suggest better next time.`,
+        `Got it.${difficultyAck}${differenceAck} This is the kind of detail that shapes what comes next.`,
+      ];
+
+      return {
+        text: pickResponse(responses, intent),
+        state: newState,
+        presence,
+        shouldEscalateToLLM: false,
+        missionAction: { kind: 'capture_outcome', outcome, reflection: intent.reflection },
       };
     }
 

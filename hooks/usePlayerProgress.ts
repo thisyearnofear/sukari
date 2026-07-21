@@ -7,6 +7,7 @@ import type { SignalSnapshot } from '@/domain/signals';
 import {
   AdherenceWeek,
   ProgrammeMission,
+  PatientReportedOutcome,
   emptyAdherenceWeek,
   rollAdherenceWeek,
   selectMission,
@@ -297,6 +298,34 @@ export function usePlayerProgress() {
     });
   }, []);
 
+  const captureMissionOutcome = useCallback(
+    (outcome: PatientReportedOutcome, reflection?: string) => {
+      setProgress((prev) => {
+        if (!prev.activeMission) return prev;
+        const next: ProgrammeMission = {
+          ...prev.activeMission,
+          reportedOutcome: outcome,
+          reflection: reflection ?? null,
+        };
+        track('measured_response_captured', {
+          template_id: next.templateId,
+          behaviour: next.behaviourTarget,
+          felt_difficulty: outcome.feltDifficulty,
+          noticed_difference: outcome.noticedDifference,
+          privacy_mode: prev.privacyMode,
+        });
+        return {
+          ...prev,
+          activeMission: next,
+          missionHistory: [...prev.missionHistory.filter((m) => m.id !== next.id), next].slice(
+            -MISSION_HISTORY_CAP,
+          ),
+        };
+      });
+    },
+    [],
+  );
+
   const relapseActiveMission = useCallback(() => {
     setProgress((prev) => {
       if (!prev.activeMission) return prev;
@@ -350,6 +379,7 @@ export function usePlayerProgress() {
     applyMissionUpdate,
     markMissionPracticed,
     completeActiveMission,
+    captureMissionOutcome,
     relapseActiveMission,
     setActiveMissionFromCoach,
     setDigestMeta,
