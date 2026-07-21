@@ -48,6 +48,14 @@ import {
 import { buildMissionMediaBrief } from '@/domain/agent';
 import { useCoach } from '@/hooks/useCoach';
 import { track } from '@/utils/analytics';
+import {
+  completionHeartbeat,
+  offerPulse,
+  acceptPulse,
+  completePulse,
+  milestonePulse,
+  noticeTick,
+} from '@/utils/haptics';
 import type { ProgrammeMission, PatientReportedOutcome } from '@/domain/programme/types';
 import type { MetabolicPattern } from '@/domain/patterns/types';
 import type { SignalSnapshot } from '@/domain/signals';
@@ -64,6 +72,7 @@ import {
   type ConversationMemory,
 } from '@/domain/agent/conversationMemory';
 import { steadyPresence, buildMiraPresence, type SukariMiraPresence } from '@/domain/agent/miraPresence';
+import { postureMorph } from '@/domain/agent/miraContract';
 
 const P = COLORS.PROGRAMME;
 
@@ -130,6 +139,15 @@ export const ConversationHome: React.FC<ConversationHomeProps> = ({
   const scrollRef = useRef<ScrollView>(null);
   const isProcessingRef = useRef(false);
 
+  // Orb reactivity — the orb responds to the patient's attention.
+  // isTyping: patient is actively typing → orb shifts to inquiry (listening)
+  // idleTimer: patient stopped typing but hasn't sent → orb shifts to watching
+  // savedPresence: the presence before typing started, restored when idle/sent
+  const [isTyping, setIsTyping] = useState(false);
+  const idleTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const savedPresenceRef = useRef<SukariMiraPresence | null>(null);
+  const wasTypingRef = useRef(false);
+
   // Load conversation memory on mount and generate opening line
   useEffect(() => {
     let active = true;
@@ -170,6 +188,8 @@ export const ConversationHome: React.FC<ConversationHomeProps> = ({
       }
 
       setOpened(true);
+      // The orb "notices" the patient — a subtle haptic tick on open.
+      noticeTick();
       track('conversation_opened', {
         phase: state.phase,
         has_prior_context: contextSummary(openedMem).hasPriorContext,
@@ -246,6 +266,66 @@ export const ConversationHome: React.FC<ConversationHomeProps> = ({
     }));
   }, [mission, pattern, opened]);
 
+  // Orb reactivity: when the patient starts typing, the orb shifts to
+  // inquiry (listening). When they stop for 2 seconds without sending,
+  // it shifts to watching (waiting patiently). When they send, it
+  // restores to the conversation-state presence.
+  const handleInputChange = useCallback(
+    (text: string) => {
+      setInput(text);
+
+      // First keystroke — save current presence and shift to inquiry
+      if (!wasTypingRef.current && text.length > 0) {
+        wasTypingRef.current = true;
+        savedPresenceRef.current = presence;
+        setPresence({
+          ...presence,
+          posture: 'inquiry',
+          morph: postureMorph('inquiry', 0),
+          label: 'Listening',
+          message: 'Mira is listening.',
+        });
+      }
+
+      // Reset the idle timer — patient is still typing
+      if (idleTimerRef.current) clearTimeout(idleTimerRef.current);
+
+      // If text is empty (patient deleted everything), restore presence
+      if (text.length === 0 && wasTypingRef.current) {
+        wasTypingRef.current = false;
+        if (savedPresenceRef.current) {
+          setPresence(savedPresenceRef.current);
+          savedPresenceRef.current = null;
+        }
+        return;
+      }
+
+      // Start idle timer — if patient stops typing for 2s, shift to watching
+      idleTimerRef.current = setTimeout(() => {
+        setPresence((prev) => ({
+          ...prev,
+          posture: 'watching',
+          morph: postureMorph('watching', 0),
+          label: 'Waiting',
+          message: 'Mira is waiting.',
+        }));
+      }, 2000);
+    },
+    [presence],
+  );
+
+  // Restore presence after sending
+  const restorePresenceAfterSend = useCallback(() => {
+    wasTypingRef.current = false;
+    if (idleTimerRef.current) {
+      clearTimeout(idleTimerRef.current);
+      idleTimerRef.current = null;
+    }
+    // Don't restore saved presence — the conversation engine will set
+    // the correct presence for the new state.
+    savedPresenceRef.current = null;
+  }, []);
+
   // Auto-scroll to bottom when thread changes
   useEffect(() => {
     if (scrollRef.current) {
@@ -310,6 +390,7 @@ export const ConversationHome: React.FC<ConversationHomeProps> = ({
 
     isProcessingRef.current = true;
     setInput('');
+    restorePresenceAfterSend();
 
     // Add user message to thread
     const userMsg: ThreadMessage = {
@@ -340,6 +421,29 @@ export const ConversationHome: React.FC<ConversationHomeProps> = ({
     setConvState(response.state);
     setPresence(response.presence);
 
+    // Haptic punctuation — fires at meaningful loop moments, not on
+    // every message. The patterns are distinct so the patient can feel
+    // the difference between "offered," "accepted," "done," and
+    // "you noticed something."
+    if (response.state.phase === 'offering' && convState.phase !== 'offering') {
+      offerPulse();
+    }
+    if (response.state.phase === 'accepted' && convState.phase !== 'accepted') {
+      acceptPulse();
+    }
+    if (response.state.phase === 'completed' && convState.phase !== 'completed') {
+      completePulse();
+    }
+    // Milestone: first noticed-difference — double pulse
+    if (
+      response.missionAction?.kind === 'capture_outcome' &&
+      response.missionAction.outcome.noticedDifference === 'yes' &&
+      memory &&
+      contextSummary(memory).noticedDifferenceCount === 0
+    ) {
+      milestonePulse();
+    }
+
     // Execute mission action if any
     if (response.missionAction) {
       switch (response.missionAction.kind) {
@@ -354,6 +458,7 @@ export const ConversationHome: React.FC<ConversationHomeProps> = ({
           break;
         case 'complete':
           onMarkDone();
+          completionHeartbeat();
           break;
         case 'capture_outcome':
           onCaptureOutcome(response.missionAction.outcome, response.missionAction.reflection);
@@ -403,6 +508,7 @@ export const ConversationHome: React.FC<ConversationHomeProps> = ({
     onRelapse,
     onCaptureOutcome,
     persistTurns,
+    restorePresenceAfterSend,
   ]);
 
   const isLoading = coach.isLoading || isProcessingRef.current;
@@ -510,7 +616,7 @@ export const ConversationHome: React.FC<ConversationHomeProps> = ({
             <TextInput
               style={styles.input}
               value={input}
-              onChangeText={setInput}
+              onChangeText={handleInputChange}
               placeholder={isLoading ? 'Mira is responding…' : 'Talk to Mira…'}
               placeholderTextColor={P.textMuted}
               editable={!isLoading}
