@@ -39,6 +39,31 @@ export interface CohortPatientSummary {
   primaryBehaviour?: string;
   /** Cohort median completion rate for this patient's primaryBehaviour this week. */
   cohortMedianForArchetype?: number;
+  /** Structured outcome summary derived from PRO data. Used by Mira flags
+   *  to reference specific behaviours instead of parsing text. */
+  outcomeSummary?: PatientOutcomeSummary;
+}
+
+/**
+ * Structured patient-reported outcome summary for flag generation.
+ * Derived from digest.outcomeByBehaviour + digest.patientBarriers.
+ */
+export interface PatientOutcomeSummary {
+  /** Per-behaviour PRO counts, keyed by behaviourTarget. */
+  byBehaviour: Record<string, {
+    harderCount: number;
+    easierCount: number;
+    noticedCount: number;
+    reportedCount: number;
+  }>;
+  /** Behaviours where the patient reported "harder" 2+ times (struggle pattern). */
+  struggleBehaviours: string[];
+  /** Behaviours where the patient noticed a difference 2+ times (positive signal). */
+  positiveBehaviours: string[];
+  /** Total reported outcomes across all behaviours. */
+  totalReported: number;
+  /** Total "noticed a difference" reports. */
+  totalNoticed: number;
 }
 
 /**

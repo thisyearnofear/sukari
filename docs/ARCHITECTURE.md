@@ -109,9 +109,9 @@ The care surface is Mira's work queue — an active operator surface, not a pass
 
 The aggregate header shows cohort evidence: archetype-level completion rates ("post_meal_walk: 73% across 12 patients") and patient-reported response rates ("64% noticed a difference, 9 reported"). Per-patient cohort context appears in the work queue row expansion ("cohort median for post_meal_walk this week is 5/7"). The clinician digest includes a longitudinal outcome trend section showing the arc across all completed missions with reported outcomes.
 
-Mira flags now include outcome-aware kinds: `outcome_struggle` (patient reported 2+ missions as harder than expected) and `outcome_positive` (patient noticed a difference on 2+ of completed missions), alongside the original safety, completion drop, barrier pattern, recovery, streak, and re-engagement flags.
+Mira flags now include outcome-aware kinds: `outcome_struggle` (patient reported specific behaviours as harder 2+ times), `outcome_positive` (patient noticed a difference on specific behaviours 2+ times), and `outcome_barrier_link` (patient has both a stated barrier and outcome struggle on a related behaviour — the barrier and the struggle align). Flags reference specific behaviours ("post_meal_walk felt harder 2 times") using structured PRO data from `PatientOutcomeSummary`, not text parsing.
 
-Work queue state persists in AsyncStorage (`domain/cohort/workQueue.ts`). Mira flags are generated deterministically from cohort summaries + work item status (`domain/cohort/miraFlags.ts`). Archetype completion and response rate are computed in `domain/cohort/synthetic.ts`.
+Work queue state persists in AsyncStorage (`domain/cohort/workQueue.ts`). Mira flags are generated deterministically from cohort summaries + work item status (`domain/cohort/miraFlags.ts`). Archetype completion and response rate are computed in `domain/cohort/synthetic.ts`. Outcome summaries are built from `digest.outcomeByBehaviour` by `buildOutcomeSummary` and stamped on each patient by `stampOutcomeSummary`.
 
 A production cohort product needs:
 

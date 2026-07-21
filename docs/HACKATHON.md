@@ -47,7 +47,7 @@ The Amina demo remains deterministic for judging. Mira is the named Famile agent
 | Quiet measured response | Done |
 | Local digest history | Done |
 | Care-team work queue with status lifecycle (open, contacted, snoozed, resolved) | Done |
-| Mira proactive flags for care team (safety, completion drop, barrier, recovery, streak, re-engagement, outcome struggle, outcome positive) | Done |
+| Mira proactive flags for care team (safety, completion drop, barrier, recovery, streak, re-engagement, outcome struggle, outcome positive, outcome barrier link) | Done |
 | Work queue persistence in AsyncStorage | Done |
 | Care-team outreach instrumentation | Done |
 | Patient-reported outcome capture (felt difficulty + noticed difference + reflection) | Done |

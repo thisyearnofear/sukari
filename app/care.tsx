@@ -25,6 +25,7 @@ import {
   computeArchetypeCompletion,
   computeArchetypeResponseRate,
   stampArchetypeContext,
+  stampOutcomeSummary,
 } from '@/domain/cohort';
 import { listLocalWeeklyDigests, type StoredWeeklyDigest } from '@/domain/digest';
 import { FONTS } from '@/constants/designSystem';
@@ -116,6 +117,7 @@ export default function CarePanelScreen() {
     const archetypeCompletion = computeArchetypeCompletion(patients);
     const archetypeResponseRate = computeArchetypeResponseRate(patients);
     stampArchetypeContext(patients, archetypeCompletion);
+    stampOutcomeSummary(patients);
     return {
       weekKey: localDigests[0]?.weekKey || '',
       aggregate: {

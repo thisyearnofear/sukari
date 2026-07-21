@@ -43,7 +43,7 @@ This reflects the product thesis: adherence per minute of attention should impro
 - work item status distribution (open, contacted, snoozed, resolved);
 - time from open to contacted;
 - time from contacted to resolved;
-- Mira flag volume by severity (urgent, worth_a_conversation, positive) and by kind (including outcome_struggle, outcome_positive);
+- Mira flag volume by severity (urgent, worth_a_conversation, positive) and by kind (including outcome_struggle, outcome_positive, outcome_barrier_link);
 - Mira flag accuracy (flagged patients who benefited from outreach);
 - cohort response rate by archetype (of patients who reported, what fraction noticed a difference);
 - snooze usage and re-open rate;

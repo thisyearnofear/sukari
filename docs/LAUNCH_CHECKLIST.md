@@ -13,7 +13,7 @@
 - [x] Demo pattern is clearly labelled.
 - [x] Measured response copy avoids causal overclaiming.
 - [x] Care-team work queue with status lifecycle (open, contacted, snoozed, resolved), filter/sort, and quick actions.
-- [x] Mira proactive flags for care team (safety, completion drop, barrier, recovery, streak, re-engagement, outcome struggle, outcome positive).
+- [x] Mira proactive flags for care team (safety, completion drop, barrier, recovery, streak, re-engagement, outcome struggle, outcome positive, outcome barrier link).
 - [x] Cohort evidence on operator surface: archetype completion rates + patient-reported response rates by mission type.
 - [x] Longitudinal outcome trend in clinician digest.
 - [x] Work queue state persists in AsyncStorage; expired snoozes auto-reopen.

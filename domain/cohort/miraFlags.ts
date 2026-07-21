@@ -25,7 +25,8 @@ export type FlagKind =
   | 'streak_building'
   | 're_engagement'
   | 'outcome_struggle'
-  | 'outcome_positive';
+  | 'outcome_positive'
+  | 'outcome_barrier_link';
 
 export type FlagSeverity = 'urgent' | 'worth_a_conversation' | 'positive';
 
@@ -136,42 +137,73 @@ function flagsForPatient(
     });
   }
 
-  // Outcome-aware flags — derived from patient-reported outcomes in experimentsTried.
-  // These parse the associatedNote text that buildLocalDigest generates from PRO data.
-  const experiments = digest?.experimentsTried ?? [];
-  let harderReported = 0;
-  let noticedReported = 0;
-  let totalReported = 0;
-  for (const exp of experiments) {
-    const note = exp.associatedNote.toLowerCase();
-    if (!note.includes('patient reported')) continue;
-    totalReported += 1;
-    if (note.includes('felt harder than expected')) harderReported += 1;
-    if (note.includes('noticed a difference') && !note.includes('did not notice')) noticedReported += 1;
-  }
+  // Outcome-aware flags — use structured PRO data from outcomeSummary,
+  // not text parsing. References specific behaviours so the operator
+  // knows exactly which missions the patient struggled with or benefited from.
+  const outcome = patient.outcomeSummary;
+  const barriers = digest?.patientBarriers ?? [];
 
-  // Outcome struggle — patient reported missions felt harder multiple times
-  if (harderReported >= 2 && !patient.hasSafetyFlag) {
-    flags.push({
-      patientLabel: patient.patientLabel,
-      kind: 'outcome_struggle',
-      severity: 'worth_a_conversation',
-      message: `Patient reported ${harderReported} mission(s) as harder than expected this week. They're completing but finding it difficult.`,
-      suggestion: "A conversation about what's making it hard could help. I'll suggest easier variants going forward.",
-      miraActed: true,
-    });
-  }
+  if (outcome) {
+    // Outcome struggle — patient reported specific behaviours as harder 2+ times
+    if (outcome.struggleBehaviours.length > 0 && !patient.hasSafetyFlag) {
+      const behaviours = outcome.struggleBehaviours.map((b) => b.replace(/_/g, ' '));
+      const behaviourList = behaviours.length === 1
+        ? behaviours[0]
+        : `${behaviours.slice(0, -1).join(', ')} and ${behaviours[behaviours.length - 1]}`;
+      flags.push({
+        patientLabel: patient.patientLabel,
+        kind: 'outcome_struggle',
+        severity: 'worth_a_conversation',
+        message: `Patient reported ${behaviourList} felt harder than expected across ${outcome.totalReported} completed mission(s). They're completing but finding it difficult.`,
+        suggestion: "A conversation about what's making it hard could help. I'll suggest easier variants going forward.",
+        miraActed: true,
+      });
+    }
 
-  // Outcome positive — patient consistently noticing a difference
-  if (noticedReported >= 2 && totalReported >= 2 && patient.priority >= 2) {
-    flags.push({
-      patientLabel: patient.patientLabel,
-      kind: 'outcome_positive',
-      severity: 'positive',
-      message: `Patient reported noticing a difference on ${noticedReported} of ${totalReported} completed mission(s) this week. Positive engagement signal.`,
-      suggestion: 'No action needed. This is a good moment to acknowledge their progress if you reach out.',
-      miraActed: false,
-    });
+    // Outcome positive — patient consistently noticing a difference on specific behaviours
+    if (outcome.positiveBehaviours.length > 0 && outcome.totalNoticed >= 2 && patient.priority >= 2) {
+      const behaviours = outcome.positiveBehaviours.map((b) => b.replace(/_/g, ' '));
+      const behaviourList = behaviours.length === 1
+        ? behaviours[0]
+        : `${behaviours.slice(0, -1).join(', ')} and ${behaviours[behaviours.length - 1]}`;
+      flags.push({
+        patientLabel: patient.patientLabel,
+        kind: 'outcome_positive',
+        severity: 'positive',
+        message: `Patient noticed a difference on ${behaviourList} (${outcome.totalNoticed} of ${outcome.totalReported} reported mission(s)). Positive engagement signal.`,
+        suggestion: 'No action needed. This is a good moment to acknowledge their progress if you reach out.',
+        miraActed: false,
+      });
+    }
+
+    // Outcome-barrier link — the patient has both a stated barrier AND outcome
+    // struggle on the same behaviour. This is a stronger signal than either alone:
+    // the barrier explains the struggle, and the struggle confirms the barrier matters.
+    if (outcome.struggleBehaviours.length > 0 && barriers.length > 0 && !patient.hasSafetyFlag) {
+      const barrierText = barriers[0].toLowerCase();
+      // Link barrier keywords to behaviours when they plausibly align.
+      // This is observational, not causal — "the barrier and the struggle align"
+      // not "the barrier caused the struggle."
+      const eveningBarrier = barrierText.includes('evening') || barrierText.includes('night');
+      const workBarrier = barrierText.includes('work') || barrierText.includes('busy');
+      const hasEveningStruggle = outcome.struggleBehaviours.some((b) =>
+        b.includes('evening') || b.includes('post_meal'),
+      );
+      const hasWorkStruggle = outcome.struggleBehaviours.some((b) =>
+        b.includes('work') || b.includes('protein_breakfast'),
+      );
+      if ((eveningBarrier && hasEveningStruggle) || (workBarrier && hasWorkStruggle)) {
+        const behaviours = outcome.struggleBehaviours.map((b) => b.replace(/_/g, ' ')).join(', ');
+        flags.push({
+          patientLabel: patient.patientLabel,
+          kind: 'outcome_barrier_link',
+          severity: 'worth_a_conversation',
+          message: `Patient mentioned "${barrierText}" and reported ${behaviours} as harder than expected. The barrier and the struggle align — a conversation about timing or approach could help.`,
+          suggestion: 'The pattern is consistent. A brief check-in about what specifically makes it hard could unblock the week.',
+          miraActed: true,
+        });
+      }
+    }
   }
 
   return flags;

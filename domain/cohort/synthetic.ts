@@ -17,6 +17,7 @@ import type {
   CohortOverview,
   CohortPatientSummary,
   CohortAggregate,
+  PatientOutcomeSummary,
 } from './types';
 
 const COHORT_SIZE = 30;
@@ -306,6 +307,44 @@ export function computeArchetypeCompletion(
 }
 
 /**
+ * Build a PatientOutcomeSummary from a digest's structured outcome data.
+ * Used by Mira flags to reference specific behaviours instead of parsing text.
+ */
+export function buildOutcomeSummary(
+  digest: WeeklyDigestPayload | null,
+): PatientOutcomeSummary | undefined {
+  if (!digest?.outcomeByBehaviour) return undefined;
+  const byBehaviour = digest.outcomeByBehaviour;
+  const struggleBehaviours: string[] = [];
+  const positiveBehaviours: string[] = [];
+  let totalReported = 0;
+  let totalNoticed = 0;
+  for (const [behaviour, counts] of Object.entries(byBehaviour)) {
+    totalReported += counts.reportedCount;
+    totalNoticed += counts.noticedCount;
+    if (counts.harderCount >= 2) struggleBehaviours.push(behaviour);
+    if (counts.noticedCount >= 2) positiveBehaviours.push(behaviour);
+  }
+  return {
+    byBehaviour,
+    struggleBehaviours,
+    positiveBehaviours,
+    totalReported,
+    totalNoticed,
+  };
+}
+
+/**
+ * Stamp each patient with their outcome summary derived from the digest.
+ * Called after patients are built so flags can use structured PRO data.
+ */
+export function stampOutcomeSummary(patients: CohortPatientSummary[]): void {
+  for (const p of patients) {
+    p.outcomeSummary = buildOutcomeSummary(p.digest);
+  }
+}
+
+/**
  * Compute patient-reported response rate by behaviourTarget.
  *
  * Reads from digest.experimentsTried — each entry's associatedNote is checked
@@ -377,6 +416,7 @@ export function buildSyntheticCohortOverview(): CohortOverview {
   );
   const aggregate = buildAggregate(patients);
   stampArchetypeContext(patients, aggregate.archetypeCompletion ?? {});
+  stampOutcomeSummary(patients);
 
   return {
     weekKey: WEEK_KEY,

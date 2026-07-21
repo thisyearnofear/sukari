@@ -35,6 +35,15 @@ export interface WeeklyDigestPayload {
     /** Plain-language summary for the clinician. */
     summary: string;
   };
+  /** Per-behaviour PRO breakdown, keyed by behaviourTarget. Used by Mira flags
+   *  to reference specific missions ("post_meal_walk felt harder 2 times") instead
+   *  of parsing text. */
+  outcomeByBehaviour?: Record<string, {
+    harderCount: number;
+    easierCount: number;
+    noticedCount: number;
+    reportedCount: number;
+  }>;
   mode?: 'patient' | 'clinician';
 }
 
@@ -105,6 +114,24 @@ export function buildLocalDigest(input: {
       ? 'No patient-reported outcomes captured yet.'
       : `Across ${totalReported} completed mission(s) with reported outcomes: ${noticedDifference} noticed a difference, ${feltEasier} felt easier than expected, ${feltHarder} felt harder than expected (patient-reported, observational).`;
 
+  // Per-behaviour PRO breakdown for structured flag access.
+  const outcomeByBehaviour: Record<string, {
+    harderCount: number;
+    easierCount: number;
+    noticedCount: number;
+    reportedCount: number;
+  }> = {};
+  for (const m of withOutcomes) {
+    const pro = m.reportedOutcome!;
+    const key = m.behaviourTarget;
+    const entry = outcomeByBehaviour[key] ?? { harderCount: 0, easierCount: 0, noticedCount: 0, reportedCount: 0 };
+    entry.reportedCount += 1;
+    if (pro.feltDifficulty === 'harder') entry.harderCount += 1;
+    if (pro.feltDifficulty === 'easier') entry.easierCount += 1;
+    if (pro.noticedDifference === 'yes') entry.noticedCount += 1;
+    outcomeByBehaviour[key] = entry;
+  }
+
   return {
     weekKey: input.adherence.weekKey,
     adherence: input.adherence,
@@ -162,6 +189,7 @@ export function buildLocalDigest(input: {
       feltHarder,
       summary: outcomeTrendSummary,
     },
+    outcomeByBehaviour: Object.keys(outcomeByBehaviour).length > 0 ? outcomeByBehaviour : undefined,
   };
 }
 

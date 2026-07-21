@@ -140,7 +140,7 @@ The patient surface stays exactly as it is: one mission, one conversation, no co
 - Conversation memory persists across sessions in AsyncStorage. Mira references past context: "Last time you mentioned evenings were hard."
 - Conversation engine drives Mira's responses deterministically for mission actions; free-form chat escalates to the LLM.
 - Patient-reported outcome capture: after completing a mission, Mira asks how it went. The patient's response is parsed into a `PatientReportedOutcome` (felt difficulty + noticed difference) plus free-form reflection, persisted on the mission, and flows into the clinician digest and cohort response rate.
-- Closed-loop adaptation: past patient-reported outcomes inform mission selection (avoid templates reported "harder" 2+ times, prefer templates with positive signal). Outcome-aware Mira flags (struggle + positive signal). Longitudinal outcome trend in the clinician digest.
+- Closed-loop adaptation: past patient-reported outcomes inform mission selection (avoid templates reported "harder" 2+ times, prefer templates with positive signal). Outcome-aware Mira flags (struggle + positive signal + barrier-outcome link) reference specific behaviours using structured PRO data. Longitudinal outcome trend in the clinician digest.
 - Mira's posture updates with each conversation state transition, reflected in the orb.
 - Live signal access is capability-gated; unavailable integrations are labelled as preview rather than implied to work.
 - Settings lets a person change mission input later without resetting role or programme progress.
