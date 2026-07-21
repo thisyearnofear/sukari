@@ -151,8 +151,9 @@ export function useCoach() {
         // down, etc.). Stay in character — Mira doesn't say "I can't
         // reach the cloud coach." She redirects to the mission.
         const mission = progress.activeMission;
-        const fallback = mission
-          ? `I'm here. If you want a starting point, today's step is: ${mission.realWorldAction}. But tell me what's on your mind.`
+        const action = mission?.realWorldAction?.replace(/\.$/, '') ?? '';
+        const fallback = action
+          ? `I'm here. If you want a starting point, today's step is: ${action}. But tell me what's on your mind.`
           : "I'm here. Tell me what's on your mind, or we can find one small thing to try today.";
         setChatReply(fallback);
         const fallbackMsg: ChatMessage = { role: 'assistant', content: fallback };

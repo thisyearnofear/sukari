@@ -351,10 +351,11 @@ export async function handleCoachChat(req: Request, env: CoachEnv): Promise<Resp
   ]);
 
   if (!ai.content) {
+    const action = body.mission?.realWorldAction?.replace(/\.$/, '');
     return Response.json({
       ok: true,
-      reply: body.mission?.realWorldAction
-        ? `Start with today’s ask: ${body.mission.realWorldAction}`
+      reply: action
+        ? `Start with today’s ask: ${action}.`
         : 'Pick one real-world habit for tonight and try it after your next meal.',
       provider_status: ai.status ?? null,
       provider_error: ai.error ?? null,
@@ -441,10 +442,11 @@ export async function handleCoachChatStream(req: Request, env: CoachEnv): Promis
 
   // Fallback: Runware (non-streaming) — send the full reply as one chunk.
   const ai = await callRunware(env, messages);
+  const fallbackAction = body.mission?.realWorldAction?.replace(/\.$/, '');
   const reply =
     ai.content ||
-    (body.mission?.realWorldAction
-      ? `Start with today’s ask: ${body.mission.realWorldAction}`
+    (fallbackAction
+      ? `Start with today’s ask: ${fallbackAction}.`
       : 'Pick one real-world habit for tonight and try it after your next meal.');
 
   return new Response(reply, {
