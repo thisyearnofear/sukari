@@ -31,6 +31,8 @@ Run `npm run build:web` when routing, Expo config, or web rendering changes.
 - The user-facing product name is Sukari.
 - The conversation is the primary patient interface. Mira initiates; the patient responds in natural language. No forms, no buttons, no cards to navigate.
 - The care-team work queue is the commercial wedge. It is an active operator surface, not a passive report.
+- The closed loop is real: signal → pattern → mission → conversation → patient-reported outcome → outcome-informed adaptation → next mission. Past outcomes inform mission selection; outcome-aware flags and cohort response rates inform operators.
+- Patient-reported outcomes are observational, not causal. Never frame them as clinical measurement. A CGM-derived response classifier is a separate, gated step.
 - Demo patterns must be clearly labelled.
 - Legacy Beam/Web3/NFT/leaderboard/challenge and combat/kingdom game language should not appear in shipped navigation or primary copy.
 - Mira remains habit-scope only in Sukari. Never dosing, diagnosis, urgent-care substitution, or implied access to another Famile product.
@@ -52,20 +54,20 @@ domain/
   agent/
     miraPresence.ts        Mira posture vocabulary
     decisionTrace.ts       explainable decision trace
-    intentParser.ts        natural language -> mission intents
+    intentParser.ts        natural language -> mission intents (incl. report_outcome)
     conversationMemory.ts  cross-session context in AsyncStorage
-    conversationEngine.ts  state machine + LLM escalation
+    conversationEngine.ts  state machine + LLM escalation + outcome capture
   coach/               Mira's habit-scope capability and clinical boundary
   cohort/
-    types.ts            cohort overview and patient summaries
-    synthetic.ts        deterministic 30-patient demo cohort
+    types.ts            cohort overview, patient summaries, archetype completion + response rate
+    synthetic.ts        deterministic 30-patient demo cohort + archetype aggregation
     workQueue.ts        work item status lifecycle + AsyncStorage
-    miraFlags.ts        proactive flags for care team
-  digest/              weekly digest client/types
+    miraFlags.ts        proactive flags for care team (incl. outcome_struggle, outcome_positive)
+  digest/              weekly digest client/types + longitudinal outcome trend
   patterns/            signal patterns and field state
-  programme/           mission templates and selection
+  programme/           mission templates, outcome-informed selection, PatientReportedOutcome
 hooks/
-  usePlayerProgress.ts local progress and programme persistence
+  usePlayerProgress.ts local progress, programme persistence, outcome capture
   useCoach.ts          LLM streaming for free-form conversation
 ```
 

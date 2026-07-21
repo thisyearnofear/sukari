@@ -18,12 +18,15 @@ The product is the closed loop from signal to mission to real-world adherence ev
 2. Type "sure" to accept the mission. Mira responds and her orb shifts to watching posture.
 3. Type "that's too much" to see Mira adapt — she offers a smaller variant in conversation. No buttons, no cards.
 4. Type "I walked for 10 minutes" to log completion. Mira acknowledges and asks how it felt.
-5. Type a free-form question like "what is protein?" to see Mira escalate to the LLM with grounded context.
-6. Open the care-team work queue (`/care`). Show Mira's observations at the top — proactive flags with severity (urgent, worth a conversation, positive).
-7. Show the work queue: status badges (open, contacted, snoozed, resolved), filter bar, sort options.
-8. Expand a patient row. Show the quick actions: mark contacted, resolve, snooze 24h, reopen.
-9. Explain that deterministic logic detects patterns and enforces safety; the LLM handles free-form chat inside that boundary.
-10. Mention the optional Runware adapter: fixed-prompt image generation from an approved mission brief, with no raw readings or identifying data in the prompt.
+5. Type "it went well, felt easier than I thought" to see patient-reported outcome capture. Mira logs the outcome (felt difficulty + noticed difference) and acknowledges deterministically — no causal claims, just "you noticed a difference — I'll remember that."
+6. Type a free-form question like "what is protein?" to see Mira escalate to the LLM with grounded context.
+7. Open the care-team work queue (`/care`). Show Mira's observations at the top — proactive flags with severity (urgent, worth a conversation, positive), including outcome-aware flags (struggle, positive signal).
+8. Show the aggregate header: archetype-level completion rates and patient-reported response rates by mission type ("post_meal_walk: 73% completion, 64% noticed difference, 9 reported").
+9. Show the work queue: status badges (open, contacted, snoozed, resolved), filter bar, sort options.
+10. Expand a patient row. Show the quick actions: mark contacted, resolve, snooze 24h, reopen. Show the per-patient cohort context ("cohort median for post_meal_walk this week is 5/7").
+11. Explain that the loop is closed: past outcomes inform what mission Mira suggests next. If a patient reports a mission as "harder" twice, the system avoids re-offering it.
+12. Explain that deterministic logic detects patterns and enforces safety; the LLM handles free-form chat inside that boundary.
+13. Mention the optional Runware adapter: fixed-prompt image generation from an approved mission brief, with no raw readings or identifying data in the prompt.
 
 The Amina demo remains deterministic for judging. Mira is the named Famile agent; Amina is only a deterministic synthetic patient fixture. Live signal paths are technical proof, but demos should not depend on OAuth success.
 
@@ -44,9 +47,13 @@ The Amina demo remains deterministic for judging. Mira is the named Famile agent
 | Quiet measured response | Done |
 | Local digest history | Done |
 | Care-team work queue with status lifecycle (open, contacted, snoozed, resolved) | Done |
-| Mira proactive flags for care team (safety, completion drop, barrier, recovery, streak, re-engagement) | Done |
+| Mira proactive flags for care team (safety, completion drop, barrier, recovery, streak, re-engagement, outcome struggle, outcome positive) | Done |
 | Work queue persistence in AsyncStorage | Done |
 | Care-team outreach instrumentation | Done |
+| Patient-reported outcome capture (felt difficulty + noticed difference + reflection) | Done |
+| Closed-loop adaptation: past outcomes inform mission selection | Done |
+| Cohort evidence: archetype completion rates + patient-reported response rates on operator surface | Done |
+| Longitudinal outcome trend in clinician digest | Done |
 | Legacy Web3/NFT/leaderboard/challenge and combat/kingdom game surfaces retired | Done |
 | Jest AsyncStorage mock and TypeScript cleanup | Done |
 

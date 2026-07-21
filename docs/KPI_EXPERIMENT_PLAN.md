@@ -17,6 +17,7 @@ This reflects the product thesis: adherence per minute of attention should impro
 | Mission made easier | `mission_made_easier` |
 | Mission deferred | `mission_deferred` |
 | Real-world action completed | `completion_to_measured_response` |
+| Patient-reported outcome captured | `measured_response_captured` with `felt_difficulty` and `noticed_difference` |
 | Care-team exception created | `measured_response_to_care_team_exception` |
 | Care panel opened | `care_panel_opened` with `open_items` count |
 | Work item status changed | `care_work_item_updated` with `patient` and `status` |
@@ -26,11 +27,13 @@ This reflects the product thesis: adherence per minute of attention should impro
 ## Patient Metrics
 
 - conversation open rate (returning vs first-session);
-- intent distribution (accept, easier, later, decline, done, not_done, chat);
+- intent distribution (accept, easier, later, decline, done, not_done, report_outcome, chat);
 - mission accept/ease/defer/decline rate from parsed intents;
 - direct completion rate, segmented by input source;
 - done-now vs later-today split;
 - later-today eventual completion rate;
+- patient-reported outcome capture rate (of completed missions, how many have a reported outcome);
+- outcome distribution (felt difficulty: easier/about_right/harder; noticed difference: yes/no/not_sure);
 - free-form chat escalation rate (how often patients ask questions beyond mission actions);
 - weekly mission completion frequency.
 
@@ -40,8 +43,9 @@ This reflects the product thesis: adherence per minute of attention should impro
 - work item status distribution (open, contacted, snoozed, resolved);
 - time from open to contacted;
 - time from contacted to resolved;
-- Mira flag volume by severity (urgent, worth_a_conversation, positive);
+- Mira flag volume by severity (urgent, worth_a_conversation, positive) and by kind (including outcome_struggle, outcome_positive);
 - Mira flag accuracy (flagged patients who benefited from outreach);
+- cohort response rate by archetype (of patients who reported, what fraction noticed a difference);
 - snooze usage and re-open rate;
 - staff minutes per enrolled patient.
 
@@ -88,6 +92,18 @@ Primary metric: time from open to contacted; Mira flag accuracy (flagged patient
 Hypothesis: Mira referencing past context ("Last time you mentioned evenings were hard") increases returning-session open rate and mission acceptance.
 
 Primary metric: returning-session open rate; mission accepted in returning sessions vs first sessions.
+
+### 8. Outcome-Informed Mission Selection
+
+Hypothesis: using past patient-reported outcomes to avoid templates reported "harder" 2+ times and prefer templates with positive signal improves weekly completion rate and reduces decline/relapse rate.
+
+Primary metric: weekly completion rate for patients with 3+ reported outcomes vs. baseline; decline rate for templates previously reported "harder."
+
+### 9. Patient-Reported Outcome Capture Rate
+
+Hypothesis: asking "how did it go?" in conversation immediately after completion yields a high outcome capture rate without adding friction.
+
+Primary metric: `measured_response_captured` / `mission_completed` ratio (capture rate); outcome distribution (easier/about_right/harder, yes/no/not_sure).
 
 ## Pilot Guardrails
 

@@ -6,10 +6,11 @@ Sukari is a React Native Expo app with a local-first adherence loop and optional
 live signal, labelled demo pattern, or private local check-in
   -> bounded pattern and approved programme mission
   -> conversation: Mira initiates, patient responds in natural language
-  -> intent parser maps response to mission action (accept, easier, later, done, not_done)
+  -> intent parser maps response to mission action (accept, easier, later, done, not_done, report_outcome)
   -> completion
-  -> measured response
-  -> care-team work queue with Mira flags
+  -> patient-reported outcome (felt difficulty + noticed difference + reflection)
+  -> outcome-informed mission selection for the next day
+  -> care-team work queue with Mira flags + cohort evidence (completion + response rates by archetype)
 ```
 
 ## Product Surfaces
@@ -34,20 +35,24 @@ domain/
                intent parser, conversation memory, and media briefs
   config/      worker and app URL helpers
   demo/        deterministic Amina demo data
-  digest/      weekly summary payloads, publishing, and local history
+  digest/      weekly summary payloads, publishing, local history,
+               and longitudinal outcome trend
   invite/      supporter invite flows
   media/       optional mission-media client
   patterns/    observational pattern types and field state mapping
-  programme/   mission templates, mission selection
+  programme/   mission templates, mission selection (outcome-informed),
+               and PatientReportedOutcome type
   signals/     CGM or snapshot abstractions
-  cohort/      operator cohort overview, work queue state, and Mira flags
+  cohort/      operator cohort overview, work queue state, Mira flags
+               (including outcome-aware), archetype completion +
+               response rate aggregation
 ```
 
 Domain code should remain pure TypeScript and should not import React Native or Expo UI.
 
 ## State
 
-`PlayerProgressProvider` wraps the app in `app/_layout.tsx` and persists progress through `usePlayerProgress`. It is the single source of truth for role, selected mission, progress, and local programme state. It also persists a mission-bound `worldState` with only: mission ID/template, an approved scene enum, tone enum, response state, and timestamp. The state is discarded whenever the active mission changes.
+`PlayerProgressProvider` wraps the app in `app/_layout.tsx` and persists progress through `usePlayerProgress`. It is the single source of truth for role, selected mission, progress, and local programme state. It also persists a mission-bound `worldState` with only: mission ID/template, an approved scene enum, tone enum, response state, and timestamp. The state is discarded whenever the active mission changes. Patient-reported outcomes (`reportedOutcome`, `reflection`) are persisted on each `ProgrammeMission` in `missionHistory` and feed back into mission selection for the next day.
 
 Care digests are persisted locally in `domain/digest/client.ts`:
 
@@ -69,7 +74,11 @@ Analytics are wrapped through the app's tracking utility and should remain optio
 - `role_to_mission_accepted`
 - `mission_made_easier`
 - `mission_deferred`
+- `mission_assigned` (with template_id, behaviour, source, privacy_mode)
+- `mission_practiced` (with template_id, behaviour, privacy_mode)
+- `mission_completed` (with template_id, behaviour, privacy_mode)
 - `completion_to_measured_response`
+- `measured_response_captured` (with template_id, behaviour, felt_difficulty, noticed_difference, privacy_mode) — fires when a patient reports an outcome after completion
 - `measured_response_to_care_team_exception`
 - `care_panel_opened`
 - `care_outreach_reviewed`
@@ -88,9 +97,9 @@ Do not add new funnel names casually. Prefer extending properties on these event
 
 The patient surface is a conversation, not a form. Three domain modules drive it:
 
-- `domain/agent/intentParser.ts`: parses natural language into structured mission intents (accept, decline, make_easier, later, done, not_done, how_was_it, chat). Lightweight pattern matching — no LLM call for mission actions.
+- `domain/agent/intentParser.ts`: parses natural language into structured mission intents (accept, decline, make_easier, later, done, not_done, report_outcome, how_was_it, chat). Lightweight pattern matching — no LLM call for mission actions. The `report_outcome` intent captures patient-reported outcomes ("it went well", "felt easier", "noticed a difference") after mission completion.
 - `domain/agent/conversationMemory.ts`: persists turns and derived facts (barriers, completion count, last action) across sessions in AsyncStorage. Enables Mira to reference past context.
-- `domain/agent/conversationEngine.ts`: state machine that generates opening lines, processes intents deterministically, and escalates free-form chat to the LLM via `useCoach`. Mira's posture updates with each state transition.
+- `domain/agent/conversationEngine.ts`: state machine that generates opening lines, processes intents deterministically, and escalates free-form chat to the LLM via `useCoach`. Mira's posture updates with each state transition. The `report_outcome` intent triggers a `capture_outcome` mission action that persists a `PatientReportedOutcome` on the mission and transitions to the `checking_in` phase.
 
 The conversation is the primary interface. There are no mission cards, no buttons to tap, and no screens to navigate. The patient opens the app and is already in a conversation with Mira.
 
@@ -98,7 +107,11 @@ The conversation is the primary interface. There are no mission cards, no button
 
 The care surface is Mira's work queue — an active operator surface, not a passive report. It reads stored weekly digests on the device and can open an explicit synthetic demo cohort. Operators work items through a status lifecycle (open, contacted, snoozed, resolved) with filter/sort and quick actions. Mira generates proactive flags from cohort data + conversation memory.
 
-Work queue state persists in AsyncStorage (`domain/cohort/workQueue.ts`). Mira flags are generated deterministically from cohort summaries + work item status (`domain/cohort/miraFlags.ts`).
+The aggregate header shows cohort evidence: archetype-level completion rates ("post_meal_walk: 73% across 12 patients") and patient-reported response rates ("64% noticed a difference, 9 reported"). Per-patient cohort context appears in the work queue row expansion ("cohort median for post_meal_walk this week is 5/7"). The clinician digest includes a longitudinal outcome trend section showing the arc across all completed missions with reported outcomes.
+
+Mira flags now include outcome-aware kinds: `outcome_struggle` (patient reported 2+ missions as harder than expected) and `outcome_positive` (patient noticed a difference on 2+ of completed missions), alongside the original safety, completion drop, barrier pattern, recovery, streak, and re-engagement flags.
+
+Work queue state persists in AsyncStorage (`domain/cohort/workQueue.ts`). Mira flags are generated deterministically from cohort summaries + work item status (`domain/cohort/miraFlags.ts`). Archetype completion and response rate are computed in `domain/cohort/synthetic.ts`.
 
 A production cohort product needs:
 

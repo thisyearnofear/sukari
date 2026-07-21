@@ -16,8 +16,9 @@ Sukari turns signal into action through Mira, Famile's shared health and wellnes
 2. Propose one daily habit experiment — in conversation, not on a card.
 3. The patient responds in natural language: "sure", "that's too much", "maybe later", "I did it." Mira adapts.
 4. Record real-world completion.
-5. Measure the associated response.
-6. Surface exceptions to the care team as an active work queue with Mira's proactive flags.
+5. Capture the patient-reported outcome: how it felt and whether they noticed a difference. Patient-reported, not CGM-derived — observational, no causal claims.
+6. Adapt: past outcomes inform what Mira suggests next. The loop is closed.
+7. Surface exceptions and cohort evidence to the care team as an active work queue with Mira's proactive flags.
 
 The agent is the connective tissue. The product is adherence evidence.
 
@@ -39,9 +40,10 @@ CGM adoption, virtual metabolic programmes, GLP-1 care models, and capable AI ma
 ## Moat
 
 - The operator work queue is the commercial wedge. Patients have infinite health app choices; care teams managing metabolic programs have almost no tooling.
-- Data moat: the prioritization engine improves with every patient turn and every completion.
+- Data moat: the closed loop — signal → pattern → mission → conversation → patient-reported outcome → outcome-informed adaptation — gets stronger with every completed mission. Each outcome makes mission selection smarter and cohort evidence more defensible.
+- Cohort evidence on the operator surface: archetype-level completion rates and patient-reported response rates ("of 9 patients who completed post_meal_walk, 64% noticed a difference") give operators a dimension no generic dashboard offers.
 - Switching costs: once a care coordinator runs 30 patients through your work queue, leaving means losing institutional memory.
-- Longitudinal mapping from context to mission to adherence to response.
+- Longitudinal mapping from context to mission to adherence to patient-reported outcome to adaptation.
 - Clinically governed mission library and safety boundaries.
 - Mission design tuned for real-world completion, not time-in-app.
 
@@ -55,8 +57,11 @@ Working prototype includes:
 - Conversation memory persists across sessions; Mira references past context.
 - Mira visual presence with bounded habit-scope posture, updating with conversation state.
 - Measured response language.
-- Local-first weekly digest history.
-- Care-team work queue with status lifecycle (open, contacted, snoozed, resolved), filter/sort, quick actions, and Mira-generated proactive flags.
+- Local-first weekly digest history with longitudinal outcome trend.
+- Care-team work queue with status lifecycle (open, contacted, snoozed, resolved), filter/sort, quick actions, and Mira-generated proactive flags (including outcome-aware struggle and positive-signal flags).
+- Patient-reported outcome capture: after completing a mission, the patient tells Mira how it went. The outcome is persisted, flows into the clinician digest, and aggregates into cohort response rates.
+- Closed-loop adaptation: past patient-reported outcomes inform mission selection. The loop is real, not aspirational.
+- Cohort evidence on the operator surface: archetype-level completion rates and patient-reported response rates by mission type.
 - Habit-only coach boundary.
 - Agency Charter for agent permissions.
 - Instrumented funnel through care-team outreach.
