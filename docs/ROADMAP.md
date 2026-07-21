@@ -57,8 +57,11 @@ Shipped this cycle:
 6. **Operator workflow depth**
    - Work queue status lifecycle shipped (open, contacted, snoozed, resolved).
    - Mira proactive flags shipped (safety, completion drop, barrier pattern, recovery, streak, re-engagement).
+   - Next: archetype-level completion in the cohort aggregate (group existing completion data by `behaviourTarget` — no new data capture). Per-patient cohort context in the work queue row expansion ("cohort median for this archetype this week is N/M").
    - Next: operator assignment to specific care team members, weekly team report, export/integration path.
    - Next: Mira flags enriched with conversation memory (reference specific past missions, not just barriers and counts).
+   - Gated: curated external evidence library keyed by `behaviourTarget`, surfaced in the clinician digest only. Human-reviewed before it reaches operators. Never patient-facing.
+   - Gated: response classifier that measures whether a completed mission produced a measurable response. Unlocks response-rate cohort evidence ("of N patients who held this archetype, M showed measurable response") and makes the closed-loop evidence claim true. Requires CGM/self-report analysis after mission completion. This is the core data moat.
 
 ## Metrics
 

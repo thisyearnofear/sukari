@@ -97,6 +97,36 @@ The agent proposes. The patient disposes.
 
 Mira may autonomously detect patterns, select one in-scope mission, remember responses, follow up once on a "later today" promise, and compile a weekly digest. Every proposal exposes its decision trace: what was observed, what was proposed, and what it is waiting for next. Mira must ask before changing a mission mid-day, involving a supporter, or suggesting care-team outreach. She must never dose, diagnose, shame, contact people without consent, imply access to another Famile product, or obscure her reasoning.
 
+## Cohort Evidence and the Operator Surface
+
+Patients on a metabolic mission will eventually ask: *am I responding normally? Will this work for someone like me? Is my pattern unusual?* The instinct is to look sideways at other people. Sukari's answer is to put aggregate evidence on the operator surface, not the patient surface, and to keep the patient conversation exactly as it is.
+
+### Two ideas that are not the same feature
+
+1. **Aggregate factual context** — "x% of patients with this pattern archetype complete this mission class," "the first week of a new mission is usually the hardest." This is cohort evidence, not social. It needs no user-generated content, no social graph, no critical mass. It enriches the operator digest and work queue, where clinical judgment can act on it.
+
+2. **"People like you" peer layer** — patient-facing surfaces showing what other patients booked, tried, or experienced. This is a social layer. It needs a cohort, profiles, shared content, moderation, and enough users to not feel empty. At early-user volume it will feel dead, and dead social features are worse than absent ones.
+
+### What Sukari does not build
+
+A patient-facing peer layer violates the stated contract. The anti-goals explicitly ban leaderboards, streak shame, and peer-comparison loops. The product's posture is "one mission today, calm, adult, no comparison." Adding a peer surface doesn't just distract from the wedge — it breaks the anti-goals the product was designed against. Health-data privacy also makes a "semi-public mode" a much harder sell than in non-health products.
+
+Patient-facing external research context is also out of scope. Patterns are "observational hypotheses — never causal diagnoses." Pulling in external research ("studies show post-meal walks reduce glucose response") pushes the product toward medical authority and causal claims it is deliberately built to avoid. It drifts toward "AI doctor" and "explanation first," both explicitly rejected by the thesis.
+
+### What Sukari does build
+
+The operator work queue is the commercial wedge. Care teams managing metabolic programs have almost no tooling. That is the audience that benefits from aggregate evidence, and the audience that can safely act on it because they have clinical judgment.
+
+**Now (no new data capture):** Archetype-level completion in the cohort aggregate — "post_meal_walk: 73% completion across N patients this week." The data already exists: `ProgrammeMission.behaviourTarget` is captured for every mission. Grouping the existing completion computation by `behaviourTarget` gives per-archetype rates with zero new infrastructure. Per-patient cohort context in the work queue row expansion — "Completion 3/7 — cohort median for post_meal_walk this week is 5/7" — tells the care team whether this patient is an exception or typical.
+
+**Next (operator-only, needs curation):** An optional `externalEvidence` field on the clinician digest, populated from a curated evidence library keyed by `behaviourTarget`. External research tooling (firecrawl, exa, tinyfish) can help build the library, but the output must be human-reviewed before it reaches operators. Framed as "context for clinical judgment," not as recommendation. Never shown to patients.
+
+**Gated (the real moat):** A response classifier that looks at CGM/self-report data after a mission completes and classifies whether there was a measurable response. This unlocks the response-rate version of the cohort beat — "of 30 patients who held this mission archetype, 22 completed, 14 showed measurable response" — and is what makes the "closed-loop adherence evidence" claim in the thesis actually true. It is the core data moat: every completed mission with a measured response makes the cohort evidence stronger and the operator surface more defensible. It is also the hardest for competitors to copy because it requires the longitudinal mission-to-outcome data they do not have.
+
+### The through-line
+
+The patient surface stays exactly as it is: one mission, one conversation, no comparison, no external authority. The operator surface gets richer, more evidence-backed, and more defensible. Aggregate evidence changes decisions on the operator surface; it adds decisions on the patient surface. That asymmetry is why cohort evidence belongs on the work queue and not in the conversation.
+
 ## Shipped Progress
 
 - Name and visible brand changed to Sukari.
