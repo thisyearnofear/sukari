@@ -19,15 +19,16 @@ The product is the closed loop from signal to mission to real-world adherence ev
 3. Type "that's too much" to see Mira adapt — she offers a smaller variant in conversation. No buttons, no cards.
 4. Type "I walked for 10 minutes" to log completion. Mira acknowledges and asks how it felt.
 5. Type "it went well, felt easier than I thought" to see patient-reported outcome capture. Mira logs the outcome (felt difficulty + noticed difference) and acknowledges deterministically — no causal claims, just "you noticed a difference — I'll remember that."
-6. Type a free-form question like "what is protein?" to see Mira escalate to the LLM with grounded context.
-7. Open the care-team work queue (`/care`). Show Mira's observations at the top — proactive flags with severity (urgent, worth a conversation, positive), including outcome-aware flags (struggle, positive signal).
-8. Show the aggregate header: archetype-level completion rates and patient-reported response rates by mission type ("post_meal_walk: 73% completion, 64% noticed difference, 9 reported").
-9. Show the work queue: status badges (open, contacted, snoozed, resolved), filter bar, sort options.
-10. Expand a patient row. Show the quick actions: mark contacted, resolve, snooze 24h, reopen. Show the per-patient cohort context ("cohort median for post_meal_walk this week is 5/7"). Show the assignment chips — assign the patient to a care team member.
-11. Tap "Team report" in the header. Show the weekly team report modal: cohort overview, per-assignee status counts, patients still needing attention, Mira's top observations. Tap "Share summary" or "Export CSV" to show the platform share sheet.
-12. Explain that the loop is closed: past outcomes inform what mission Mira suggests next. If a patient reports a mission as "harder" twice, the system avoids re-offering it.
-13. Explain that deterministic logic detects patterns and enforces safety; the LLM handles free-form chat inside that boundary.
-14. Mention the optional Runware adapter: fixed-prompt image generation from an approved mission brief, with no raw readings or identifying data in the prompt.
+6. Close and reopen the app. Mira's opening line now references the outcome: "You said post meal walk felt easier than expected and you noticed a difference. Building on what worked — I have something for today. Want to try it?" The closed loop is visible to the patient.
+7. Type a free-form question like "what is protein?" to see Mira escalate to the LLM with grounded context.
+8. Open the care-team work queue (`/care`). Show Mira's observations at the top — proactive flags with severity (urgent, worth a conversation, positive), including outcome-aware flags (struggle, positive signal).
+9. Show the aggregate header: archetype-level completion rates and patient-reported response rates by mission type ("post_meal_walk: 73% completion, 64% noticed difference, 9 reported").
+10. Show the work queue: status badges (open, contacted, snoozed, resolved), filter bar, sort options.
+11. Expand a patient row. Show the quick actions: mark contacted, resolve, snooze 24h, reopen. Show the per-patient cohort context ("cohort median for post_meal_walk this week is 5/7"). Show the assignment chips — assign the patient to a care team member.
+12. Tap "Team report" in the header. Show the weekly team report modal: cohort overview, per-assignee status counts, patients still needing attention, Mira's top observations. Tap "Share summary" or "Export CSV" to show the platform share sheet.
+13. Explain that the loop is closed: past outcomes inform what mission Mira suggests next. If a patient reports a mission as "harder" twice, the system avoids re-offering it.
+14. Explain that deterministic logic detects patterns and enforces safety; the LLM handles free-form chat inside that boundary.
+15. Mention the optional Runware adapter: fixed-prompt image generation from an approved mission brief, with no raw readings or identifying data in the prompt.
 
 The Amina demo remains deterministic for judging. Mira is the named Famile agent; Amina is only a deterministic synthetic patient fixture. Live signal paths are technical proof, but demos should not depend on OAuth success.
 

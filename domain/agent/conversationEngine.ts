@@ -126,10 +126,43 @@ export function generateOpeningLine(
     }
   }
 
+  // Reference the last patient-reported outcome — this is what makes
+  // the closed loop visible to the patient. Mira remembers what they
+  // told her about how it went, not just that they completed it.
+  if (ctx.lastOutcome) {
+    const behaviour = ctx.lastOutcome.behaviourTarget.replace(/_/g, ' ');
+    const difficultyPart =
+      ctx.lastOutcome.feltDifficulty === 'easier'
+        ? `felt easier than expected`
+        : ctx.lastOutcome.feltDifficulty === 'harder'
+          ? `felt harder than expected`
+          : `felt about right`;
+    const differencePart =
+      ctx.lastOutcome.noticedDifference === 'yes'
+        ? ` and you noticed a difference`
+        : ctx.lastOutcome.noticedDifference === 'no'
+          ? ` though you hadn't noticed a difference yet`
+          : '';
+    parts.push(`You said ${behaviour} ${difficultyPart}${differencePart}.`);
+  }
+
   // Current state
   if (state.phase === 'offering' && state.mission) {
     if (parts.length > 0) {
-      parts.push(`Today I'm seeing another opportunity. Want to hear it?`);
+      // If the patient has a past outcome, signal that this suggestion
+      // is informed by it. This makes the closed loop visible: the
+      // patient knows their outcome reports are shaping what Mira suggests.
+      if (ctx.lastOutcome) {
+        if (ctx.lastOutcome.feltDifficulty === 'harder') {
+          parts.push(`Based on that, I'm suggesting something different today. Want to hear it?`);
+        } else if (ctx.lastOutcome.feltDifficulty === 'easier' && ctx.lastOutcome.noticedDifference === 'yes') {
+          parts.push(`Building on what worked — I have something for today. Want to try it?`);
+        } else {
+          parts.push(`Today I'm seeing another opportunity. Want to hear it?`);
+        }
+      } else {
+        parts.push(`Today I'm seeing another opportunity. Want to hear it?`);
+      }
     } else {
       parts.push(`I noticed something in your pattern today. Want to try one small thing?`);
     }

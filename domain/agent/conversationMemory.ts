@@ -47,6 +47,14 @@ export interface ConversationMemory {
   lastBarrier?: string;
   /** How many sessions the patient has had. */
   sessionCount: number;
+  /** Last patient-reported outcome summary, so Mira can reference it
+   *  in her opening line: "Last time you said post_meal_walk felt easier
+   *  and you noticed a difference." */
+  lastOutcome?: {
+    behaviourTarget: string;
+    feltDifficulty: 'easier' | 'about_right' | 'harder';
+    noticedDifference: 'yes' | 'no' | 'not_sure';
+  };
 }
 
 export interface ConversationFact {
@@ -62,6 +70,26 @@ export function emptyConversationMemory(): ConversationMemory {
     lastOpenedAt: null,
     sessionCount: 0,
   };
+}
+
+/**
+ * Parse a stored last_outcome fact back into its structured form.
+ * Returns undefined if the fact is missing or malformed.
+ */
+function parseOutcomeFact(
+  raw: string | undefined,
+): ConversationMemory['lastOutcome'] {
+  if (!raw) return undefined;
+  try {
+    const parsed = JSON.parse(raw) as {
+      behaviourTarget: string;
+      feltDifficulty: 'easier' | 'about_right' | 'harder';
+      noticedDifference: 'yes' | 'no' | 'not_sure';
+    };
+    return parsed;
+  } catch {
+    return undefined;
+  }
 }
 
 /**
@@ -172,6 +200,31 @@ export function appendTurn(
         facts.push(lastActionFact);
       }
     }
+
+    // Track patient-reported outcomes — store as a fact so Mira can
+    // reference it in her opening line: "Last time you said post_meal_walk
+    // felt easier and you noticed a difference."
+    if (turn.intent === 'report_outcome' && mission?.behaviourTarget) {
+      const outcomeFact: ConversationFact = {
+        key: 'last_outcome',
+        value: JSON.stringify({
+          behaviourTarget: mission.behaviourTarget,
+          // The feltDifficulty and noticedDifference are encoded in the
+          // turn content by the intent parser; we extract them from the
+          // mission's reportedOutcome if available, or leave as not_sure.
+          feltDifficulty: mission.reportedOutcome?.feltDifficulty ?? 'about_right',
+          noticedDifference: mission.reportedOutcome?.noticedDifference ?? 'not_sure',
+        }),
+        timestamp: turn.timestamp,
+      };
+      const existing = facts.find((f) => f.key === 'last_outcome');
+      if (existing) {
+        const idx = facts.indexOf(existing);
+        facts[idx] = outcomeFact;
+      } else {
+        facts.push(outcomeFact);
+      }
+    }
   }
 
   // Derive mission state snapshot
@@ -195,6 +248,7 @@ export function appendTurn(
     facts,
     lastCompletedAction: facts.find((f) => f.key === 'last_completed_action')?.value,
     lastBarrier: facts.find((f) => f.key === 'last_barrier')?.value,
+    lastOutcome: parseOutcomeFact(facts.find((f) => f.key === 'last_outcome')?.value),
   };
 }
 
@@ -220,6 +274,11 @@ export function contextSummary(memory: ConversationMemory): {
   lastBarrier?: string;
   completionCount: number;
   lastCompletedAction?: string;
+  lastOutcome?: {
+    behaviourTarget: string;
+    feltDifficulty: 'easier' | 'about_right' | 'harder';
+    noticedDifference: 'yes' | 'no' | 'not_sure';
+  };
   sessionsAgo: number;
   lastVisitDescription: string;
 } {
@@ -227,6 +286,7 @@ export function contextSummary(memory: ConversationMemory): {
   const completionCountStr = memory.facts.find((f) => f.key === 'completion_count')?.value;
   const completionCount = completionCountStr ? parseInt(completionCountStr, 10) : 0;
   const lastCompletedAction = memory.facts.find((f) => f.key === 'last_completed_action')?.value;
+  const lastOutcome = parseOutcomeFact(memory.facts.find((f) => f.key === 'last_outcome')?.value);
 
   let lastVisitDescription = '';
   if (memory.lastOpenedAt) {
@@ -242,6 +302,7 @@ export function contextSummary(memory: ConversationMemory): {
     lastBarrier,
     completionCount,
     lastCompletedAction,
+    lastOutcome,
     sessionsAgo: memory.sessionCount,
     lastVisitDescription,
   };
