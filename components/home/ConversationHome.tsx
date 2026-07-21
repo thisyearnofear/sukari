@@ -32,10 +32,17 @@ import {
   Easing,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import Svg, { Circle } from 'react-native-svg';
 import { COLORS, FONTS } from '@/constants/designSystem';
 import { MiraOrb } from '@/components/agent/MiraOrb';
 import { PressableScale } from '@/components/ui/PressableScale';
 import { WelcomeScene } from '@/components/home/WelcomeScene';
+import type { ConversationPhase ,
+  processIntent,
+  generateOpeningLine,
+  initialConversationState,
+  type ConversationState,
+} from '@/domain/agent/conversationEngine';
 import { useCoach } from '@/hooks/useCoach';
 import { track } from '@/utils/analytics';
 import type { ProgrammeMission, PatientReportedOutcome } from '@/domain/programme/types';
@@ -45,12 +52,6 @@ import type { UserMode } from '@/types/game';
 import {
   parseIntent,
 } from '@/domain/agent/intentParser';
-import {
-  processIntent,
-  generateOpeningLine,
-  initialConversationState,
-  type ConversationState,
-} from '@/domain/agent/conversationEngine';
 import {
   loadConversationMemory,
   saveConversationMemory,
@@ -427,6 +428,14 @@ export const ConversationHome: React.FC<ConversationHomeProps> = ({
     );
   }
 
+  // Split thread into "recent" (last 2-3 messages, prominent) and
+  // "earlier" (older messages, faded and compressed). This creates the
+  // spatial feel — the current exchange is centered and present, the
+  // past recedes.
+  const recentCount = 3;
+  const earlierMessages = displayThread.slice(0, -recentCount);
+  const recentMessages = displayThread.slice(-recentCount);
+
   return (
     <View style={styles.root}>
       <SafeAreaView style={styles.flex}>
@@ -434,34 +443,51 @@ export const ConversationHome: React.FC<ConversationHomeProps> = ({
           style={styles.flex}
           behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         >
-          {/* Header */}
+          {/* Minimal header — just settings/care team, no orb */}
           <View style={styles.header}>
             <PressableScale onPress={onOpenSettings} style={styles.headerButton} accessibilityRole="button">
               <Text style={styles.headerButtonText}>Settings</Text>
             </PressableScale>
-            <MiraOrb
-              posture={presence.posture}
-              presence={presence}
-              size={56}
-            />
             <PressableScale onPress={onOpenCareTeamSummary} style={styles.headerButton} accessibilityRole="button">
               <Text style={styles.headerButtonText}>Care team</Text>
             </PressableScale>
           </View>
 
-          {/* Conversation thread */}
+          {/* Orb — large, central, with loop ring */}
+          <View style={styles.orbStage}>
+            <LoopRing phase={convState.phase} size={120} />
+            <MiraOrb
+              posture={presence.posture}
+              presence={presence}
+              size={90}
+            />
+          </View>
+
+          {/* Conversation — spatial layout */}
           <ScrollView
             ref={scrollRef}
             style={styles.threadScroll}
             contentContainerStyle={styles.threadContent}
             showsVerticalScrollIndicator={false}
           >
-            {displayThread.map((msg) => (
-              <MessageBubble key={msg.id} message={msg} />
-            ))}
-            {isLoading && !coach.chatReply ? (
-              <ThinkingIndicator />
-            ) : null}
+            {/* Earlier messages — faded, compressed */}
+            {earlierMessages.length > 0 && (
+              <View style={styles.earlierSection}>
+                {earlierMessages.map((msg) => (
+                  <FadedMessage key={msg.id} message={msg} />
+                ))}
+              </View>
+            )}
+
+            {/* Recent messages — prominent, centered */}
+            <View style={styles.recentSection}>
+              {recentMessages.map((msg) => (
+                <MessageBubble key={msg.id} message={msg} />
+              ))}
+              {isLoading && !coach.chatReply ? (
+                <ThinkingIndicator />
+              ) : null}
+            </View>
           </ScrollView>
 
           {/* Input bar */}
@@ -492,6 +518,109 @@ export const ConversationHome: React.FC<ConversationHomeProps> = ({
     </View>
   );
 };
+
+/**
+ * LoopRing — a subtle SVG arc around the orb that visualizes where the
+ * patient is in the conversation loop. The arc fills as the phase
+ * progresses: greeting (empty) → offering (quarter) → accepted (half)
+ * → completed (three-quarters) → checking_in (full ring).
+ *
+ * The ring is faint — it's ambient information, not a progress bar.
+ * The patient perceives the loop without being told they're in a loop.
+ */
+const PHASE_PROGRESS: Record<ConversationPhase, number> = {
+  greeting: 0,
+  offering: 0.25,
+  accepted: 0.5,
+  adapted: 0.5,
+  completed: 0.75,
+  checking_in: 1,
+};
+
+function LoopRing({ phase, size }: { phase: ConversationPhase; size: number }) {
+  const progress = PHASE_PROGRESS[phase] ?? 0;
+  const strokeWidth = 1.5;
+  const radius = (size - strokeWidth) / 2;
+  const center = size / 2;
+  // SVG arc: circumference * progress
+  const circumference = 2 * Math.PI * radius;
+  const dashLength = circumference * progress;
+  const gap = circumference - dashLength;
+
+  return (
+    <View style={[loopRingStyles.container, { width: size, height: size }]}>
+      <Svg width={size} height={size} style={StyleSheet.absoluteFill}>
+        {/* Background ring — always visible, very faint */}
+        <Circle
+          cx={center}
+          cy={center}
+          r={radius}
+          fill="none"
+          stroke={P.line}
+          strokeWidth={strokeWidth}
+          opacity={0.5}
+        />
+        {/* Progress arc — fills with the phase */}
+        {progress > 0 && (
+          <Circle
+            cx={center}
+            cy={center}
+            r={radius}
+            fill="none"
+            stroke={P.accent}
+            strokeWidth={strokeWidth}
+            strokeDasharray={`${dashLength} ${gap}`}
+            strokeLinecap="round"
+            opacity={0.6}
+            // Start from top (12 o'clock)
+            transform={`rotate(-90 ${center} ${center})`}
+          />
+        )}
+      </Svg>
+    </View>
+  );
+}
+
+const loopRingStyles = StyleSheet.create({
+  container: {
+    position: 'absolute',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+});
+
+/**
+ * FadedMessage — earlier messages rendered at reduced opacity and
+ * smaller size. They're still readable if the patient scrolls up, but
+ * they recede visually so the current exchange feels central.
+ */
+function FadedMessage({ message }: { message: ThreadMessage }) {
+  const isUser = message.role === 'user';
+  return (
+    <View style={[styles.messageRowAssistant, fadedStyles.row]}>
+      <Text
+        style={[
+          isUser ? styles.bubbleTextUser : styles.bubbleTextAssistant,
+          fadedStyles.text,
+        ]}
+        numberOfLines={3}
+      >
+        {message.content}
+      </Text>
+    </View>
+  );
+}
+
+const fadedStyles = StyleSheet.create({
+  row: {
+    opacity: 0.4,
+    marginBottom: 10,
+  },
+  text: {
+    fontSize: 13,
+    lineHeight: 19,
+  },
+});
 
 function MessageBubble({ message }: { message: ThreadMessage }) {
   const isUser = message.role === 'user';
@@ -564,9 +693,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 16,
-    paddingVertical: 10,
-    borderBottomWidth: 1,
-    borderBottomColor: P.line,
+    paddingVertical: 8,
   },
   headerButton: {
     paddingHorizontal: 12,
@@ -577,13 +704,28 @@ const styles = StyleSheet.create({
     color: P.textSoft,
     fontSize: 13,
   },
+  orbStage: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 12,
+    position: 'relative',
+  },
   threadScroll: {
     flex: 1,
   },
   threadContent: {
     paddingHorizontal: 20,
-    paddingVertical: 20,
+    paddingVertical: 16,
     paddingBottom: 40,
+  },
+  earlierSection: {
+    marginBottom: 20,
+    paddingBottom: 16,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: P.line,
+  },
+  recentSection: {
+    // Recent messages are full opacity, centered in the reading area
   },
   messageRow: {
     marginBottom: 14,
