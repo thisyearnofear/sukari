@@ -201,6 +201,25 @@ export function appendTurn(
       }
     }
 
+    // Track noticed-difference count — used to mark the first time
+    // a patient notices a difference from a mission. That moment is
+    // the emotional core of the product and worth naming.
+    if (turn.intent === 'report_outcome' && mission?.reportedOutcome?.noticedDifference === 'yes') {
+      const existing = facts.find((f) => f.key === 'noticed_difference_count');
+      const count = existing ? parseInt(existing.value, 10) + 1 : 1;
+      const newFact: ConversationFact = {
+        key: 'noticed_difference_count',
+        value: String(count),
+        timestamp: turn.timestamp,
+      };
+      if (existing) {
+        const idx = facts.indexOf(existing);
+        facts[idx] = newFact;
+      } else {
+        facts.push(newFact);
+      }
+    }
+
     // Track patient-reported outcomes — store as a fact so Mira can
     // reference it in her opening line: "Last time you said post_meal_walk
     // felt easier and you noticed a difference."
@@ -209,9 +228,6 @@ export function appendTurn(
         key: 'last_outcome',
         value: JSON.stringify({
           behaviourTarget: mission.behaviourTarget,
-          // The feltDifficulty and noticedDifference are encoded in the
-          // turn content by the intent parser; we extract them from the
-          // mission's reportedOutcome if available, or leave as not_sure.
           feltDifficulty: mission.reportedOutcome?.feltDifficulty ?? 'about_right',
           noticedDifference: mission.reportedOutcome?.noticedDifference ?? 'not_sure',
         }),
@@ -223,6 +239,24 @@ export function appendTurn(
         facts[idx] = outcomeFact;
       } else {
         facts.push(outcomeFact);
+      }
+
+      // Store the free-form reflection separately — this is the most
+      // human, specific thing the patient offered. Referencing it later
+      // makes Mira feel like she listened, not just parsed.
+      if (mission.reflection && mission.reflection.trim().length > 0) {
+        const reflectionFact: ConversationFact = {
+          key: 'last_reflection',
+          value: mission.reflection.trim(),
+          timestamp: turn.timestamp,
+        };
+        const existingReflection = facts.find((f) => f.key === 'last_reflection');
+        if (existingReflection) {
+          const idx = facts.indexOf(existingReflection);
+          facts[idx] = reflectionFact;
+        } else {
+          facts.push(reflectionFact);
+        }
       }
     }
   }
@@ -273,7 +307,9 @@ export function contextSummary(memory: ConversationMemory): {
   hasPriorContext: boolean;
   lastBarrier?: string;
   completionCount: number;
+  noticedDifferenceCount: number;
   lastCompletedAction?: string;
+  lastReflection?: string;
   lastOutcome?: {
     behaviourTarget: string;
     feltDifficulty: 'easier' | 'about_right' | 'harder';
@@ -285,7 +321,10 @@ export function contextSummary(memory: ConversationMemory): {
   const lastBarrier = memory.facts.find((f) => f.key === 'last_barrier')?.value;
   const completionCountStr = memory.facts.find((f) => f.key === 'completion_count')?.value;
   const completionCount = completionCountStr ? parseInt(completionCountStr, 10) : 0;
+  const noticedDiffStr = memory.facts.find((f) => f.key === 'noticed_difference_count')?.value;
+  const noticedDifferenceCount = noticedDiffStr ? parseInt(noticedDiffStr, 10) : 0;
   const lastCompletedAction = memory.facts.find((f) => f.key === 'last_completed_action')?.value;
+  const lastReflection = memory.facts.find((f) => f.key === 'last_reflection')?.value;
   const lastOutcome = parseOutcomeFact(memory.facts.find((f) => f.key === 'last_outcome')?.value);
 
   let lastVisitDescription = '';
@@ -301,7 +340,9 @@ export function contextSummary(memory: ConversationMemory): {
     hasPriorContext: memory.turns.length > 0,
     lastBarrier,
     completionCount,
+    noticedDifferenceCount,
     lastCompletedAction,
+    lastReflection,
     lastOutcome,
     sessionsAgo: memory.sessionCount,
     lastVisitDescription,

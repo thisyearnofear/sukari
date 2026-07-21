@@ -17,9 +17,9 @@ The product is the closed loop from signal to mission to real-world adherence ev
 1. Open the app. You're immediately in a conversation with Mira — no value screen, no role selection, no signal picker. Mira initiates: "I noticed a pattern in your evenings. Want to try one small thing today?"
 2. Type "sure" to accept the mission. Mira responds and her orb shifts to watching posture.
 3. Type "that's too much" to see Mira adapt — she offers a smaller variant in conversation. No buttons, no cards.
-4. Type "I walked for 10 minutes" to log completion. Mira acknowledges and asks how it felt.
-5. Type "it went well, felt easier than I thought" to see patient-reported outcome capture. Mira logs the outcome (felt difficulty + noticed difference) and acknowledges deterministically — no causal claims, just "you noticed a difference — I'll remember that."
-6. Close and reopen the app. Mira's opening line now references the outcome: "You said post meal walk felt easier than expected and you noticed a difference. Building on what worked — I have something for today. Want to try it?" The closed loop is visible to the patient.
+4. Type "I walked for 10 minutes" to log completion. Mira marks the first completion: "That's your first one. Starting is the hardest part. How do you feel it went?"
+5. Type "it went well, felt easier than I thought, I had more energy in the afternoon" to see patient-reported outcome capture. Mira honors the noticed-difference moment: "That's the first time you've noticed a difference from one of these. That's the whole point — you did something small and you felt it."
+6. Close and reopen the app. Mira's opening line now references the outcome AND the reflection: "You said post meal walk felt easier than expected and you noticed a difference. You mentioned: 'I had more energy in the afternoon.' Building on what worked — I have something for today. Want to try it?" The closed loop is visible, and Mira sounds like she listened.
 7. Type a free-form question like "what is protein?" to see Mira escalate to the LLM with grounded context.
 8. Open the care-team work queue (`/care`). Show Mira's observations at the top — proactive flags with severity (urgent, worth a conversation, positive), including outcome-aware flags (struggle, positive signal).
 9. Show the aggregate header: archetype-level completion rates and patient-reported response rates by mission type ("post_meal_walk: 73% completion, 64% noticed difference, 9 reported").

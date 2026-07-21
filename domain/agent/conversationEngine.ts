@@ -144,6 +144,13 @@ export function generateOpeningLine(
           ? ` though you hadn't noticed a difference yet`
           : '';
     parts.push(`You said ${behaviour} ${difficultyPart}${differencePart}.`);
+
+    // If the patient left a free-form reflection, reference it too.
+    // This is the most human, specific thing they offered — Mira
+    // quoting it back makes her feel like she listened, not just parsed.
+    if (ctx.lastReflection) {
+      parts.push(`You mentioned: "${ctx.lastReflection}"`);
+    }
   }
 
   // Current state
@@ -274,11 +281,20 @@ export function processIntent(
         ? buildMiraPresence(state.pattern, 'completed', false)
         : steadyPresence();
       const detailPart = intent.detail ? ` You said you ${intent.detail}.` : '';
-      const responses = [
-        `Logged.${detailPart} That's real. How do you feel it went?`,
-        `I've got that.${detailPart} One step at a time. How was it?`,
-        `Noted.${detailPart} I'll use this to shape what I suggest next. Any thoughts on how it felt?`,
-      ];
+      // The first completion is the hardest — starting is the whole game.
+      // Mark it quietly, without gamifying.
+      const isFirstCompletion = ctx.completionCount === 0;
+      const responses = isFirstCompletion
+        ? [
+            `That's your first one.${detailPart} Starting is the hardest part. How do you feel it went?`,
+            `Your first completion.${detailPart} That's the one that matters most. How was it?`,
+            `That's one.${detailPart} The first one is always the hardest — you did it. How did it feel?`,
+          ]
+        : [
+            `Logged.${detailPart} That's real. How do you feel it went?`,
+            `I've got that.${detailPart} One step at a time. How was it?`,
+            `Noted.${detailPart} I'll use this to shape what I suggest next. Any thoughts on how it felt?`,
+          ];
       return {
         text: pickResponse(responses, intent),
         state: newState,
@@ -316,24 +332,32 @@ export function processIntent(
 
       // Deterministic acknowledgment that references the outcome without
       // making causal claims. Stays observational: "you noticed" not "it caused."
+      // The language is warmer than a log entry — this is a conversation,
+      // not a database. "I've logged this" is gone.
       const difficultyAck =
         intent.feltDifficulty === 'easier'
-          ? "That's encouraging — easier than expected is a good sign it fits."
+          ? "Easier than you expected — that's a good sign it fits."
           : intent.feltDifficulty === 'harder'
-            ? "Harder than expected is useful to know. I'll factor that into what I suggest next."
-            : "Good to know it felt about right.";
+            ? "Harder than expected. Good to know — I'll shape what I suggest around that."
+            : "About right. That's a solid fit.";
 
+      // The "noticed a difference" moment is the emotional core of the
+      // product. The first time deserves to be named. Subsequent times
+      // are acknowledged warmly but not over-celebrated.
+      const isFirstNotice = ctx.noticedDifferenceCount === 0 && intent.noticedDifference === 'yes';
       const differenceAck =
         intent.noticedDifference === 'yes'
-          ? " You noticed a difference — I'll remember that."
+          ? isFirstNotice
+            ? " That's the first time you've noticed a difference from one of these. That's the whole point — you did something small and you felt it."
+            : " You noticed a difference. That's what we're building on."
           : intent.noticedDifference === 'no'
-            ? " No difference noticed yet — that's normal early on. The pattern matters more over time."
+            ? " No difference yet — that's normal early on. The pattern matters more over time."
             : " Hard to tell so far. That's honest.";
 
       const responses = [
-        `${difficultyAck}${differenceAck} I've logged this.`,
+        `${difficultyAck}${differenceAck}`,
         `${difficultyAck}${differenceAck} Thank you for telling me — this helps me suggest better next time.`,
-        `Got it.${difficultyAck}${differenceAck} This is the kind of detail that shapes what comes next.`,
+        `${difficultyAck}${differenceAck} This is the kind of detail that shapes what comes next.`,
       ];
 
       return {
