@@ -88,7 +88,7 @@ export function buildMiraPresence(
     posture: 'offering',
     valence,
     reaction: null,
-    label: 'Mira noticed a pattern',
+    label: 'I noticed a pattern',
     message:
       pattern.source === 'demo'
         ? 'This is a labelled example. One bounded option to explore it.'

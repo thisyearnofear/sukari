@@ -65,7 +65,7 @@ describe('patterns domain', () => {
   it('gives Mira a truthful, bounded posture for the current mission state', () => {
     const pattern = resolvePattern({ useDemo: true, demoDayIndex: 10 });
     // 2nd-person voice per the network contract (famile/web/docs/MIRA.md).
-    expect(buildMiraPresence(pattern, 'unselected', false).label).toBe('Mira noticed a pattern');
+    expect(buildMiraPresence(pattern, 'unselected', false).label).toBe('I noticed a pattern');
     expect(buildMiraPresence(pattern, 'accepted', true).label).toBe('Adjusted for you');
     expect(buildMiraPresence(pattern, 'deferred', false).label).toBe('Holding this for you');
     expect(buildMiraPresence(pattern, 'completed', false).label).toBe('Logged');

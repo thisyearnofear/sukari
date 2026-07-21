@@ -20,7 +20,6 @@ import { UserMode } from '@/types/game';
 import { CGMProvider } from '@/types/health';
 import { usePlayerProgressContext } from '@/context/PlayerProgressContext';
 import { useCGMConnection } from '@/hooks/useCGMConnection';
-import { useProactivePresence } from '@/hooks/useProactivePresence';
 import { track } from '@/utils/analytics';
 import { buildSignalSnapshot } from '@/domain/signals';
 import { buildLocalDigest, publishWeeklyDigest } from '@/domain/digest';
@@ -33,20 +32,17 @@ import {
 import {
   AMINA_DEMO,
   getAminaDay,
-  aminaLoopSteps,
   buildAminaClinicianDigest,
 } from '@/domain/demo';
 import { selectMission, type ProgrammeMission } from '@/domain/programme';
 import {
-  buildMissionAdaptation,
   buildPersonalisedWorldState,
-  type MissionAdaptation,
   type WorldResponse,
 } from '@/domain/agent';
 import { RoleSelector } from '@/components/home/RoleSelector';
 import { SignalSourcePicker } from '@/components/home/SignalSourcePicker';
 import { ManualCheckIn } from '@/components/home/ManualCheckIn';
-import { HomeMission } from '@/components/home/HomeMission';
+import { ConversationHome } from '@/components/home/ConversationHome';
 import { HomeSettings } from '@/components/home/HomeSettings';
 import { HOME_STORAGE_KEYS, type SignalPath } from '@/components/home/types';
 
@@ -65,6 +61,7 @@ export const MainMenu: React.FC<MainMenuProps> = ({
     setPrivacyMode,
     updatePrivacySettings,
     completeActiveMission,
+    relapseActiveMission,
     setDigestMeta,
     ensureTodayMission,
     setWorldState,
@@ -76,14 +73,14 @@ export const MainMenu: React.FC<MainMenuProps> = ({
   const [showManualCheckIn, setShowManualCheckIn] = useState(false);
   const [demoMode, setDemoMode] = useState(false);
   const [demoDay, setDemoDay] = useState<number>(AMINA_DEMO.defaultDayIndex);
-  const [missionChoice, setMissionChoice] = useState<'accept' | 'easier' | 'not_practical' | null>(null);
-  const [missionDeferred, setMissionDeferred] = useState(false);
+  // missionChoice/missionDeferred track mission lifecycle internally;
+  // ConversationHome reads mission status from progress, not these.
+  const [, setMissionChoice] = useState<'accept' | 'easier' | 'not_practical' | null>(null);
+  const [, setMissionDeferred] = useState(false);
   const [signalPathChosen, setSignalPathChosen] = useState(false);
   const [changingSignalSource, setChangingSignalSource] = useState(false);
   const [manualMoment, setManualMoment] = useState<SelfReportedMoment | null>(null);
   const [missionOverride, setMissionOverride] = useState<ProgrammeMission | null>(null);
-  const [adaptation, setAdaptation] = useState<MissionAdaptation | null>(null);
-  const [supportDismissed, setSupportDismissed] = useState(false);
 
   // --- Signal / pattern -------------------------------------------------
   const cgm = useCGMConnection();
@@ -99,7 +96,6 @@ export const MainMenu: React.FC<MainMenuProps> = ({
     privacyMode: progress.privacyMode,
   });
 
-  const band = signalSnapshot.minimized.band;
   const missionInputSource = demoMode
     ? 'demo'
     : manualMoment
@@ -133,34 +129,6 @@ export const MainMenu: React.FC<MainMenuProps> = ({
     ],
   );
   const displayMission = demoMode ? amina?.mission ?? null : missionOverride || progress.activeMission;
-  const { presence: proactivePresence } = useProactivePresence({
-    pattern,
-    mission: displayMission,
-    missionChoice,
-    deferred: missionDeferred && !demoMode,
-    hasSeenMission: !!missionChoice,
-  });
-  const loopSteps = useMemo(() => {
-    if (demoMode) return aminaLoopSteps(demoDay);
-    const status = progress.activeMission?.status;
-    const done = status === 'completed';
-    const accepted = !!missionChoice && missionChoice !== 'not_practical';
-    return [
-      { key: 'detect', title: 'Detect', done: true, active: false },
-      { key: 'mission', title: 'Mission', done: accepted || done, active: !accepted && !done },
-      { key: 'act', title: 'Act', done: done, active: accepted && !done },
-      { key: 'measure', title: 'Measure', done: false, active: done },
-      { key: 'adapt', title: 'Care team', done: false, active: false },
-    ];
-  }, [demoMode, demoDay, progress.activeMission?.status, missionChoice]);
-
-  const displayWorldState = useMemo(() => {
-    if (demoMode && displayMission) return buildPersonalisedWorldState(pattern, displayMission);
-    if (progress.worldState?.missionId === displayMission?.id) return progress.worldState;
-    if (displayMission) return buildPersonalisedWorldState(pattern, displayMission);
-    return null;
-  }, [demoMode, displayMission, pattern, progress.worldState]);
-
   // --- Hydration --------------------------------------------------------
   useEffect(() => {
     AsyncStorage.multiGet([
@@ -201,7 +169,6 @@ export const MainMenu: React.FC<MainMenuProps> = ({
 
   // A new mission re-arms the support proposal.
   useEffect(() => {
-    setSupportDismissed(false);
   }, [displayMission?.templateId]);
 
   useEffect(() => {
@@ -228,7 +195,6 @@ export const MainMenu: React.FC<MainMenuProps> = ({
     setDemoMode(on);
     setMissionChoice(null);
     setMissionOverride(null);
-    setAdaptation(null);
     await AsyncStorage.setItem(HOME_STORAGE_KEYS.demo, on ? '1' : '0');
     track('demo_amina_toggled', { on });
     if (on) {
@@ -242,7 +208,6 @@ export const MainMenu: React.FC<MainMenuProps> = ({
     const clamped = Math.max(0, Math.min(AMINA_DEMO.totalDays - 1, next));
     setDemoDay(clamped);
     setMissionChoice(null);
-    setAdaptation(null);
     await AsyncStorage.setItem(HOME_STORAGE_KEYS.demoDay, String(clamped));
     track('demo_amina_day_jump', { day: clamped });
   };
@@ -275,7 +240,6 @@ export const MainMenu: React.FC<MainMenuProps> = ({
     await AsyncStorage.setItem(HOME_STORAGE_KEYS.deferred, JSON.stringify({ dateKey: mission.dateKey }));
     setMissionDeferred(true);
     setMissionChoice('accept');
-    setAdaptation(buildMissionAdaptation(mission.templateId, 'later'));
     if (!demoMode) setWorldState(buildPersonalisedWorldState(pattern, mission, 'later'));
     track('mission_deferred', {
       template_id: mission.templateId,
@@ -397,15 +361,6 @@ export const MainMenu: React.FC<MainMenuProps> = ({
     }
   };
 
-  // --- Derived display values ------------------------------------------
-  const signalLine = demoMode
-    ? `${AMINA_DEMO.patientLabel} · ${amina?.label}`
-    : signalSnapshot.connected
-      ? `CGM · ${band.replace('_', ' ')}${signalSnapshot.trend ? ` · ${signalSnapshot.trend}` : ''}`
-      : manualMoment
-        ? `Adjusted from today · ${manualMoment.title.toLowerCase()}`
-        : 'No CGM · missions use programme defaults';
-
   // --- Render -----------------------------------------------------------
   if (showUserModeSelector) {
     return (
@@ -455,35 +410,21 @@ export const MainMenu: React.FC<MainMenuProps> = ({
 
   return (
     <>
-      <HomeMission
-        signalLine={signalLine}
+      <ConversationHome
+        mission={displayMission}
         pattern={pattern}
-        displayMission={displayMission}
-        displayWorldState={displayWorldState}
-        adaptation={adaptation}
-        missionChoice={missionChoice}
-        missionDeferred={missionDeferred}
-        proactivePresence={proactivePresence}
         signalSnapshot={signalSnapshot}
         userMode={progress.userMode}
         demoMode={demoMode}
-        demoDay={demoDay}
-        aminaLabel={amina?.label}
-        aminaOutcome={amina?.outcome}
-        aminaReflection={amina?.reflection}
-        loopSteps={loopSteps}
         onOpenSettings={() => setShowSettings(true)}
         onOpenCharter={() => {
           track('charter_opened', { from: 'home_topbar' });
           router.push('/charter');
         }}
         onOpenCareTeamSummary={openCareTeamSummary}
-        onJumpDemoDay={jumpDemoDay}
-        onExitDemo={() => setDemo(false)}
         onAccept={() => {
           setMissionChoice('accept');
           setMissionDeferred(false);
-          setAdaptation(null);
           assignFromPattern(pattern.suggestedBehaviour, 'ready');
           track('mission_accepted', { template: pattern.suggestedBehaviour, demo: demoMode });
           track('role_to_mission_accepted', { template: pattern.suggestedBehaviour, demo: demoMode });
@@ -496,7 +437,6 @@ export const MainMenu: React.FC<MainMenuProps> = ({
         onMakeEasier={() => {
           setMissionChoice('easier');
           setMissionDeferred(false);
-          setAdaptation(buildMissionAdaptation(displayMission?.templateId || pattern.suggestedBehaviour, 'easier'));
           assignFromPattern(pattern.suggestedBehaviour, 'easier');
           track('mission_made_easier', { template: pattern.suggestedBehaviour });
           track('role_to_mission_accepted', { template: pattern.suggestedBehaviour, variant: 'easier' });
@@ -508,7 +448,6 @@ export const MainMenu: React.FC<MainMenuProps> = ({
         }}
         onNotPractical={() => {
           setMissionChoice('not_practical');
-          setAdaptation(null);
           track('mission_not_practical', { template: pattern.suggestedBehaviour });
           track('mission_response_selected', {
             choice: 'not_practical',
@@ -524,15 +463,10 @@ export const MainMenu: React.FC<MainMenuProps> = ({
           setMissionDeferred(false);
         }}
         onLater={deferMission}
-        onWhy={() =>
-          track('agent_trace_opened', {
-            template: displayMission?.templateId || pattern.suggestedBehaviour,
-            signal_source: pattern.source,
-            demo: demoMode,
-          })
-        }
-        onDismissSupport={() => setSupportDismissed(true)}
-        supportDismissed={supportDismissed}
+        onRelapse={() => {
+          if (!demoMode) relapseActiveMission();
+          setMissionDeferred(false);
+        }}
       />
 
       <HomeSettings
