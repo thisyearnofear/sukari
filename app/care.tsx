@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { View, Text, ScrollView, StyleSheet } from 'react-native';
+import { View, Text, ScrollView, StyleSheet, useWindowDimensions } from 'react-native';
 import { router } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { getCohortOverview, type CohortOverview, type CohortPatientSummary } from '@/domain/cohort';
@@ -14,6 +14,8 @@ export default function CarePanelScreen() {
   const [loading, setLoading] = useState(true);
   const [showLocal, setShowLocal] = useState(false);
   const [expandedPatient, setExpandedPatient] = useState<string | null>(null);
+  const { width } = useWindowDimensions();
+  const compact = width < 700;
 
   useEffect(() => {
     let active = true;
@@ -89,8 +91,8 @@ export default function CarePanelScreen() {
   return (
     <View style={styles.root}>
       <SafeAreaView style={styles.flex}>
-        <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
-          <View style={styles.headerRow}>
+        <ScrollView contentContainerStyle={[styles.scroll, compact && styles.scrollCompact]} showsVerticalScrollIndicator={false}>
+          <View style={[styles.headerRow, compact && styles.headerRowCompact]}>
             <View>
               <Text style={styles.kicker}>Programme operator</Text>
               <Text style={styles.brand}>Sukari</Text>
@@ -136,7 +138,7 @@ export default function CarePanelScreen() {
 
           {!loading && view ? (
             <>
-              <AggregateHeader aggregate={view.aggregate} />
+              <AggregateHeader aggregate={view.aggregate} compact={compact} />
 
               {needsAttention.length > 0 ? (
                 <Text style={styles.sectionLabel}>Needs human attention ({needsAttention.length})</Text>
@@ -197,37 +199,41 @@ export default function CarePanelScreen() {
   );
 }
 
-function AggregateHeader({ aggregate }: { aggregate: CohortOverview['aggregate'] }) {
+function AggregateHeader({ aggregate, compact }: { aggregate: CohortOverview['aggregate']; compact: boolean }) {
   return (
-    <View style={styles.aggregateGrid}>
+    <View style={[styles.aggregateGrid, compact && styles.aggregateGridCompact]}>
       <Metric
         value={String(aggregate.needsAttention)}
         label="need attention"
         accent={aggregate.needsAttention > 0 ? '#C4923A' : '#2F7A5E'}
+        compact={compact}
       />
       <Metric
         value={`${aggregate.weeklyAdherentPatients}/${aggregate.enrolled}`}
         label="weekly adherent"
         accent="#2F7A5E"
+        compact={compact}
       />
       <Metric
         value={`${aggregate.cohortCompletionRate}%`}
         label="cohort completion"
         accent="#2A3A33"
+        compact={compact}
       />
       <Metric
         value={String(aggregate.totalStaffMinutesSaved)}
-        label="min saved"
+        label="min saved this week"
         accent="#2F7A5E"
+        compact={compact}
       />
     </View>
   );
 }
 
-function Metric({ value, label, accent }: { value: string; label: string; accent: string }) {
+function Metric({ value, label, accent, compact }: { value: string; label: string; accent: string; compact: boolean }) {
   return (
-    <View style={styles.metric}>
-      <Text style={[styles.metricValue, { color: accent }]}>{value}</Text>
+    <View style={[styles.metric, compact && styles.metricCompact]}>
+      <Text numberOfLines={1} adjustsFontSizeToFit style={[styles.metricValue, { color: accent }]}>{value}</Text>
       <Text style={styles.metricLabel}>{label}</Text>
     </View>
   );
@@ -259,7 +265,10 @@ function PatientRow({
           <Text style={styles.patientName}>{patient.patientLabel}</Text>
           <Text style={[styles.priorityReason, { color: c.text }]}>{patient.priorityReason}</Text>
         </View>
-        <Text style={[styles.rowRate, { color: c.text }]}>{patient.completionRate}%</Text>
+        <View style={styles.rowMetric}>
+          <Text style={[styles.rowRate, { color: c.text }]}>{patient.completionRate}%</Text>
+          <Text style={styles.rowMetricLabel}>{expanded ? 'hide details' : 'completion · details'}</Text>
+        </View>
       </PressableScale>
 
       {expanded ? (
@@ -315,7 +324,9 @@ const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: '#F4F6F5' },
   flex: { flex: 1 },
   scroll: { width: '100%', maxWidth: 1080, alignSelf: 'center', padding: 32, paddingBottom: 56 },
+  scrollCompact: { paddingHorizontal: 20, paddingTop: 18, paddingBottom: 44 },
   headerRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', gap: 20 },
+  headerRowCompact: { gap: 12 },
   kicker: { fontFamily: FONTS.bodyMedium, color: '#5A6B62', fontSize: 11, letterSpacing: 1.4, textTransform: 'uppercase' },
   brand: { fontFamily: FONTS.display, color: '#14201B', fontSize: 30, marginTop: 4 },
   title: { fontFamily: FONTS.display, color: '#2A3A33', fontSize: 28, lineHeight: 34, marginTop: 12 },
@@ -331,18 +342,22 @@ const styles = StyleSheet.create({
   sourceButtonText: { fontFamily: FONTS.bodyMedium, color: '#2A3A33', fontSize: 12 },
   loading: { fontFamily: FONTS.body, color: '#5A6B62', fontSize: 14, marginTop: 28 },
   aggregateGrid: { flexDirection: 'row', gap: 10, marginTop: 24, marginBottom: 30 },
+  aggregateGridCompact: { flexWrap: 'wrap' },
   metric: { flex: 1, backgroundColor: '#FFF', borderWidth: 1, borderColor: 'rgba(20,32,27,0.12)', padding: 16, minHeight: 96 },
+  metricCompact: { flexBasis: '46%', flexGrow: 1, flexShrink: 0, maxWidth: '48%', minHeight: 104 },
   metricValue: { fontFamily: FONTS.display, fontSize: 30, lineHeight: 36 },
-  metricLabel: { fontFamily: FONTS.bodyMedium, color: '#5A6B62', fontSize: 11, marginTop: 6 },
+  metricLabel: { fontFamily: FONTS.bodyMedium, color: '#5A6B62', fontSize: 12, marginTop: 6 },
   sectionLabel: { fontFamily: FONTS.bodyMedium, color: '#2F7A5E', fontSize: 11, letterSpacing: 1.4, textTransform: 'uppercase', marginBottom: 10 },
   patientRow: { backgroundColor: '#FFF', borderWidth: 1, borderLeftWidth: 4, padding: 16, marginBottom: 8 },
   rowTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: 16 },
   patientName: { fontFamily: FONTS.bodyBold, color: '#14201B', fontSize: 14 },
-  priorityReason: { fontFamily: FONTS.bodyMedium, fontSize: 12, marginTop: 4 },
+  priorityReason: { fontFamily: FONTS.bodyMedium, fontSize: 13, marginTop: 4 },
   rowRate: { fontFamily: FONTS.display, fontSize: 24 },
+  rowMetric: { alignItems: 'flex-end', minWidth: 76 },
+  rowMetricLabel: { fontFamily: FONTS.body, color: '#718078', fontSize: 12, marginTop: 2 },
   rowDetail: { marginTop: 14, borderTopWidth: 1, borderTopColor: 'rgba(20,32,27,0.08)', paddingTop: 12 },
-  detailLine: { fontFamily: FONTS.body, color: '#5A6B62', fontSize: 12, lineHeight: 18, marginBottom: 4 },
+  detailLine: { fontFamily: FONTS.body, color: '#5A6B62', fontSize: 13, lineHeight: 19, marginBottom: 4 },
   reviewButton: { alignSelf: 'flex-start', backgroundColor: '#2F7A5E', paddingHorizontal: 14, paddingVertical: 10, marginTop: 10 },
   reviewText: { fontFamily: FONTS.bodyBold, color: '#FFF', fontSize: 12 },
-  footer: { fontFamily: FONTS.body, color: '#5A6B62', fontSize: 12, lineHeight: 18, marginTop: 36, maxWidth: 560 },
+  footer: { fontFamily: FONTS.body, color: '#5A6B62', fontSize: 13, lineHeight: 19, marginTop: 36, maxWidth: 560 },
 });

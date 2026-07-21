@@ -28,7 +28,6 @@ import { LoopStrip } from '@/components/programme/LoopStrip';
 import { AgencyLaneTag } from '@/components/programme/AgencyLaneTag';
 import { QuietWinBeat } from '@/components/programme/QuietWinBeat';
 import { CoachModal } from '@/components/agent/CoachModal';
-import { FloatingMiraOrb } from '@/components/agent/FloatingMiraOrb';
 import { useCoach } from '@/hooks/useCoach';
 import { track } from '@/utils/analytics';
 import { completionHeartbeat } from '@/utils/haptics';
@@ -122,6 +121,7 @@ export const HomeMission: React.FC<HomeMissionProps> = ({
   const [showCoach, setShowCoach] = React.useState(false);
   const [coachInput, setCoachInput] = React.useState('');
   const [showQuietWin, setShowQuietWin] = React.useState(false);
+  const [showDemoTools, setShowDemoTools] = React.useState(false);
   const coach = useCoach();
   const enterAnim = useRef(new Animated.Value(0)).current;
 
@@ -207,12 +207,27 @@ export const HomeMission: React.FC<HomeMissionProps> = ({
           }}
         >
           <Text style={styles.brandMark}>Sukari</Text>
-          <Text style={styles.tagline}>One mission today. Better evidence for tomorrow.</Text>
-          <Text style={styles.signalLine}>{signalLine}</Text>
+          {!demoMode ? <Text style={styles.tagline}>One mission today. Better evidence for tomorrow.</Text> : null}
+          {!demoMode ? <Text style={styles.signalLine}>{signalLine}</Text> : null}
 
           {demoMode ? (
-            <View style={styles.judgeScenes}>
-              <Text style={styles.judgeScenesLabel}>Demo scenes</Text>
+            <View style={styles.demoSummary}>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.demoSummaryLabel}>Synthetic example · {aminaLabel}</Text>
+                <Text style={styles.demoSummaryText}>A labelled walkthrough, never patient data.</Text>
+              </View>
+              <PressableScale
+                onPress={() => setShowDemoTools((visible) => !visible)}
+                style={styles.demoToolsButton}
+                accessibilityRole="button"
+              >
+                <Text style={styles.demoToolsButtonText}>{showDemoTools ? 'Hide controls' : 'Demo controls'}</Text>
+              </PressableScale>
+            </View>
+          ) : null}
+
+          {demoMode && showDemoTools ? (
+            <View style={styles.demoTools}>
               <View style={styles.judgeSceneRow}>
                 <PressableScale
                   onPress={() => onJumpDemoDay(AMINA_DEMO.scenes.pattern)}
@@ -251,16 +266,7 @@ export const HomeMission: React.FC<HomeMissionProps> = ({
               <PressableScale onPress={() => onExitDemo()} style={styles.exitDemo}>
                 <Text style={styles.exitDemoText}>Exit demo</Text>
               </PressableScale>
-            </View>
-          ) : null}
-
-          <View style={{ marginTop: demoMode ? 22 : 12 }}>
-            {demoMode ? <LoopStrip steps={loopSteps} /> : null}
-          </View>
-
-          {demoMode ? (
-            <View style={styles.demoControls}>
-              <Text style={styles.demoHint}>{AMINA_DEMO.disclaimer}</Text>
+              <LoopStrip steps={loopSteps} />
               <View style={styles.demoRow}>
                 <PressableScale
                   onPress={() => onJumpDemoDay(demoDay - 1)}
@@ -275,19 +281,19 @@ export const HomeMission: React.FC<HomeMissionProps> = ({
                   style={styles.demoChip}
                   accessibilityRole="button"
                 >
-                  <Text style={styles.demoChipText}>Time jump →</Text>
+                  <Text style={styles.demoChipText}>Next day →</Text>
                 </PressableScale>
               </View>
             </View>
           ) : null}
 
-          <View style={{ marginTop: 8, marginBottom: 20 }}>
+          <View style={styles.missionCardWrap}>
             <PatternMissionCard
               pattern={pattern}
               mission={displayMission}
               outcome={aminaOutcome}
               reflection={aminaReflection}
-              demoLabel={demoMode ? AMINA_DEMO.disclaimer : null}
+              demoLabel={null}
               missionChoice={missionChoice}
               adaptation={adaptation}
               worldState={displayWorldState}
@@ -340,10 +346,6 @@ export const HomeMission: React.FC<HomeMissionProps> = ({
           ) : null}
 
           <View style={styles.secondaryRow}>
-            <TouchableOpacity onPress={() => setShowCoach(true)} accessibilityRole="button">
-              <Text style={styles.link}>Ask Mira</Text>
-            </TouchableOpacity>
-            <Text style={styles.dot}>·</Text>
             <TouchableOpacity
               onPress={async () => {
                 const mission =
@@ -380,8 +382,6 @@ export const HomeMission: React.FC<HomeMissionProps> = ({
         />
       ) : null}
 
-      <FloatingMiraOrb onPress={() => setShowCoach(true)} />
-
       <CoachModal
         visible={showCoach}
         onClose={() => setShowCoach(false)}
@@ -399,6 +399,7 @@ export const HomeMission: React.FC<HomeMissionProps> = ({
         }}
         messages={coach.messages}
         onClearChat={coach.clearChat}
+        presence={proactivePresence ?? undefined}
       />
     </View>
   );
@@ -448,39 +449,70 @@ const styles = StyleSheet.create({
   homeScroll: {
     alignItems: 'center',
     paddingHorizontal: 24,
-    paddingTop: 28,
+    paddingTop: 18,
     paddingBottom: 48,
   },
   brandMark: {
     fontFamily: FONTS.display,
     color: P.text,
-    fontSize: 36,
-    lineHeight: 42,
+    fontSize: 28,
+    lineHeight: 34,
     letterSpacing: -0.5,
   },
   tagline: {
     fontFamily: FONTS.body,
     color: P.textSoft,
-    fontSize: 16,
-    lineHeight: 24,
-    marginTop: 8,
+    fontSize: 15,
+    lineHeight: 22,
+    marginTop: 6,
   },
   signalLine: {
     fontFamily: FONTS.body,
     color: P.textMuted,
-    fontSize: 12,
+    fontSize: 14,
     marginTop: 10,
   },
-  judgeScenes: {
-    marginTop: 14,
-    gap: 8,
+  demoSummary: {
+    marginTop: 10,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    borderWidth: 1,
+    borderColor: P.warn,
+    backgroundColor: P.warnSoft,
+    padding: 10,
   },
-  judgeScenesLabel: {
+  demoSummaryLabel: {
+    fontFamily: FONTS.bodyBold,
+    color: P.warn,
+    fontSize: 13,
+  },
+  demoSummaryText: {
+    fontFamily: FONTS.body,
+    color: P.textSoft,
+    fontSize: 12,
+    lineHeight: 17,
+    marginTop: 2,
+  },
+  demoToolsButton: {
+    paddingHorizontal: 10,
+    paddingVertical: 9,
+    borderWidth: 1,
+    borderColor: P.line,
+    backgroundColor: P.inkElevated,
+  },
+  demoToolsButtonText: {
     fontFamily: FONTS.bodyMedium,
-    color: P.textMuted,
-    fontSize: 10,
-    letterSpacing: 1.3,
-    textTransform: 'uppercase',
+    color: P.textSoft,
+    fontSize: 12,
+  },
+  demoTools: {
+    marginTop: 10,
+    gap: 12,
+    padding: 12,
+    borderWidth: 1,
+    borderColor: P.line,
+    backgroundColor: P.inkElevated,
   },
   judgeSceneRow: {
     flexDirection: 'row',
@@ -502,7 +534,7 @@ const styles = StyleSheet.create({
   sceneChipText: {
     fontFamily: FONTS.bodyMedium,
     color: P.textSoft,
-    fontSize: 11,
+    fontSize: 12,
   },
   exitDemo: {
     alignSelf: 'flex-start',
@@ -512,16 +544,6 @@ const styles = StyleSheet.create({
     fontFamily: FONTS.bodyMedium,
     color: P.cool,
     fontSize: 12,
-  },
-  demoControls: {
-    marginBottom: 12,
-    gap: 8,
-  },
-  demoHint: {
-    fontFamily: FONTS.body,
-    color: P.warn,
-    fontSize: 11,
-    lineHeight: 16,
   },
   demoRow: {
     flexDirection: 'row',
@@ -545,7 +567,11 @@ const styles = StyleSheet.create({
   demoDayLabel: {
     fontFamily: FONTS.bodyBold,
     color: P.text,
-    fontSize: 12,
+    fontSize: 13,
+  },
+  missionCardWrap: {
+    marginTop: 10,
+    marginBottom: 16,
   },
   secondaryRow: {
     flexDirection: 'row',
@@ -559,20 +585,20 @@ const styles = StyleSheet.create({
   link: {
     fontFamily: FONTS.bodyMedium,
     color: P.textSoft,
-    fontSize: 13,
+    fontSize: 14,
     paddingVertical: 4,
   },
   dot: {
     color: P.textMuted,
-    fontSize: 13,
+    fontSize: 14,
   },
   footerHint: {
     fontFamily: FONTS.body,
     color: P.textMuted,
-    fontSize: 12,
+    fontSize: 13,
     textAlign: 'center',
     marginTop: 24,
-    lineHeight: 18,
+    lineHeight: 19,
     maxWidth: 320,
     alignSelf: 'center',
   },
@@ -606,8 +632,8 @@ const styles = StyleSheet.create({
   supportBody: {
     fontFamily: FONTS.body,
     color: P.textSoft,
-    fontSize: 13,
-    lineHeight: 19,
+    fontSize: 14,
+    lineHeight: 20,
     marginTop: 4,
   },
   supportRow: {
@@ -630,6 +656,6 @@ const styles = StyleSheet.create({
   supportGhost: {
     fontFamily: FONTS.bodyMedium,
     color: P.cool,
-    fontSize: 13,
+    fontSize: 14,
   },
 });

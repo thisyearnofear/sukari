@@ -16,6 +16,7 @@ import { CoachModal } from '@/components/agent/CoachModal';
 import { MedicalDisclaimer } from '@/components/MedicalDisclaimer';
 import { PressableScale } from '@/components/ui/PressableScale';
 import { useCoach } from '@/hooks/useCoach';
+import { steadyPresence } from '@/domain/agent';
 import { track } from '@/utils/analytics';
 import type { CGMProvider } from '@/types/health';
 import type { MetabolicPattern } from '@/domain/patterns';
@@ -105,12 +106,12 @@ export const SignalSourcePicker: React.FC<SignalSourcePickerProps> = ({
         </Text>
         <View style={styles.signalOptions}>
           <PressableScale
-            onPress={() => handleChoose('demo')}
+            onPress={() => handleChoose('manual')}
             style={[styles.signalOption, styles.signalOptionPrimary]}
             accessibilityRole="button"
           >
-            <Text style={styles.signalOptionTitle}>Use Amina&apos;s example</Text>
-            <Text style={styles.signalOptionPrimaryBody}>A private, synthetic 14-day pattern. No account or data needed.</Text>
+            <Text style={styles.signalOptionTitle}>Tell Sukari about today</Text>
+            <Text style={styles.signalOptionPrimaryBody}>Choose a moment in a few taps. It stays on this device.</Text>
           </PressableScale>
           <PressableScale
             onPress={() => handleChoose('connect')}
@@ -127,20 +128,22 @@ export const SignalSourcePicker: React.FC<SignalSourcePickerProps> = ({
             </Text>
           </PressableScale>
           <PressableScale
-            onPress={() => handleChoose('manual')}
+            onPress={() => handleChoose('without_signal')}
             style={styles.signalOption}
             accessibilityRole="button"
           >
-            <Text style={styles.signalOptionTitle}>Tell Sukari about today</Text>
-            <Text style={styles.signalOptionBody}>Choose a moment in a few taps. It stays on this device.</Text>
+            <Text style={styles.signalOptionTitle}>Start with a general habit mission</Text>
+            <Text style={styles.signalOptionBody}>No signal needed. You can change the input later.</Text>
           </PressableScale>
         </View>
         <PressableScale
-          onPress={() => handleChoose('without_signal')}
-          style={styles.continueWithoutSignal}
+          onPress={() => handleChoose('demo')}
+          style={styles.demoPath}
           accessibilityRole="button"
         >
-          <Text style={styles.continueWithoutSignalText}>Give me a general habit mission</Text>
+          <Text style={styles.demoPathLabel}>Want to look around first?</Text>
+          <Text style={styles.demoPathTitle}>Explore Amina&apos;s example →</Text>
+          <Text style={styles.demoPathBody}>A labelled, synthetic 14-day pattern. No account or personal data needed.</Text>
         </PressableScale>
         <Text style={styles.signalScope}>Connect data later when you are ready. Sukari never gives dosing or diagnostic advice.</Text>
       </ScrollView>
@@ -201,6 +204,7 @@ export const SignalSourcePicker: React.FC<SignalSourcePickerProps> = ({
         }}
         messages={coach.messages}
         onClearChat={coach.clearChat}
+        presence={steadyPresence()}
       />
     </View>
   );
@@ -293,21 +297,35 @@ const styles = StyleSheet.create({
     lineHeight: 19,
     marginTop: 5,
   },
-  continueWithoutSignal: {
-    alignSelf: 'flex-start',
-    paddingVertical: 12,
-    marginTop: 6,
+  demoPath: {
+    marginTop: 14,
+    paddingTop: 14,
+    borderTopWidth: 1,
+    borderTopColor: P.line,
   },
-  continueWithoutSignalText: {
+  demoPathLabel: {
     fontFamily: FONTS.bodyMedium,
+    color: P.textMuted,
+    fontSize: 12,
+  },
+  demoPathTitle: {
+    fontFamily: FONTS.bodyBold,
     color: P.cool,
+    fontSize: 14,
+    marginTop: 4,
+  },
+  demoPathBody: {
+    fontFamily: FONTS.body,
+    color: P.textSoft,
     fontSize: 13,
+    lineHeight: 19,
+    marginTop: 4,
   },
   signalScope: {
     fontFamily: FONTS.body,
     color: P.textMuted,
-    fontSize: 11,
-    lineHeight: 16,
+    fontSize: 12,
+    lineHeight: 18,
     marginTop: 12,
   },
   modalCenter: {

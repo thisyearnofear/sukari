@@ -11,10 +11,13 @@
  * before the modal opens — a 200ms "leaning in" signal.
  */
 import React, { useRef } from 'react';
-import { View, StyleSheet, Animated, Easing } from 'react-native';
+import { View, Text, StyleSheet, Animated, Easing } from 'react-native';
 import { MiraOrb } from './MiraOrb';
 import { steadyPresence } from '@/domain/agent';
 import { useReducedMotion } from '@/hooks/useReducedMotion';
+import { COLORS, FONTS } from '@/constants/designSystem';
+
+const P = COLORS.PROGRAMME;
 
 interface FloatingMiraOrbProps {
   onPress: () => void;
@@ -50,12 +53,17 @@ export const FloatingMiraOrb: React.FC<FloatingMiraOrbProps> = ({ onPress, size 
   return (
     <View style={styles.floating} pointerEvents="box-none">
       <Animated.View style={{ transform: [{ scale: scaleAnim }] }}>
-        <MiraOrb
-          posture="steady"
-          presence={presence}
-          size={size}
-          onPress={handlePress}
-        />
+        <View style={styles.action}>
+          <MiraOrb
+            posture="steady"
+            presence={presence}
+            size={size}
+            onPress={handlePress}
+          />
+          <Text style={styles.label} onPress={handlePress} accessibilityRole="button">
+            Ask Mira
+          </Text>
+        </View>
       </Animated.View>
     </View>
   );
@@ -67,5 +75,21 @@ const styles = StyleSheet.create({
     top: 56,
     right: 20,
     zIndex: 50,
+  },
+  action: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingRight: 12,
+    borderWidth: 1,
+    borderColor: P.line,
+    borderRadius: 999,
+    backgroundColor: P.inkElevated,
+  },
+  label: {
+    fontFamily: FONTS.bodyMedium,
+    color: P.textSoft,
+    fontSize: 13,
+    paddingVertical: 12,
   },
 });

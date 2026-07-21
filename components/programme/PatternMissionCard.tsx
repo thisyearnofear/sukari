@@ -115,6 +115,11 @@ export function PatternMissionCard({
         <View style={styles.miraCopy}>
           <Text style={styles.miraLabel}>{mira.label}</Text>
           <Text style={styles.miraMessage}>{mira.message}</Text>
+          {onAskMira ? (
+            <PressableScale onPress={onAskMira} accessibilityRole="button" style={styles.askMiraLink}>
+              <Text style={styles.askMiraText}>Ask Mira about this →</Text>
+            </PressableScale>
+          ) : null}
         </View>
       </View>
       <MissionVisual brief={mediaBrief} worldState={worldState} requestPersonalisation={showDetails} />
@@ -187,7 +192,7 @@ export function PatternMissionCard({
       {!missionChoice && !done && !deferred ? (
         <View style={styles.choiceSection}>
           <PressableScale onPress={onAccept} style={styles.acceptBtn} accessibilityRole="button">
-            <Text style={styles.acceptText}>Do it now</Text>
+            <Text style={styles.acceptText}>I’ll do this now</Text>
           </PressableScale>
           <View style={styles.choiceRow}>
             <PressableScale onPress={onMakeEasier} style={styles.ghostBtn} accessibilityRole="button">
@@ -256,8 +261,8 @@ const styles = StyleSheet.create({
     borderColor: P.line,
     backgroundColor: P.mist,
     borderRadius: 2,
-    paddingVertical: 18,
-    paddingHorizontal: 16,
+    paddingVertical: 14,
+    paddingHorizontal: 14,
   },
   demoBanner: {
     backgroundColor: P.warnSoft,
@@ -271,7 +276,7 @@ const styles = StyleSheet.create({
   demoText: {
     fontFamily: FONTS.bodyMedium,
     color: P.warn,
-    fontSize: 11,
+    fontSize: 12,
     letterSpacing: 0.3,
   },
   waitBanner: {
@@ -291,8 +296,8 @@ const styles = StyleSheet.create({
   waitBody: {
     fontFamily: FONTS.body,
     color: P.textSoft,
-    fontSize: 12,
-    lineHeight: 17,
+    fontSize: 13,
+    lineHeight: 18,
     marginTop: 4,
   },
   practiceCue: {
@@ -304,21 +309,21 @@ const styles = StyleSheet.create({
   practiceCueLabel: {
     color: P.cool,
     fontFamily: FONTS.bodyMedium,
-    fontSize: 9,
+    fontSize: 11,
     letterSpacing: 1.05,
   },
   practiceCueText: {
     color: P.textSoft,
     fontFamily: FONTS.body,
-    fontSize: 12,
-    lineHeight: 17,
+    fontSize: 14,
+    lineHeight: 20,
     marginTop: 3,
   },
   practiceCueDetail: {
     color: P.textSoft,
     fontFamily: FONTS.body,
-    fontSize: 11,
-    lineHeight: 16,
+    fontSize: 13,
+    lineHeight: 19,
     marginTop: 2,
   },
   cardHeader: {
@@ -342,14 +347,24 @@ const styles = StyleSheet.create({
   miraLabel: {
     fontFamily: FONTS.bodyBold,
     color: P.text,
-    fontSize: 12,
+    fontSize: 14,
   },
   miraMessage: {
     fontFamily: FONTS.body,
     color: P.textSoft,
-    fontSize: 12,
-    lineHeight: 17,
+    fontSize: 14,
+    lineHeight: 20,
     marginTop: 2,
+  },
+  askMiraLink: {
+    alignSelf: 'flex-start',
+    paddingVertical: 6,
+    marginTop: 2,
+  },
+  askMiraText: {
+    fontFamily: FONTS.bodyMedium,
+    color: P.cool,
+    fontSize: 14,
   },
   eyebrow: {
     fontFamily: FONTS.bodyMedium,
@@ -362,16 +377,16 @@ const styles = StyleSheet.create({
   missionAction: {
     fontFamily: FONTS.display,
     color: P.text,
-    fontSize: 20,
-    lineHeight: 26,
+    fontSize: 19,
+    lineHeight: 25,
     letterSpacing: -0.2,
     marginBottom: 2,
   },
   patternOneLiner: {
     fontFamily: FONTS.body,
     color: P.textMuted,
-    fontSize: 13,
-    lineHeight: 19,
+    fontSize: 14,
+    lineHeight: 20,
   },
   trace: {
     marginTop: 4,
@@ -383,7 +398,7 @@ const styles = StyleSheet.create({
   traceLabel: {
     fontFamily: FONTS.bodyMedium,
     color: P.cool,
-    fontSize: 11,
+    fontSize: 12,
     letterSpacing: 0.8,
     textTransform: 'uppercase',
     marginBottom: 2,
@@ -391,14 +406,14 @@ const styles = StyleSheet.create({
   traceLine: {
     fontFamily: FONTS.body,
     color: P.textMuted,
-    fontSize: 11,
-    lineHeight: 16,
+    fontSize: 13,
+    lineHeight: 19,
   },
   traceMeta: {
     fontFamily: FONTS.body,
     color: P.textMuted,
-    fontSize: 10,
-    lineHeight: 15,
+    fontSize: 13,
+    lineHeight: 19,
     marginTop: 3,
   },
   linkBtn: {
@@ -415,13 +430,13 @@ const styles = StyleSheet.create({
   adaptationLabel: {
     fontFamily: FONTS.bodyBold,
     color: P.cool,
-    fontSize: 12,
+    fontSize: 13,
   },
   adaptationBody: {
     fontFamily: FONTS.body,
     color: P.textSoft,
-    fontSize: 12,
-    lineHeight: 18,
+    fontSize: 14,
+    lineHeight: 20,
     marginTop: 2,
   },
   linkText: {
@@ -439,33 +454,33 @@ const styles = StyleSheet.create({
   detailBody: {
     fontFamily: FONTS.body,
     color: P.textSoft,
-    fontSize: 13,
-    lineHeight: 20,
+    fontSize: 14,
+    lineHeight: 21,
   },
   detailMeta: {
     fontFamily: FONTS.body,
     color: P.textMuted,
-    fontSize: 11,
+    fontSize: 13,
     marginBottom: 4,
   },
   evidenceItem: {
     fontFamily: FONTS.body,
     color: P.text,
-    fontSize: 12,
-    lineHeight: 18,
+    fontSize: 14,
+    lineHeight: 20,
   },
   whyExperiment: {
     fontFamily: FONTS.body,
     color: P.textSoft,
-    fontSize: 12,
-    lineHeight: 18,
+    fontSize: 14,
+    lineHeight: 20,
     marginTop: 4,
   },
   safety: {
     fontFamily: FONTS.body,
     color: P.textMuted,
-    fontSize: 11,
-    lineHeight: 16,
+    fontSize: 13,
+    lineHeight: 19,
     marginTop: 6,
   },
   choiceSection: {
@@ -487,7 +502,7 @@ const styles = StyleSheet.create({
   acceptText: {
     fontFamily: FONTS.bodyBold,
     color: P.ink,
-    fontSize: 13,
+    fontSize: 14,
   },
   ghostBtn: {
     borderWidth: 1,
@@ -504,12 +519,12 @@ const styles = StyleSheet.create({
   textBtnLabel: {
     fontFamily: FONTS.bodyMedium,
     color: P.textMuted,
-    fontSize: 12,
+    fontSize: 14,
   },
   ghostText: {
     fontFamily: FONTS.bodyMedium,
     color: P.textSoft,
-    fontSize: 12,
+    fontSize: 14,
   },
   choiceAck: {
     fontFamily: FONTS.bodyMedium,
@@ -540,7 +555,7 @@ const styles = StyleSheet.create({
   laterText: {
     fontFamily: FONTS.bodyMedium,
     color: P.textSoft,
-    fontSize: 12,
+    fontSize: 13,
   },
   outcomeBlock: {
     marginTop: 16,

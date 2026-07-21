@@ -26,12 +26,15 @@ import {
   Easing,
   Vibration,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { COLORS, FONTS } from '@/constants/designSystem';
 import { PressableScale } from '@/components/ui/PressableScale';
 import { MiraOrb } from './MiraOrb';
 import type { ProgrammeMission } from '@/domain/programme';
 import type { MetabolicPattern } from '@/domain/patterns';
 import type { ChatMessage } from '@/hooks/useCoach';
+import { postureMorph } from '@/domain/agent/miraContract';
+import { steadyPresence, type SukariMiraPresence } from '@/domain/agent';
 
 const P = COLORS.PROGRAMME;
 
@@ -51,6 +54,7 @@ interface CoachModalProps {
   onAsk: () => void;
   messages?: ChatMessage[];
   onClearChat?: () => void;
+  presence?: SukariMiraPresence;
 }
 
 export const CoachModal: React.FC<CoachModalProps> = ({
@@ -66,27 +70,29 @@ export const CoachModal: React.FC<CoachModalProps> = ({
   onAsk,
   messages = [],
   onClearChat,
+  presence,
 }) => {
+  const insets = useSafeAreaInsets();
   // --- Rest mode ("Sit with me") ---
   const [sitting, setSitting] = React.useState(false);
   const sitTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const sitFade = useRef(new Animated.Value(0)).current;
-  const orbSize = useRef(new Animated.Value(54)).current;
+  const orbScale = useRef(new Animated.Value(0.84)).current;
 
   // Orb tier transition: grow when modal opens, settle when it closes.
   useEffect(() => {
     if (visible && !sitting) {
-      Animated.timing(orbSize, {
-        toValue: 64,
-        duration: 600,
+      Animated.timing(orbScale, {
+        toValue: 1,
+        duration: 720,
         easing: Easing.bezier(0.22, 1, 0.36, 1),
-        useNativeDriver: false,
+        useNativeDriver: true,
       }).start();
     } else if (!visible) {
-      orbSize.setValue(54);
+      orbScale.setValue(0.84);
       setSitting(false);
     }
-  }, [visible, sitting, orbSize]);
+  }, [visible, sitting, orbScale]);
 
   // Rest mode fade in/out.
   useEffect(() => {
@@ -124,23 +130,31 @@ export const CoachModal: React.FC<CoachModalProps> = ({
     Vibration.vibrate(15);
   };
 
-  const orbSizeAnimated = orbSize.interpolate({
-    inputRange: [40, 120],
-    outputRange: [40, 120],
-  });
+  const basePresence = presence ?? steadyPresence();
+  const displayedPresence: SukariMiraPresence = isLoading
+    ? {
+        ...basePresence,
+        posture: 'inquiry',
+        valence: 0.1,
+        reaction: null,
+        label: 'Listening',
+        message: 'Mira is considering your question within today’s habit boundary.',
+        morph: postureMorph('inquiry', 0.1),
+      }
+    : basePresence;
 
   return (
     <Modal visible={visible} animationType="slide" transparent onRequestClose={onClose}>
       <View style={styles.coachBackdrop}>
-        <View style={styles.coachSheet}>
+        <View style={[styles.coachSheet, { paddingBottom: Math.max(24, insets.bottom + 16) }]}>
           {/* Header with orb + presence dot */}
           <View style={styles.sheetHeader}>
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-              <Animated.View style={{ width: orbSizeAnimated, height: orbSizeAnimated }}>
+            <View style={styles.headerIdentity}>
+              <Animated.View style={{ transform: [{ scale: orbScale }] }}>
                 <MiraOrb
-                  posture={sitting ? 'steady' : isLoading ? 'watching' : 'steady'}
-                  size={64}
-                  onPress={sitting ? endSit : beginSit}
+                  posture={displayedPresence.posture}
+                  presence={displayedPresence}
+                  size={72}
                 />
               </Animated.View>
               <View>
@@ -168,9 +182,11 @@ export const CoachModal: React.FC<CoachModalProps> = ({
                 </Text>
               </View>
             </View>
-            <TouchableOpacity onPress={sitting ? endSit : onClose} accessibilityRole="button">
-              <Text style={styles.link}>{sitting ? 'End' : 'Close'}</Text>
-            </TouchableOpacity>
+            <View style={styles.headerActions}>
+              <TouchableOpacity onPress={sitting ? endSit : onClose} accessibilityRole="button">
+                <Text style={styles.link}>{sitting ? 'Return' : 'Close'}</Text>
+              </TouchableOpacity>
+            </View>
           </View>
 
           {/* Rest mode overlay — orb breathes, panel dims, no input */}
@@ -180,8 +196,20 @@ export const CoachModal: React.FC<CoachModalProps> = ({
               pointerEvents="auto"
             >
               <Text style={styles.sitText}>Stillness is data.</Text>
-              <Text style={styles.sitHint}>Tap the orb to return</Text>
+              <Text style={styles.sitHint}>Stay for a breath, or return when you are ready.</Text>
             </Animated.View>
+          )}
+
+          {!sitting && (
+            <>
+              <View style={styles.presenceCard} accessibilityRole="summary">
+                <Text style={styles.presenceLabel}>Mira · {displayedPresence.label}</Text>
+                <Text style={styles.presenceMessage}>{displayedPresence.message}</Text>
+              </View>
+              <PressableScale onPress={beginSit} accessibilityRole="button" style={styles.sitLink}>
+                <Text style={styles.sitLinkText}>Sit quietly with Mira</Text>
+              </PressableScale>
+            </>
           )}
 
           {/* Mission context (hidden in rest mode) */}
@@ -281,15 +309,26 @@ const styles = StyleSheet.create({
     backgroundColor: P.inkElevated,
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
-    padding: 24,
-    paddingBottom: 40,
-    maxHeight: '85%',
+    padding: 20,
+    maxHeight: '92%',
   },
   sheetHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: 12,
+  },
+  headerIdentity: {
+    flex: 1,
+    minWidth: 0,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  headerActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginLeft: 10,
   },
   miraPresenceDot: {
     width: 8,
@@ -304,7 +343,7 @@ const styles = StyleSheet.create({
   sheetSubtitle: {
     fontFamily: FONTS.body,
     color: P.textMuted,
-    fontSize: 11,
+    fontSize: 12,
     marginTop: 2,
   },
   link: {
@@ -318,11 +357,42 @@ const styles = StyleSheet.create({
     fontSize: 14,
     lineHeight: 20,
   },
+  presenceCard: {
+    borderLeftWidth: 2,
+    borderLeftColor: P.accent,
+    backgroundColor: P.mist,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    marginBottom: 10,
+  },
+  presenceLabel: {
+    fontFamily: FONTS.bodyBold,
+    color: P.text,
+    fontSize: 13,
+  },
+  presenceMessage: {
+    fontFamily: FONTS.body,
+    color: P.textSoft,
+    fontSize: 13,
+    lineHeight: 19,
+    marginTop: 3,
+  },
+  sitLink: {
+    alignSelf: 'flex-start',
+    paddingVertical: 8,
+    paddingHorizontal: 2,
+    marginBottom: 2,
+  },
+  sitLinkText: {
+    fontFamily: FONTS.bodyMedium,
+    color: P.cool,
+    fontSize: 13,
+  },
   insight: {
     fontFamily: FONTS.body,
     color: P.textMuted,
-    fontSize: 12,
-    lineHeight: 17,
+    fontSize: 13,
+    lineHeight: 19,
     marginTop: 3,
   },
   thread: {
@@ -368,12 +438,14 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: P.line,
     marginTop: 14,
-    marginBottom: 12,
+    marginBottom: 10,
   },
   primaryCta: {
     backgroundColor: P.accent,
-    paddingVertical: 14,
+    paddingVertical: 12,
+    minHeight: 44,
     alignItems: 'center',
+    justifyContent: 'center',
     borderRadius: 4,
   },
   primaryCtaText: {
@@ -382,9 +454,11 @@ const styles = StyleSheet.create({
     fontSize: 15,
   },
   clearBtn: {
-    paddingVertical: 14,
-    paddingHorizontal: 16,
+    paddingVertical: 12,
+    paddingHorizontal: 14,
+    minHeight: 44,
     alignItems: 'center',
+    justifyContent: 'center',
     borderRadius: 4,
     borderWidth: 1,
     borderColor: P.line,
@@ -414,7 +488,7 @@ const styles = StyleSheet.create({
   sitHint: {
     fontFamily: FONTS.body,
     color: P.textMuted,
-    fontSize: 12,
+    fontSize: 13,
     marginTop: 16,
   },
 });

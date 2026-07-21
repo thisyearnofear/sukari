@@ -9,6 +9,8 @@ import {
 } from 'react-native';
 import { ANIMATIONS } from '@/constants/designSystem';
 
+const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
+
 type Props = Omit<PressableProps, 'style' | 'children'> & {
   children: ReactNode;
   style?: StyleProp<ViewStyle>;
@@ -41,8 +43,9 @@ export function PressableScale({
   };
 
   return (
-    <Pressable
+    <AnimatedPressable
       disabled={disabled}
+      style={[style, { transform: [{ scale }] }]}
       onPressIn={(e) => {
         if (!disabled) animateTo(pressedScale);
         onPressIn?.(e);
@@ -53,9 +56,7 @@ export function PressableScale({
       }}
       {...rest}
     >
-      <Animated.View style={[style, { transform: [{ scale }] }]}>
-        {children}
-      </Animated.View>
-    </Pressable>
+      {children}
+    </AnimatedPressable>
   );
 }

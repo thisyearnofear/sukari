@@ -217,6 +217,33 @@ export function MiraOrb({ posture, morph, size = 54, onPress, presence }: Props)
               <Stop offset="1" stopColor={P.ink} stopOpacity={0.94} />
             </RadialGradient>
           </Defs>
+          {tier !== 'inline' && effectiveMorph.blobCount >= 2 ? (
+            <Circle
+              cx={69 + effectiveMorph.asymmetry * 5}
+              cy={43 - effectiveMorph.bloom * 4}
+              r={11 + effectiveMorph.bloom * 5 - effectiveMorph.pinch * 2}
+              fill={`url(#${gradientId})`}
+              fillOpacity="0.9"
+            />
+          ) : null}
+          {tier !== 'inline' && effectiveMorph.blobCount >= 3 ? (
+            <Circle
+              cx={34 - effectiveMorph.asymmetry * 4}
+              cy={68 + effectiveMorph.pinch * 3}
+              r={9 + effectiveMorph.bloom * 4}
+              fill={`url(#${gradientId})`}
+              fillOpacity="0.76"
+            />
+          ) : null}
+          {tier === 'hero' && effectiveMorph.blobCount >= 4 ? (
+            <Circle
+              cx="28"
+              cy="34"
+              r={8 + effectiveMorph.bloom * 3}
+              fill={`url(#${gradientId})`}
+              fillOpacity="0.64"
+            />
+          ) : null}
           <Circle cx="50" cy="50" r={37 - effectiveMorph.pinch * 6} fill={`url(#${gradientId})`} />
           <Circle cx="50" cy="50" r="39.5" fill="none" stroke={visual.edge} strokeOpacity="0.38" strokeWidth="0.8" />
           <Circle cx="38" cy="35" r={10 - effectiveMorph.pinch * 2} fill="#FFFFFF" fillOpacity={0.11 + effectiveMorph.brightness * 0.05} />
