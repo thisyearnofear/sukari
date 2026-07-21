@@ -45,7 +45,7 @@ domain/
   signals/     CGM or snapshot abstractions
   cohort/      operator cohort overview, work queue state, Mira flags
                (including outcome-aware), archetype completion +
-               response rate aggregation
+               response rate aggregation, care team roster, team report
 ```
 
 Domain code should remain pure TypeScript and should not import React Native or Expo UI.
@@ -86,6 +86,10 @@ Analytics are wrapped through the app's tracking utility and should remain optio
 - `conversation_intent` (with intent kind and conversation phase)
 - `care_work_item_updated` (with patient and new status)
 - `care_work_item_snoozed` (with patient and snooze duration)
+- `care_work_item_assigned` (with patient and assignee)
+- `care_report_viewed` (with week_key and source)
+- `care_report_shared` (with format)
+- `care_report_exported` (with format)
 
 Supporting events include `agent_trace_opened` and `signal_connection_chosen`. They measure progressive disclosure and connect intent; they do not replace the core completion funnel.
 
@@ -105,7 +109,7 @@ The conversation is the primary interface. There are no mission cards, no button
 
 ## Care-Team Architecture
 
-The care surface is Mira's work queue — an active operator surface, not a passive report. It reads stored weekly digests on the device and can open an explicit synthetic demo cohort. Operators work items through a status lifecycle (open, contacted, snoozed, resolved) with filter/sort and quick actions. Mira generates proactive flags from cohort data + conversation memory.
+The care surface is Mira's work queue — an active operator surface, not a passive report. It reads stored weekly digests on the device and can open an explicit synthetic demo cohort. Operators work items through a status lifecycle (open, contacted, snoozed, resolved) with filter/sort and quick actions. Work items can be assigned to specific care team members (persisted on `WorkItem.assignedTo`), and a weekly team report modal aggregates cohort overview, per-assignee status counts, patients still needing attention, and Mira's top flags — with share-to-text and CSV export via the platform share sheet. Mira generates proactive flags from cohort data + conversation memory.
 
 The aggregate header shows cohort evidence: archetype-level completion rates ("post_meal_walk: 73% across 12 patients") and patient-reported response rates ("64% noticed a difference, 9 reported"). Per-patient cohort context appears in the work queue row expansion ("cohort median for post_meal_walk this week is 5/7"). The clinician digest includes a longitudinal outcome trend section showing the arc across all completed missions with reported outcomes.
 

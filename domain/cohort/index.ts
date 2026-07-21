@@ -12,6 +12,8 @@ import type { CohortOverview } from './types';
 export * from './types';
 export * from './workQueue';
 export * from './miraFlags';
+export * from './team';
+export * from './teamReport';
 export { buildSyntheticCohortOverview, computeArchetypeCompletion, computeArchetypeResponseRate, stampArchetypeContext, buildOutcomeSummary, stampOutcomeSummary } from './synthetic';
 
 /**

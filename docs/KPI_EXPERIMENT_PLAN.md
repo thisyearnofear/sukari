@@ -22,6 +22,10 @@ This reflects the product thesis: adherence per minute of attention should impro
 | Care panel opened | `care_panel_opened` with `open_items` count |
 | Work item status changed | `care_work_item_updated` with `patient` and `status` |
 | Work item snoozed | `care_work_item_snoozed` with `patient` and `hours` |
+| Work item assigned | `care_work_item_assigned` with `patient` and `assignee` |
+| Team report viewed | `care_report_viewed` with `week_key` and `source` |
+| Team report shared | `care_report_shared` with `format` |
+| Team report exported | `care_report_exported` with `format` |
 | Outreach rationale reviewed | `care_outreach_reviewed` |
 
 ## Patient Metrics
@@ -47,6 +51,9 @@ This reflects the product thesis: adherence per minute of attention should impro
 - Mira flag accuracy (flagged patients who benefited from outreach);
 - cohort response rate by archetype (of patients who reported, what fraction noticed a difference);
 - snooze usage and re-open rate;
+- assignment distribution (patients per assignee, unassigned count);
+- team report view rate (of sessions that open the care panel);
+- team report share/export rate (of team report views);
 - staff minutes per enrolled patient.
 
 ## Experiments

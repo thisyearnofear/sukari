@@ -23,10 +23,11 @@ The product is the closed loop from signal to mission to real-world adherence ev
 7. Open the care-team work queue (`/care`). Show Mira's observations at the top — proactive flags with severity (urgent, worth a conversation, positive), including outcome-aware flags (struggle, positive signal).
 8. Show the aggregate header: archetype-level completion rates and patient-reported response rates by mission type ("post_meal_walk: 73% completion, 64% noticed difference, 9 reported").
 9. Show the work queue: status badges (open, contacted, snoozed, resolved), filter bar, sort options.
-10. Expand a patient row. Show the quick actions: mark contacted, resolve, snooze 24h, reopen. Show the per-patient cohort context ("cohort median for post_meal_walk this week is 5/7").
-11. Explain that the loop is closed: past outcomes inform what mission Mira suggests next. If a patient reports a mission as "harder" twice, the system avoids re-offering it.
-12. Explain that deterministic logic detects patterns and enforces safety; the LLM handles free-form chat inside that boundary.
-13. Mention the optional Runware adapter: fixed-prompt image generation from an approved mission brief, with no raw readings or identifying data in the prompt.
+10. Expand a patient row. Show the quick actions: mark contacted, resolve, snooze 24h, reopen. Show the per-patient cohort context ("cohort median for post_meal_walk this week is 5/7"). Show the assignment chips — assign the patient to a care team member.
+11. Tap "Team report" in the header. Show the weekly team report modal: cohort overview, per-assignee status counts, patients still needing attention, Mira's top observations. Tap "Share summary" or "Export CSV" to show the platform share sheet.
+12. Explain that the loop is closed: past outcomes inform what mission Mira suggests next. If a patient reports a mission as "harder" twice, the system avoids re-offering it.
+13. Explain that deterministic logic detects patterns and enforces safety; the LLM handles free-form chat inside that boundary.
+14. Mention the optional Runware adapter: fixed-prompt image generation from an approved mission brief, with no raw readings or identifying data in the prompt.
 
 The Amina demo remains deterministic for judging. Mira is the named Famile agent; Amina is only a deterministic synthetic patient fixture. Live signal paths are technical proof, but demos should not depend on OAuth success.
 
@@ -50,6 +51,8 @@ The Amina demo remains deterministic for judging. Mira is the named Famile agent
 | Mira proactive flags for care team (safety, completion drop, barrier, recovery, streak, re-engagement, outcome struggle, outcome positive, outcome barrier link) | Done |
 | Work queue persistence in AsyncStorage | Done |
 | Care-team outreach instrumentation | Done |
+| Operator assignment to care team members | Done |
+| Weekly team report with per-assignee breakdown + share/CSV export | Done |
 | Patient-reported outcome capture (felt difficulty + noticed difference + reflection) | Done |
 | Closed-loop adaptation: past outcomes inform mission selection | Done |
 | Cohort evidence: archetype completion rates + patient-reported response rates on operator surface | Done |

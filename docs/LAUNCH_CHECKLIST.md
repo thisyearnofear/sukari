@@ -12,7 +12,8 @@
 - [x] Closed-loop adaptation: past outcomes inform mission selection (avoid templates reported "harder" 2+ times, prefer templates with positive signal).
 - [x] Demo pattern is clearly labelled.
 - [x] Measured response copy avoids causal overclaiming.
-- [x] Care-team work queue with status lifecycle (open, contacted, snoozed, resolved), filter/sort, and quick actions.
+- [x] Care-team work queue with status lifecycle (open, contacted, snoozed, resolved), filter/sort, quick actions, and operator assignment to care team members.
+- [x] Weekly team report with per-assignee breakdown, patients needing attention, Mira's top flags, and share/CSV export.
 - [x] Mira proactive flags for care team (safety, completion drop, barrier, recovery, streak, re-engagement, outcome struggle, outcome positive, outcome barrier link).
 - [x] Cohort evidence on operator surface: archetype completion rates + patient-reported response rates by mission type.
 - [x] Longitudinal outcome trend in clinician digest.
@@ -33,6 +34,8 @@
 - [x] Patient-reported outcome captured (with felt_difficulty and noticed_difference).
 - [x] Care-team work item status changes.
 - [x] Care-team work item snooze.
+- [x] Care-team work item assignment.
+- [x] Team report view, share, and export.
 - [x] Care-team exception/outreach.
 
 ## Engineering

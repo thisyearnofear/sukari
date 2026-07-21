@@ -61,8 +61,10 @@ domain/
   cohort/
     types.ts            cohort overview, patient summaries, archetype completion + response rate
     synthetic.ts        deterministic 30-patient demo cohort + archetype aggregation
-    workQueue.ts        work item status lifecycle + AsyncStorage
-    miraFlags.ts        proactive flags for care team (incl. outcome_struggle, outcome_positive)
+    workQueue.ts        work item status lifecycle + AsyncStorage (incl. assignedTo)
+    miraFlags.ts        proactive flags for care team (incl. outcome_struggle, outcome_positive, outcome_barrier_link)
+    team.ts             care team roster (TeamMember) + AsyncStorage
+    teamReport.ts       weekly team report aggregation + shareable summary + CSV export
   digest/              weekly digest client/types + longitudinal outcome trend
   patterns/            signal patterns and field state
   programme/           mission templates, outcome-informed selection, PatientReportedOutcome

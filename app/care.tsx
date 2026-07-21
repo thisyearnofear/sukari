@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState, useCallback } from 'react';
-import { View, Text, ScrollView, StyleSheet, useWindowDimensions, Pressable } from 'react-native';
+import { View, Text, ScrollView, StyleSheet, useWindowDimensions, Pressable, Modal, Share } from 'react-native';
 import { router } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import {
@@ -11,6 +11,8 @@ import {
   type WorkItemSort,
   type WorkQueueState,
   type MiraFlag,
+  type TeamMember,
+  type TeamReport,
   loadWorkQueue,
   saveWorkQueue,
   getWorkItem,
@@ -26,6 +28,10 @@ import {
   computeArchetypeResponseRate,
   stampArchetypeContext,
   stampOutcomeSummary,
+  loadTeamMembers,
+  generateTeamReport,
+  generateShareableSummary,
+  exportTeamReportCSV,
 } from '@/domain/cohort';
 import { listLocalWeeklyDigests, type StoredWeeklyDigest } from '@/domain/digest';
 import { FONTS } from '@/constants/designSystem';
@@ -61,19 +67,22 @@ export default function CarePanelScreen() {
   const [sort, setSort] = useState<WorkItemSort>('priority');
   const [showLocal, setShowLocal] = useState(false);
   const [expandedPatient, setExpandedPatient] = useState<string | null>(null);
+  const [team, setTeam] = useState<TeamMember[]>([]);
+  const [showTeamReport, setShowTeamReport] = useState(false);
   const { width } = useWindowDimensions();
   const compact = width < 700;
 
-  // Load cohort + work queue + local digests
+  // Load cohort + work queue + local digests + care team
   useEffect(() => {
     let active = true;
-    Promise.all([getCohortOverview(), loadWorkQueue(), listLocalWeeklyDigests()]).then(
-      ([c, wq, digests]) => {
+    Promise.all([getCohortOverview(), loadWorkQueue(), listLocalWeeklyDigests(), loadTeamMembers()]).then(
+      ([c, wq, digests, members]) => {
         if (!active) return;
         const reopened = reopenExpiredSnoozes(wq);
         setCohort(c);
         setWorkQueue(reopened);
         setLocalDigests(digests);
+        setTeam(members);
         setLoading(false);
       },
     );
@@ -185,6 +194,52 @@ export default function CarePanelScreen() {
     [updateQueue],
   );
 
+  const handleAssign = useCallback(
+    (patientLabel: string, assigneeId: string) => {
+      updateQueue((prev) =>
+        updateWorkItemStatus(prev, patientLabel, prev[patientLabel]?.status ?? 'open', {
+          assignedTo: assigneeId,
+        }),
+      );
+      track('care_work_item_assigned', { patient: patientLabel, assignee: assigneeId });
+    },
+    [updateQueue],
+  );
+
+  const teamReport = useMemo<TeamReport | null>(() => {
+    if (!view || team.length === 0) return null;
+    return generateTeamReport(view, workQueue, miraFlags, team);
+  }, [view, workQueue, miraFlags, team]);
+
+  const handleOpenReport = useCallback(() => {
+    setShowTeamReport(true);
+    if (teamReport) {
+      track('care_report_viewed', { week_key: teamReport.weekKey, source: teamReport.source });
+    }
+  }, [teamReport]);
+
+  const handleShareReport = useCallback(async () => {
+    if (!teamReport) return;
+    const summary = generateShareableSummary(teamReport);
+    track('care_report_shared', { format: 'text' });
+    try {
+      await Share.share({ message: summary, title: `Sukari team report — ${teamReport.weekKey}` });
+    } catch {
+      // Share can fail if no share targets are available; silent fail.
+    }
+  }, [teamReport]);
+
+  const handleExportCSV = useCallback(async () => {
+    if (!view) return;
+    const csv = exportTeamReportCSV(view, workQueue, team);
+    track('care_report_exported', { format: 'csv' });
+    try {
+      await Share.share({ message: csv, title: `Sukari cohort export — ${view.weekKey}` });
+    } catch {
+      // Silent fail.
+    }
+  }, [view, workQueue, team]);
+
   return (
     <View style={styles.root}>
       <SafeAreaView style={styles.flex}>
@@ -199,13 +254,24 @@ export default function CarePanelScreen() {
               <Text style={styles.brand}>Sukari</Text>
               <Text style={styles.title}>Mira&apos;s work queue</Text>
             </View>
-            <PressableScale
-              onPress={() => router.replace('/')}
-              style={styles.back}
-              accessibilityRole="button"
-            >
-              <Text style={styles.backText}>Patient view</Text>
-            </PressableScale>
+            <View style={styles.headerActions}>
+              {teamReport ? (
+                <PressableScale
+                  onPress={handleOpenReport}
+                  style={[styles.back, styles.reportButton]}
+                  accessibilityRole="button"
+                >
+                  <Text style={styles.backText}>Team report</Text>
+                </PressableScale>
+              ) : null}
+              <PressableScale
+                onPress={() => router.replace('/')}
+                style={styles.back}
+                accessibilityRole="button"
+              >
+                <Text style={styles.backText}>Patient view</Text>
+              </PressableScale>
+            </View>
           </View>
 
           {/* Source note */}
@@ -312,6 +378,7 @@ export default function CarePanelScreen() {
                     flag={topFlagForPatient(p, workQueue)}
                     expanded={expandedPatient === p.patientLabel}
                     compact={compact}
+                    team={team}
                     onToggle={() =>
                       setExpandedPatient((cur) =>
                         cur === p.patientLabel ? null : p.patientLabel,
@@ -319,6 +386,7 @@ export default function CarePanelScreen() {
                     }
                     onStatusChange={handleStatusChange}
                     onSnooze={handleSnooze}
+                    onAssign={handleAssign}
                   />
                 ))
               )}
@@ -332,6 +400,15 @@ export default function CarePanelScreen() {
           ) : null}
         </ScrollView>
       </SafeAreaView>
+
+      {showTeamReport && teamReport ? (
+        <TeamReportModal
+          report={teamReport}
+          onClose={() => setShowTeamReport(false)}
+          onShare={handleShareReport}
+          onExportCSV={handleExportCSV}
+        />
+      ) : null}
     </View>
   );
 }
@@ -456,18 +533,22 @@ function WorkQueueRow({
   flag,
   expanded,
   compact,
+  team,
   onToggle,
   onStatusChange,
   onSnooze,
+  onAssign,
 }: {
   patient: CohortPatientSummary;
   workItem: ReturnType<typeof getWorkItem>;
   flag: MiraFlag | null;
   expanded: boolean;
   compact: boolean;
+  team: TeamMember[];
   onToggle: () => void;
   onStatusChange: (label: string, status: WorkItemStatus) => void;
   onSnooze: (label: string, hours: number) => void;
+  onAssign: (label: string, assigneeId: string) => void;
 }) {
   const sc = STATUS_COLORS[workItem.status];
   const priorityLeft = PRIORITY_LEFT[patient.priority];
@@ -534,6 +615,42 @@ function WorkQueueRow({
             </Text>
           ) : null}
 
+          {/* Assignment */}
+          {team.length > 0 ? (
+            <View style={styles.assignRow}>
+              <Text style={styles.assignLabel}>Assign to:</Text>
+              {team.map((member) => (
+                <PressableScale
+                  key={member.id}
+                  onPress={() => onAssign(patient.patientLabel, member.id)}
+                  style={[
+                    styles.assignChip,
+                    workItem.assignedTo === member.id && styles.assignChipActive,
+                  ]}
+                  accessibilityRole="button"
+                >
+                  <Text
+                    style={[
+                      styles.assignChipText,
+                      workItem.assignedTo === member.id && styles.assignChipTextActive,
+                    ]}
+                  >
+                    {member.name}
+                  </Text>
+                </PressableScale>
+              ))}
+              {workItem.assignedTo ? (
+                <PressableScale
+                  onPress={() => onAssign(patient.patientLabel, '')}
+                  style={styles.assignUnassign}
+                  accessibilityRole="button"
+                >
+                  <Text style={styles.assignUnassignText}>Clear</Text>
+                </PressableScale>
+              ) : null}
+            </View>
+          ) : null}
+
           {/* Quick actions */}
           <View style={styles.actionRow}>
             {workItem.status !== 'contacted' ? (
@@ -592,6 +709,132 @@ function WorkQueueRow({
         </View>
       ) : null}
     </View>
+  );
+}
+
+function TeamReportModal({
+  report,
+  onClose,
+  onShare,
+  onExportCSV,
+}: {
+  report: TeamReport;
+  onClose: () => void;
+  onShare: () => void;
+  onExportCSV: () => void;
+}) {
+  const assigneeEntries = Object.entries(report.byAssignee).filter(
+    ([, counts]) => counts.total > 0,
+  );
+
+  return (
+    <Modal transparent visible animationType="fade" onRequestClose={onClose}>
+      <View style={styles.modalOverlay}>
+        <View style={styles.modalContent}>
+          <ScrollView showsVerticalScrollIndicator={false}>
+            <Text style={styles.modalTitle}>Weekly team report</Text>
+            <Text style={styles.modalSubtitle}>
+              Week of {report.weekKey} · {report.source} data
+            </Text>
+
+            {/* Cohort overview */}
+            <View style={styles.reportSection}>
+              <Text style={styles.reportSectionTitle}>Cohort overview</Text>
+              <Text style={styles.reportLine}>
+                {report.aggregate.enrolled} enrolled · {report.aggregate.needsAttention} need
+                attention
+              </Text>
+              <Text style={styles.reportLine}>
+                {report.aggregate.weeklyAdherentPatients} weekly adherent ·{' '}
+                {report.aggregate.cohortCompletionRate}% completion
+              </Text>
+              <Text style={styles.reportLine}>
+                {report.aggregate.totalStaffMinutesSaved} staff minutes saved
+              </Text>
+            </View>
+
+            {/* By assignee */}
+            {assigneeEntries.length > 0 ? (
+              <View style={styles.reportSection}>
+                <Text style={styles.reportSectionTitle}>By team member</Text>
+                {assigneeEntries.map(([id, counts]) => {
+                  const name = report.assigneeNames[id] ?? id;
+                  return (
+                    <View key={id} style={styles.reportRow}>
+                      <Text style={styles.reportRowLabel}>{name}</Text>
+                      <Text style={styles.reportRowValue}>
+                        {counts.open} open · {counts.contacted} contacted · {counts.resolved}{' '}
+                        resolved · {counts.snoozed} snoozed
+                      </Text>
+                    </View>
+                  );
+                })}
+              </View>
+            ) : null}
+
+            {/* Needs attention */}
+            {report.needsAttention.length > 0 ? (
+              <View style={styles.reportSection}>
+                <Text style={styles.reportSectionTitle}>
+                  Still needing attention ({report.needsAttention.length})
+                </Text>
+                {report.needsAttention.slice(0, 12).map((p) => (
+                  <Text key={p.label} style={styles.reportLine}>
+                    {p.label} — {p.priorityReason} (assigned: {p.assignee})
+                  </Text>
+                ))}
+                {report.needsAttention.length > 12 ? (
+                  <Text style={styles.reportLine}>
+                    ...and {report.needsAttention.length - 12} more
+                  </Text>
+                ) : null}
+              </View>
+            ) : null}
+
+            {/* Top flags */}
+            {report.topFlags.length > 0 ? (
+              <View style={styles.reportSection}>
+                <Text style={styles.reportSectionTitle}>Mira&apos;s top observations</Text>
+                {report.topFlags.slice(0, 5).map((f, i) => (
+                  <Text key={i} style={styles.reportLine}>
+                    [{f.severity}] {f.patientLabel}: {f.message}
+                  </Text>
+                ))}
+              </View>
+            ) : null}
+
+            <Text style={styles.reportDisclaimer}>
+              Patient-reported outcomes are observational, not clinical.
+            </Text>
+          </ScrollView>
+
+          {/* Actions */}
+          <View style={styles.modalActions}>
+            <PressableScale
+              onPress={onShare}
+              style={[styles.modalAction, { backgroundColor: '#2F7A5E' }]}
+              accessibilityRole="button"
+            >
+              <Text style={styles.modalActionText}>Share summary</Text>
+            </PressableScale>
+            <PressableScale
+              onPress={onExportCSV}
+              style={[styles.modalAction, { backgroundColor: '#4A8FA8' }]}
+              accessibilityRole="button"
+            >
+              <Text style={styles.modalActionText}>Export CSV</Text>
+            </PressableScale>
+            <PressableScale
+              onPress={onClose}
+              style={[styles.modalAction, { backgroundColor: '#14201B' }]}
+              accessibilityRole="button"
+            >
+              <Text style={styles.modalActionText}>Close</Text>
+            </PressableScale>
+          </View>
+        </View>
+      </View>
+    </Modal>
   );
 }
 
@@ -676,4 +919,31 @@ const styles = StyleSheet.create({
   reviewButton: { alignSelf: 'flex-start', backgroundColor: 'transparent', borderWidth: 1, borderColor: 'rgba(20,32,27,0.16)', paddingHorizontal: 14, paddingVertical: 9, marginTop: 10 },
   reviewText: { fontFamily: FONTS.bodyBold, color: '#2A3A33', fontSize: 12 },
   footer: { fontFamily: FONTS.body, color: '#5A6B62', fontSize: 13, lineHeight: 19, marginTop: 36, maxWidth: 560 },
+  // Header actions
+  headerActions: { flexDirection: 'row', gap: 8, alignItems: 'flex-start' },
+  reportButton: { borderColor: '#2F7A5E', backgroundColor: 'rgba(47,122,94,0.08)' },
+  // Assignment
+  assignRow: { flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: 6, marginTop: 10 },
+  assignLabel: { fontFamily: FONTS.bodyMedium, color: '#5A6B62', fontSize: 12, marginRight: 2 },
+  assignChip: { paddingHorizontal: 10, paddingVertical: 5, backgroundColor: '#FFF', borderWidth: 1, borderColor: 'rgba(20,32,27,0.10)', borderRadius: 2 },
+  assignChipActive: { backgroundColor: 'rgba(47,122,94,0.15)', borderColor: '#2F7A5E' },
+  assignChipText: { fontFamily: FONTS.bodyMedium, color: '#5A6B62', fontSize: 12 },
+  assignChipTextActive: { color: '#2F634F' },
+  assignUnassign: { paddingHorizontal: 8, paddingVertical: 5, backgroundColor: 'transparent', borderWidth: 1, borderColor: 'rgba(20,32,27,0.10)', borderRadius: 2 },
+  assignUnassignText: { fontFamily: FONTS.bodyMedium, color: '#718078', fontSize: 12 },
+  // Team report modal
+  modalOverlay: { flex: 1, backgroundColor: 'rgba(20,32,27,0.55)', justifyContent: 'center', alignItems: 'center', padding: 24 },
+  modalContent: { backgroundColor: '#FFF', borderRadius: 4, padding: 24, maxWidth: 560, width: '100%', maxHeight: '82%' },
+  modalTitle: { fontFamily: FONTS.display, color: '#14201B', fontSize: 24, lineHeight: 30 },
+  modalSubtitle: { fontFamily: FONTS.bodyMedium, color: '#5A6B62', fontSize: 12, marginTop: 4, marginBottom: 16 },
+  reportSection: { marginTop: 14, borderTopWidth: 1, borderTopColor: 'rgba(20,32,27,0.08)', paddingTop: 12 },
+  reportSectionTitle: { fontFamily: FONTS.bodyBold, color: '#14201B', fontSize: 13, marginBottom: 8, textTransform: 'uppercase', letterSpacing: 0.6 },
+  reportLine: { fontFamily: FONTS.body, color: '#2A3A33', fontSize: 13, lineHeight: 19, marginBottom: 3 },
+  reportRow: { flexDirection: 'column', marginBottom: 8 },
+  reportRowLabel: { fontFamily: FONTS.bodyBold, color: '#14201B', fontSize: 13, marginBottom: 2 },
+  reportRowValue: { fontFamily: FONTS.body, color: '#5A6B62', fontSize: 12 },
+  reportDisclaimer: { fontFamily: FONTS.bodyMedium, color: '#718078', fontSize: 11, fontStyle: 'italic', marginTop: 16 },
+  modalActions: { flexDirection: 'row', gap: 8, marginTop: 18, flexWrap: 'wrap' },
+  modalAction: { paddingHorizontal: 16, paddingVertical: 10, borderRadius: 2, flex: 1, minWidth: 120 },
+  modalActionText: { fontFamily: FONTS.bodyBold, color: '#FFF', fontSize: 13, textAlign: 'center' },
 });

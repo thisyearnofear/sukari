@@ -58,7 +58,8 @@ Working prototype includes:
 - Mira visual presence with bounded habit-scope posture, updating with conversation state.
 - Measured response language.
 - Local-first weekly digest history with longitudinal outcome trend.
-- Care-team work queue with status lifecycle (open, contacted, snoozed, resolved), filter/sort, quick actions, and Mira-generated proactive flags (including outcome-aware struggle and positive-signal flags).
+- Care-team work queue with status lifecycle (open, contacted, snoozed, resolved), filter/sort, quick actions, operator assignment to care team members, and Mira-generated proactive flags (including outcome-aware struggle, positive-signal, and barrier-outcome link flags).
+- Weekly team report with per-assignee status counts, patients still needing attention, and Mira's top observations — shareable as text or CSV via the platform share sheet.
 - Patient-reported outcome capture: after completing a mission, the patient tells Mira how it went. The outcome is persisted, flows into the clinician digest, and aggregates into cohort response rates.
 - Closed-loop adaptation: past patient-reported outcomes inform mission selection. The loop is real, not aspirational.
 - Cohort evidence on the operator surface: archetype-level completion rates and patient-reported response rates by mission type.

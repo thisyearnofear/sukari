@@ -61,7 +61,8 @@ Shipped this cycle:
    - Shipped: patient-reported outcome capture — after completing a mission, Mira asks how it went. Patient response parsed into `PatientReportedOutcome` (felt difficulty + noticed difference) + free-form reflection. Persisted on the mission, flows into the clinician digest, and aggregates into cohort response rate on the operator surface.
    - Shipped: closed-loop adaptation — past PROs inform mission selection (avoid templates reported "harder" 2+ times, prefer templates with "easier" + "noticed difference"). Outcome-aware Mira flags (struggle + positive signal). Longitudinal outcome trend in clinician digest.
    - Shipped: enriched Mira flags — flags now reference specific behaviours ("post_meal_walk felt harder 2 times") instead of generic counts, use structured PRO data instead of text parsing, and cross-reference barriers with outcome struggle (outcome_barrier_link flag).
-   - Next: operator assignment to specific care team members, weekly team report, export/integration path.
+   - Shipped: operator assignment to care team members (WorkItem.assignedTo + team roster in AsyncStorage), weekly team report modal with per-assignee status counts + patients needing attention + Mira's top flags, and share/CSV export via the platform share sheet.
+   - Next: integration path to external care-team tools (EHR, Slack, email) via the export surface.
    - Gated: curated external evidence library keyed by `behaviourTarget`, surfaced in the clinician digest only. Human-reviewed before it reaches operators. Never patient-facing.
    - Gated: CGM-derived response classifier that measures objective metabolic response after mission completion. Distinct from the patient-reported outcome (already shipped). Requires clinical validation. Unlocks the full response-rate cohort evidence and makes the closed-loop evidence claim fully true. This is the core data moat.
 

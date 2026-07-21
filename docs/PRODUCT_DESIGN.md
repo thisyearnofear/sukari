@@ -149,7 +149,8 @@ The patient surface stays exactly as it is: one mission, one conversation, no co
 - Decision trace remains available through progressive disclosure.
 - Demo patterns are labelled as demo evidence.
 - Mission-specific visuals use the deployed optional Runware worker when configured, with local fallback; only approved visual intents leave the app.
-- Care-team surface is now Mira's work queue: active status lifecycle (open, contacted, snoozed, resolved), filter/sort, quick actions, and Mira-generated proactive flags.
+- Care-team surface is now Mira's work queue: active status lifecycle (open, contacted, snoozed, resolved), filter/sort, quick actions, operator assignment to care team members, and Mira-generated proactive flags (including outcome-aware struggle, positive-signal, and barrier-outcome link flags).
+- Weekly team report modal with per-assignee status counts, patients still needing attention, and Mira's top observations — shareable as text or CSV via the platform share sheet.
 - Work queue state persists in AsyncStorage; expired snoozes auto-reopen.
 - Local digest history powers the care surface instead of fixture-only data.
 - Cohort evidence on the operator surface: archetype-level completion rates ("post_meal_walk: 73% across 12 patients"), per-patient cohort context in the work queue row, and patient-reported response rates ("64% noticed a difference").
