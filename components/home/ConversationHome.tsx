@@ -28,11 +28,14 @@ import {
   StyleSheet,
   KeyboardAvoidingView,
   Platform,
+  Animated,
+  Easing,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { COLORS, FONTS } from '@/constants/designSystem';
 import { MiraOrb } from '@/components/agent/MiraOrb';
 import { PressableScale } from '@/components/ui/PressableScale';
+import { WelcomeScene } from '@/components/home/WelcomeScene';
 import { useCoach } from '@/hooks/useCoach';
 import { track } from '@/utils/analytics';
 import type { ProgrammeMission, PatientReportedOutcome } from '@/domain/programme/types';
@@ -117,6 +120,9 @@ export const ConversationHome: React.FC<ConversationHomeProps> = ({
   );
   const [memory, setMemory] = useState<ConversationMemory | null>(null);
   const [opened, setOpened] = useState(false);
+  const [showWelcome, setShowWelcome] = useState(false);
+  const [welcomeDone, setWelcomeDone] = useState(false);
+  const fadeOpacity = useRef(new Animated.Value(1)).current;
   const scrollRef = useRef<ScrollView>(null);
   const isProcessingRef = useRef(false);
 
@@ -125,9 +131,22 @@ export const ConversationHome: React.FC<ConversationHomeProps> = ({
     let active = true;
     loadConversationMemory().then((mem) => {
       if (!active || isProcessingRef.current) return;
+
+      // First-ever open: show the welcome scene instead of jumping
+      // straight into the conversation. sessionCount is 0 before
+      // markSessionOpened increments it.
+      const isFirstEver = mem.sessionCount === 0 && mem.turns.length === 0;
+
       const openedMem = markSessionOpened(mem);
       setMemory(openedMem);
       saveConversationMemory(openedMem);
+
+      if (isFirstEver) {
+        setShowWelcome(true);
+        // Don't generate the opening line yet — the welcome scene's
+        // onComplete will transition into the conversation.
+        return;
+      }
 
       const state = initialConversationState(mission, pattern);
       setConvState(state);
@@ -158,6 +177,60 @@ export const ConversationHome: React.FC<ConversationHomeProps> = ({
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // Handle welcome scene completion — transition into conversation
+  const handleWelcomeComplete = useCallback(
+    (firstMessage: string) => {
+      // Fade out the welcome scene, then show the conversation
+      Animated.timing(fadeOpacity, {
+        toValue: 0,
+        duration: 600,
+        easing: Easing.inOut(Easing.quad),
+        useNativeDriver: true,
+      }).start(() => {
+        setShowWelcome(false);
+        setWelcomeDone(true);
+        fadeOpacity.setValue(1);
+
+        // Now generate the opening line and seed the conversation
+        // with the patient's first message from the welcome scene.
+        if (memory) {
+          const state = initialConversationState(mission, pattern);
+          setConvState(state);
+
+          const opening = generateOpeningLine(state, memory);
+          const openingMsg: ThreadMessage = {
+            id: nextId(),
+            role: 'assistant',
+            content: opening,
+            timestamp: Date.now(),
+          };
+
+          const userMsg: ThreadMessage = {
+            id: nextId(),
+            role: 'user',
+            content: firstMessage,
+            timestamp: Date.now() + 1,
+          };
+
+          setThread([openingMsg, userMsg]);
+          setOpened(true);
+
+          if (state.phase === 'offering' && pattern) {
+            setPresence(buildPresenceFromState(state, pattern));
+          }
+
+          track('conversation_opened', {
+            phase: state.phase,
+            has_prior_context: false,
+            session_count: 1,
+            from_welcome: true,
+          });
+        }
+      });
+    },
+    [memory, mission, pattern, fadeOpacity],
+  );
 
   // Update conversation state when mission changes externally
   useEffect(() => {
@@ -346,6 +419,14 @@ export const ConversationHome: React.FC<ConversationHomeProps> = ({
     return thread.filter((m) => m.id !== 'streaming');
   }, [thread, coach.chatReply, isLoading]);
 
+  if (showWelcome) {
+    return (
+      <Animated.View style={[styles.root, { opacity: fadeOpacity }]}>
+        <WelcomeScene onComplete={handleWelcomeComplete} />
+      </Animated.View>
+    );
+  }
+
   return (
     <View style={styles.root}>
       <SafeAreaView style={styles.flex}>
@@ -414,13 +495,24 @@ export const ConversationHome: React.FC<ConversationHomeProps> = ({
 
 function MessageBubble({ message }: { message: ThreadMessage }) {
   const isUser = message.role === 'user';
-  return (
-    <View style={[styles.messageRow, isUser ? styles.messageRowUser : styles.messageRowAssistant]}>
-      <View style={[styles.bubble, isUser ? styles.bubbleUser : styles.bubbleAssistant]}>
-        <Text style={[styles.bubbleText, isUser ? styles.bubbleTextUser : styles.bubbleTextAssistant]}>
-          {message.content}
-        </Text>
+  if (isUser) {
+    // Patient messages: right-aligned, subtle accent background, no
+    // heavy bubble border. Reads as "your words" without feeling like
+    // a standard chat app.
+    return (
+      <View style={styles.messageRowUser}>
+        <View style={styles.bubbleUser}>
+          <Text style={styles.bubbleTextUser}>{message.content}</Text>
+        </View>
       </View>
+    );
+  }
+  // Mira's messages: no bubble at all. Prose flowing from the left,
+  // like a letter or journal entry. This is the key differentiator —
+  // the conversation reads as writing, not as a transcript of bubbles.
+  return (
+    <View style={styles.messageRowAssistant}>
+      <Text style={styles.bubbleTextAssistant}>{message.content}</Text>
     </View>
   );
 }
@@ -499,9 +591,16 @@ const styles = StyleSheet.create({
   },
   messageRowUser: {
     alignItems: 'flex-end',
+    marginBottom: 18,
   },
   messageRowAssistant: {
     alignItems: 'flex-start',
+    marginBottom: 20,
+    // Slight left indent so Mira's prose reads as a distinct voice
+    // without needing a bubble container.
+    borderLeftWidth: 2,
+    borderLeftColor: P.accentSoft,
+    paddingLeft: 14,
   },
   bubble: {
     maxWidth: '85%',
@@ -510,27 +609,29 @@ const styles = StyleSheet.create({
     borderRadius: 4,
   },
   bubbleUser: {
+    maxWidth: '80%',
     backgroundColor: P.accentSoft,
-    borderWidth: 1,
-    borderColor: 'rgba(61, 155, 122, 0.3)',
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: 4,
   },
   bubbleAssistant: {
-    backgroundColor: 'rgba(180, 210, 195, 0.06)',
-    borderWidth: 1,
-    borderColor: P.line,
-    borderLeftWidth: 3,
-    borderLeftColor: P.accent,
+    // No bubble — prose style
   },
   bubbleText: {
     fontSize: 15,
     lineHeight: 22,
   },
   bubbleTextUser: {
-    fontFamily: FONTS.body,
+    fontFamily: FONTS.bodyMedium,
+    fontSize: 15,
+    lineHeight: 22,
     color: P.text,
   },
   bubbleTextAssistant: {
     fontFamily: FONTS.body,
+    fontSize: 16,
+    lineHeight: 25,
     color: P.text,
   },
   typingIndicator: {
