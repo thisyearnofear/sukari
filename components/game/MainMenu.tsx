@@ -69,7 +69,8 @@ export const MainMenu: React.FC<MainMenuProps> = ({
 
   // --- UI state ---------------------------------------------------------
   const [showSettings, setShowSettings] = useState(false);
-  const [showUserModeSelector, setShowUserModeSelector] = useState(userModeSelected === false);
+  // Conversation-first: skip role selector on first run. User can configure from settings.
+  const [showUserModeSelector, setShowUserModeSelector] = useState(false);
   const [showManualCheckIn, setShowManualCheckIn] = useState(false);
   const [demoMode, setDemoMode] = useState(false);
   const [demoDay, setDemoDay] = useState<number>(AMINA_DEMO.defaultDayIndex);
@@ -77,7 +78,9 @@ export const MainMenu: React.FC<MainMenuProps> = ({
   // ConversationHome reads mission status from progress, not these.
   const [, setMissionChoice] = useState<'accept' | 'easier' | 'not_practical' | null>(null);
   const [, setMissionDeferred] = useState(false);
-  const [signalPathChosen, setSignalPathChosen] = useState(false);
+  // Conversation-first: signal path is "chosen" by default (general habit mode).
+  // User can change from settings.
+  const [signalPathChosen, setSignalPathChosen] = useState(true);
   const [changingSignalSource, setChangingSignalSource] = useState(false);
   const [manualMoment, setManualMoment] = useState<SelfReportedMoment | null>(null);
   const [missionOverride, setMissionOverride] = useState<ProgrammeMission | null>(null);
@@ -138,7 +141,12 @@ export const MainMenu: React.FC<MainMenuProps> = ({
       HOME_STORAGE_KEYS.signalPath,
     ]).then((pairs) => {
       const [demoVal, dayVal, deferredVal, signalPathVal] = pairs.map((p) => p[1]);
-      if (signalPathVal === '1') setSignalPathChosen(true);
+      // If signal path was never chosen, default to 'general' (without_signal).
+      // Conversation-first: don't block on signal picker.
+      if (signalPathVal !== '1') {
+        persistSignalPath('without_signal');
+        setSignalPathChosen(true);
+      }
       if (demoVal === '1') setDemoMode(true);
       if (dayVal != null) {
         const n = Number(dayVal);
@@ -158,6 +166,7 @@ export const MainMenu: React.FC<MainMenuProps> = ({
         }
       }
     });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
@@ -362,6 +371,10 @@ export const MainMenu: React.FC<MainMenuProps> = ({
   };
 
   // --- Render -----------------------------------------------------------
+  // Conversation-first: always show ConversationHome immediately.
+  // Role and signal configuration happen in settings (HomeSettings).
+  // The only exception is if the user explicitly opens role/signal pickers from settings.
+  
   if (showUserModeSelector) {
     return (
       <RoleSelector
