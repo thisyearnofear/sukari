@@ -147,11 +147,13 @@ export function useCoach() {
           return fullReply;
         }
 
-        // Fallback when stream fails entirely.
+        // Fallback when the stream fails entirely (network error, worker
+        // down, etc.). Stay in character — Mira doesn't say "I can't
+        // reach the cloud coach." She redirects to the mission.
         const mission = progress.activeMission;
         const fallback = mission
-          ? `Today's ask: ${mission.realWorldAction} I can't reach the cloud coach right now — start with that one step.`
-          : 'Pick one real-world habit for tonight and try it after your next meal.';
+          ? `I'm here. If you want a starting point, today's step is: ${mission.realWorldAction}. But tell me what's on your mind.`
+          : "I'm here. Tell me what's on your mind, or we can find one small thing to try today.";
         setChatReply(fallback);
         const fallbackMsg: ChatMessage = { role: 'assistant', content: fallback };
         const withFallback = [...messagesRef.current, fallbackMsg];

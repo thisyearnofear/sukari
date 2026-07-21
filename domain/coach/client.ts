@@ -78,6 +78,11 @@ export interface CoachChatStreamRequest extends CoachChatRequest {
  * Stream a coach chat reply. Calls onChunk for each text fragment as it
  * arrives. Returns the full accumulated reply when the stream ends, or
  * null if the request fails.
+ *
+ * React Native's fetch does not support response.body.getReader() —
+ * response.body is undefined in RN. When that happens, we fall back to
+ * reading the full response as text. The reply arrives all at once
+ * instead of token-by-token, but the content is the same.
  */
 export async function fetchCoachChatStream(
   req: CoachChatStreamRequest,
@@ -95,7 +100,15 @@ export async function fetchCoachChatStream(
       body: JSON.stringify(req),
       signal: controller.signal,
     });
-    if (!res.ok || !res.body) return null;
+    if (!res.ok) return null;
+
+    // React Native: response.body is undefined, so getReader() is not
+    // available. Fall back to reading the full response as text.
+    if (!res.body) {
+      const text = await res.text();
+      if (text) onChunk(text);
+      return text || null;
+    }
 
     const reader = res.body.getReader();
     const decoder = new TextDecoder();
