@@ -29,9 +29,9 @@ Run `npm run build:web` when routing, Expo config, or web rendering changes.
 ## Current Product Rules
 
 - The user-facing product name is Sukari.
-- The mission is the primary action on home.
+- The conversation is the primary patient interface. Mira initiates; the patient responds in natural language. No forms, no buttons, no cards to navigate.
+- The care-team work queue is the commercial wedge. It is an active operator surface, not a passive report.
 - Demo patterns must be clearly labelled.
-- Desktop care is an operator surface, not a stretched patient view.
 - Legacy Beam/Web3/NFT/leaderboard/challenge and combat/kingdom game language should not appear in shipped navigation or primary copy.
 - Mira remains habit-scope only in Sukari. Never dosing, diagnosis, urgent-care substitution, or implied access to another Famile product.
 
@@ -39,19 +39,34 @@ Run `npm run build:web` when routing, Expo config, or web rendering changes.
 
 ```text
 app/
-  index.tsx            value-first entry and home
-  care.tsx             programme-operator care surface
+  index.tsx            entry point; routes to conversation home
+  care.tsx             Mira's work queue (operator surface)
   digest/[token].tsx   weekly digest view
 components/
-  game/                intro, home composition (legacy folder name)
-  programme/           mission card, loop strip, quiet win
+  home/
+    ConversationHome.tsx  conversation-first primary patient surface
+  game/                home state orchestrator (legacy folder name)
+  programme/           mission visuals and cards (used by detail views)
+  agent/               MiraOrb visual carrier
 domain/
+  agent/
+    miraPresence.ts        Mira posture vocabulary
+    decisionTrace.ts       explainable decision trace
+    intentParser.ts        natural language -> mission intents
+    conversationMemory.ts  cross-session context in AsyncStorage
+    conversationEngine.ts  state machine + LLM escalation
   coach/               Mira's habit-scope capability and clinical boundary
+  cohort/
+    types.ts            cohort overview and patient summaries
+    synthetic.ts        deterministic 30-patient demo cohort
+    workQueue.ts        work item status lifecycle + AsyncStorage
+    miraFlags.ts        proactive flags for care team
   digest/              weekly digest client/types
   patterns/            signal patterns and field state
   programme/           mission templates and selection
 hooks/
   usePlayerProgress.ts local progress and programme persistence
+  useCoach.ts          LLM streaming for free-form conversation
 ```
 
 ## Analytics

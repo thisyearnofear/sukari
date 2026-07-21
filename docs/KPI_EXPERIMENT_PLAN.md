@@ -10,39 +10,39 @@ This reflects the product thesis: adherence per minute of attention should impro
 
 | Step | Event |
 |------|-------|
-| Value screen completed | `value_proposition_completed` |
-| Role selected after value screen | `value_to_role_completed` |
-| Role captured | `role_selected` |
-| Signal path selected | `signal_path_selected` |
-| Private check-in started / submitted | `manual_signal_started` / `manual_signal_submitted` |
+| Conversation opened | `conversation_opened` with `phase` and `has_prior_context` |
+| Intent parsed | `conversation_intent` with `kind` and `phase` |
 | Mission accepted | `role_to_mission_accepted` |
 | Mission response selected | `mission_response_selected` with `choice` and `input_source` |
 | Mission made easier | `mission_made_easier` |
 | Mission deferred | `mission_deferred` |
 | Real-world action completed | `completion_to_measured_response` |
 | Care-team exception created | `measured_response_to_care_team_exception` |
-| Care panel opened | `care_panel_opened` |
+| Care panel opened | `care_panel_opened` with `open_items` count |
+| Work item status changed | `care_work_item_updated` with `patient` and `status` |
+| Work item snoozed | `care_work_item_snoozed` with `patient` and `hours` |
 | Outreach rationale reviewed | `care_outreach_reviewed` |
 
 ## Patient Metrics
 
-- value screen completion rate;
-- role selection distribution;
-- signal import vs labelled demo pattern vs private check-in use;
-- selected mission input vs current source changes;
-- mission accept/ease/defer/decline rate;
+- conversation open rate (returning vs first-session);
+- intent distribution (accept, easier, later, decline, done, not_done, chat);
+- mission accept/ease/defer/decline rate from parsed intents;
 - direct completion rate, segmented by input source;
 - done-now vs later-today split;
 - later-today eventual completion rate;
+- free-form chat escalation rate (how often patients ask questions beyond mission actions);
 - weekly mission completion frequency.
 
 ## Operator Metrics
 
-- exceptions per enrolled patient per week;
-- outreach suggestions reviewed;
-- outreach suggestions dismissed;
-- time from exception to review;
-- weekly outcomes visible per reviewed patient;
+- open items per enrolled patient per week;
+- work item status distribution (open, contacted, snoozed, resolved);
+- time from open to contacted;
+- time from contacted to resolved;
+- Mira flag volume by severity (urgent, worth_a_conversation, positive);
+- Mira flag accuracy (flagged patients who benefited from outreach);
+- snooze usage and re-open rate;
 - staff minutes per enrolled patient.
 
 ## Experiments
@@ -59,11 +59,11 @@ Hypothesis: clearly labelling demo evidence increases trust without reducing mis
 
 Primary metric: role -> mission accepted.
 
-### 3. Mission Friction
+### 3. Conversation Intent Friction
 
-Hypothesis: do it now/easier/later/not practical controls increase overall mission commitment by making refusal dignified.
+Hypothesis: natural language intent parsing increases overall mission commitment by making refusal dignified and reducing tap friction.
 
-Primary metric: mission accepted or adapted.
+Primary metric: mission accepted or adapted (from parsed intents).
 
 ### 4. First-Session Input Choice
 
@@ -77,11 +77,17 @@ Hypothesis: the later-today promise drives eventual completion better than a sin
 
 Primary metric: mission deferred -> eventual completion within the week.
 
-### 6. Care-Team Exception Value
+### 6. Care-Team Work Queue Value
 
-Hypothesis: operators care about concise exception rationale more than raw dashboards.
+Hypothesis: operators work an active queue faster than they read a passive report. Mira's proactive flags narrow attention to the patients who benefit from outreach.
 
-Primary metric: care-team exception -> outreach reviewed.
+Primary metric: time from open to contacted; Mira flag accuracy (flagged patients who benefited from outreach).
+
+### 7. Conversation Memory Continuity
+
+Hypothesis: Mira referencing past context ("Last time you mentioned evenings were hard") increases returning-session open rate and mission acceptance.
+
+Primary metric: returning-session open rate; mission accepted in returning sessions vs first sessions.
 
 ## Pilot Guardrails
 

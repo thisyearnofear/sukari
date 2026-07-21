@@ -14,17 +14,16 @@ The product is the closed loop from signal to mission to real-world adherence ev
 
 ## Demo Script
 
-1. Start at the Sukari value screen.
-2. Select a role.
-3. Connect a signal, use the labelled demo pattern, or show the private local check-in.
-4. Show the mission card.
-5. Choose "Make it easier" or "Later today" once to show the visible "Adjusted for you" agent moment.
-6. Accept the mission or mark it complete.
-7. Open "Why this?" to show the structured signal -> mission trace and the mission visual cue.
-8. Explain that deterministic logic detects patterns and enforces safety; the LLM may personalise approved copy or smaller variants inside that boundary.
-9. Mention the optional Runware adapter: fixed-prompt image generation from an approved mission brief, with no raw readings or identifying data in the prompt.
-10. Show measured response language.
-11. Open the care-team panel to show exception rationale, weekly outcomes, and estimated staff minutes saved.
+1. Open the app. You're immediately in a conversation with Mira — no value screen, no role selection, no signal picker. Mira initiates: "I noticed a pattern in your evenings. Want to try one small thing today?"
+2. Type "sure" to accept the mission. Mira responds and her orb shifts to watching posture.
+3. Type "that's too much" to see Mira adapt — she offers a smaller variant in conversation. No buttons, no cards.
+4. Type "I walked for 10 minutes" to log completion. Mira acknowledges and asks how it felt.
+5. Type a free-form question like "what is protein?" to see Mira escalate to the LLM with grounded context.
+6. Open the care-team work queue (`/care`). Show Mira's observations at the top — proactive flags with severity (urgent, worth a conversation, positive).
+7. Show the work queue: status badges (open, contacted, snoozed, resolved), filter bar, sort options.
+8. Expand a patient row. Show the quick actions: mark contacted, resolve, snooze 24h, reopen.
+9. Explain that deterministic logic detects patterns and enforces safety; the LLM handles free-form chat inside that boundary.
+10. Mention the optional Runware adapter: fixed-prompt image generation from an approved mission brief, with no raw readings or identifying data in the prompt.
 
 The Amina demo remains deterministic for judging. Mira is the named Famile agent; Amina is only a deterministic synthetic patient fixture. Live signal paths are technical proof, but demos should not depend on OAuth success.
 
@@ -33,18 +32,20 @@ The Amina demo remains deterministic for judging. Mira is the named Famile agent
 | Area | Status |
 |------|--------|
 | Sukari brand and product copy | Done |
-| Value proposition before role selection | Done |
-| Signal path: demo, connect, or habit mission | Done |
-| Private local check-in maps a moment to an approved mission | Done |
-| Mission card with direct-action path | Done |
-| Visible "Adjusted for you" mission adaptation | Done |
-| Agent decision trace | Done |
-| Progressive disclosure: "Why this?" context | Done |
+| Conversation-first patient interface (Mira initiates, patient responds in natural language) | Done |
+| Intent parser: natural language to mission intents | Done |
+| Conversation memory: cross-session context in AsyncStorage | Done |
+| Conversation engine: deterministic state machine + LLM escalation | Done |
+| Mira orb reflects conversation state | Done |
+| Visible "Adjusted for you" mission adaptation in conversation | Done |
+| Agent decision trace via progressive disclosure | Done |
 | Deployed mission-specific visual cue with Runware adapter | Done |
 | Labelled demo pattern | Done |
 | Quiet measured response | Done |
 | Local digest history | Done |
-| Desktop care-team exception panel with staff-minutes-saved | Done |
+| Care-team work queue with status lifecycle (open, contacted, snoozed, resolved) | Done |
+| Mira proactive flags for care team (safety, completion drop, barrier, recovery, streak, re-engagement) | Done |
+| Work queue persistence in AsyncStorage | Done |
 | Care-team outreach instrumentation | Done |
 | Legacy Web3/NFT/leaderboard/challenge and combat/kingdom game surfaces retired | Done |
 | Jest AsyncStorage mock and TypeScript cleanup | Done |

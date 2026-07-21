@@ -3,28 +3,31 @@
 ## Product
 
 - [x] User-facing name changed to Sukari.
-- [x] Value proposition leads first run.
-- [x] Role selection follows value screen.
-- [x] Signal choice supports labelled demo, read-only connection, private local check-in, or general habit mission.
-- [x] Mission card supports do it now, make it easier, later today, and not practical today.
-- [x] "Adjusted for you" appears after easier/later choices.
+- [x] Conversation-first patient interface: Mira initiates, patient responds in natural language.
+- [x] Intent parser maps natural language to mission intents (accept, easier, later, done, not_done, decline).
+- [x] Conversation memory persists across sessions in AsyncStorage.
+- [x] Conversation engine drives deterministic mission responses + LLM escalation for free-form chat.
+- [x] "Adjusted for you" appears in conversation when patient says "that's too much."
 - [x] Demo pattern is clearly labelled.
 - [x] Measured response copy avoids causal overclaiming.
-- [x] Desktop care panel shows exceptions, rationale, outcomes, and estimated staff minutes saved.
+- [x] Care-team work queue with status lifecycle (open, contacted, snoozed, resolved), filter/sort, and quick actions.
+- [x] Mira proactive flags for care team (safety, completion drop, barrier, recovery, streak, re-engagement).
+- [x] Work queue state persists in AsyncStorage; expired snoozes auto-reopen.
 - [x] Demo cohort is explicit, not disguised as real panel data.
 - [x] Legacy Web3/NFT/leaderboard/challenge and combat/kingdom game surfaces removed.
 
 ## Instrumentation
 
-- [x] Value screen -> role selection.
-- [x] Signal path selection.
-- [x] Private local check-in start and completion.
+- [x] Conversation opened (with phase and prior-context flag).
+- [x] Conversation intent (with kind and phase).
 - [x] Normalized mission-response event with input-source segmentation.
 - [x] Settings control to change mission input without resetting programme progress.
 - [x] Connection capability gate labels unavailable live signal access as preview.
 - [x] Role -> mission accepted.
 - [x] Mission easier/later adaptation.
 - [x] Completion -> measurable response.
+- [x] Care-team work item status changes.
+- [x] Care-team work item snooze.
 - [x] Care-team exception/outreach.
 
 ## Engineering

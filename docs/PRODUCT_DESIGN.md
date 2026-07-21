@@ -40,17 +40,16 @@ The LLM may personalise wording, offer an approved smaller variant, or summarise
 
 Sukari has one loop and two surfaces.
 
-1. **Patient home:** value proposition, role selection, current signal, one mission, and patient governance.
-2. **Care team:** desktop-first programme-operator view with exceptions, outreach rationale, and weekly outcomes.
+1. **Patient home:** a conversation with Mira. She initiates with a contextual observation based on current state and memory of past sessions. The patient responds in natural language. The mission lifecycle — accept, make easier, defer, complete, decline — happens in the conversation thread. Free-form questions escalate to the LLM. No forms, no buttons, no cards to navigate.
+2. **Care team:** Mira's work queue — an active operator surface with status lifecycle (open, contacted, snoozed, resolved), filter/sort, quick actions, and Mira-generated proactive flags. Not a passive report.
 
-The first mission flow:
+The first conversation:
 
-1. Lead with the pain and value proposition.
-2. Ask who the product is helping: patient, supporter, or care team.
-3. Connect/import a signal or use a clearly labelled demo pattern.
-4. Show the mission card.
-5. The patient can act now, make it easier, save it for later, or mark it not practical.
-6. If the patient says the mission is too much or poorly timed, show a concise "Adjusted for you" moment before asking for more.
+1. The patient opens the app. Mira is already there — no role selection, no signal picker, no value screen to tap through.
+2. Mira initiates: "I noticed a pattern in your evenings. Want to try one small thing today?" (first session) or "Last time you mentioned evenings were hard. How's this week going?" (returning session).
+3. The patient responds in natural language. "Sure" accepts. "That's too much" triggers a smaller variant. "Maybe later" defers. "I walked for 10 minutes" logs completion.
+4. If the patient asks a free-form question ("what is protein?"), Mira escalates to the LLM with grounded context.
+5. Mira's posture updates with each state transition — offering, watching, completed — reflected in the orb in the header.
 
 ## Mira, The Famile Agent
 
@@ -102,17 +101,20 @@ Mira may autonomously detect patterns, select one in-scope mission, remember res
 
 - Name and visible brand changed to Sukari.
 - Mira established as the shared Famile agent identity; Amina is the labelled synthetic demo patient.
-- Value-first intro added before role selection.
-- First-minute signal choice added: labelled demo, read-only connection, private local check-in, or general habit mission.
+- Conversation-first patient interface: the patient opens into a conversation with Mira, not a form or mission card. Mira initiates with a contextual opening line.
+- Intent parser maps natural language ("sure", "too hard", "I did it") to structured mission intents — no buttons required.
+- Conversation memory persists across sessions in AsyncStorage. Mira references past context: "Last time you mentioned evenings were hard."
+- Conversation engine drives Mira's responses deterministically for mission actions; free-form chat escalates to the LLM.
+- Mira's posture updates with each conversation state transition, reflected in the orb.
 - Live signal access is capability-gated; unavailable integrations are labelled as preview rather than implied to work.
 - Settings lets a person change mission input later without resetting role or programme progress.
-- Mission-first flow: the patient sees the mission card and can act immediately.
-- Approved smaller mission variants create a visible "Adjusted for you" agent moment.
+- Approved smaller mission variants are offered in conversation when the patient says "that's too much."
 - A local, mission-bound world state carries approved scene, tone, and response state across home and generated media; it resets when the mission changes.
-- Mission cards expose an agent decision trace: observed evidence, proposal, and next patient-controlled step.
+- Decision trace remains available through progressive disclosure.
 - Demo patterns are labelled as demo evidence.
 - Mission-specific visuals use the deployed optional Runware worker when configured, with local fallback; only approved visual intents leave the app.
-- Desktop care surface emphasizes operator value: exceptions, rationale, outcomes, and estimated staff minutes saved.
+- Care-team surface is now Mira's work queue: active status lifecycle (open, contacted, snoozed, resolved), filter/sort, quick actions, and Mira-generated proactive flags.
+- Work queue state persists in AsyncStorage; expired snoozes auto-reopen.
 - Local digest history powers the care surface instead of fixture-only data.
 - Demo cohort remains available as an explicit toggle.
 - Legacy Web3, Beam, NFT, leaderboard, challenge-era, and combat/kingdom game surfaces were removed.

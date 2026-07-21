@@ -7,18 +7,19 @@ Sukari has moved from a game-first GlucoseWars prototype to a mission-first adhe
 Shipped this cycle:
 
 - Sukari name and product register.
-- Value proposition before role selection.
-- First-minute signal choice: labelled demo, read-only connection, private local check-in, or general habit mission.
-- Mission-first flow: the patient sees the mission card and can act immediately.
-- Approved "Adjusted for you" mission adaptation after easier/later choices.
-- Mira presence on the mission card, with a small orb that reflects the current agent posture.
+- Conversation-first patient interface: the patient opens into a conversation with Mira, not a form or mission card. Mira initiates with a contextual opening line based on current state and memory of past sessions.
+- Intent parser maps natural language to structured mission intents — no buttons required.
+- Conversation memory persists across sessions in AsyncStorage; Mira references past context.
+- Conversation engine drives Mira's responses deterministically for mission actions; free-form chat escalates to the LLM.
+- Mira presence in the conversation header, with an orb that reflects the current agent posture.
+- Approved "Adjusted for you" mission adaptation offered in conversation when the patient says "that's too much."
 - Clearly labelled demo pattern path.
 - Amina established as the deterministic synthetic demo patient, separate from Mira.
 - Deployed optional Runware mission-media worker with local fallback.
-- Local-first digest history and care-team panel.
-- Desktop programme-operator surface: exceptions, outreach rationale, weekly outcomes, and estimated staff minutes saved.
+- Local-first digest history and care-team work queue.
+- Care-team work queue: active status lifecycle (open, contacted, snoozed, resolved), filter/sort, quick actions, and Mira-generated proactive flags. Work queue state persists in AsyncStorage.
 - Legacy Beam/Web3/NFT/leaderboard/challenge and combat/kingdom game surfaces removed.
-- Funnel instrumentation from value screen through care-team outreach.
+- Funnel instrumentation from conversation open through care-team work queue actions.
 - Green lint, TypeScript, Jest, and web export gates.
 
 ## Next Product Milestones
@@ -53,10 +54,11 @@ Shipped this cycle:
    - Weekly Adherent Patients as primary behavioural metric.
    - Health outcomes exploratory only until study design exists.
 
-6. **Operator workflow**
-   - Outreach state: suggested, reviewed, sent, dismissed.
-   - Weekly team report.
-   - Export or integration path for programme operators.
+6. **Operator workflow depth**
+   - Work queue status lifecycle shipped (open, contacted, snoozed, resolved).
+   - Mira proactive flags shipped (safety, completion drop, barrier pattern, recovery, streak, re-engagement).
+   - Next: operator assignment to specific care team members, weekly team report, export/integration path.
+   - Next: Mira flags enriched with conversation memory (reference specific past missions, not just barriers and counts).
 
 ## Metrics
 
@@ -64,19 +66,20 @@ North star: **Weekly Adherent Patients (WAP)**.
 
 Funnel:
 
-- value screen -> role selection;
-- role -> mission accepted;
-- mission -> easier/later adaptation;
+- conversation opened -> mission offered;
+- mission offered -> intent parsed (accept, easier, later, decline);
 - mission accepted -> real-world completion or later;
 - completion -> measurable response;
-- care-team exception -> outreach reviewed.
+- care-team work item -> status changed (contacted, resolved, snoozed);
+- Mira flag -> operator action.
 
 Operator metrics:
 
-- exceptions per enrolled patient;
-- staff minutes per reviewed exception;
-- outreach acceptance and completion;
-- digest usefulness rating.
+- open items per enrolled patient per week;
+- time from open to contacted;
+- time from contacted to resolved;
+- Mira flag accuracy (flagged patients who benefited from outreach);
+- staff minutes per enrolled patient.
 
 ## Strategic Focus
 

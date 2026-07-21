@@ -13,11 +13,11 @@ Metabolic programmes know what patients should do, but adherence fails between a
 Sukari turns signal into action through Mira, Famile's shared health and wellness agent:
 
 1. Detect one actionable pattern.
-2. Propose one daily habit experiment.
-3. Let the patient do it now, make it easier, save it for later, or decline.
+2. Propose one daily habit experiment — in conversation, not on a card.
+3. The patient responds in natural language: "sure", "that's too much", "maybe later", "I did it." Mira adapts.
 4. Record real-world completion.
 5. Measure the associated response.
-6. Surface exceptions to the care team with outreach rationale.
+6. Surface exceptions to the care team as an active work queue with Mira's proactive flags.
 
 The agent is the connective tissue. The product is adherence evidence.
 
@@ -38,22 +38,25 @@ CGM adoption, virtual metabolic programmes, GLP-1 care models, and capable AI ma
 
 ## Moat
 
+- The operator work queue is the commercial wedge. Patients have infinite health app choices; care teams managing metabolic programs have almost no tooling.
+- Data moat: the prioritization engine improves with every patient turn and every completion.
+- Switching costs: once a care coordinator runs 30 patients through your work queue, leaving means losing institutional memory.
 - Longitudinal mapping from context to mission to adherence to response.
 - Clinically governed mission library and safety boundaries.
-- Programme workflow embed through exception-based care views.
 - Mission design tuned for real-world completion, not time-in-app.
 
 ## Current Progress
 
 Working prototype includes:
 
-- Sukari brand and value-first entry.
-- Signal/demo pattern to Mira mission card.
-- Do now, make easier, later today, and not practical today.
-- Mira visual presence with bounded habit-scope posture.
+- Sukari brand and conversation-first entry.
+- Conversation-first patient interface: Mira initiates, patient responds in natural language, mission lifecycle happens in the thread.
+- Intent parser maps natural language to structured mission intents — no buttons required.
+- Conversation memory persists across sessions; Mira references past context.
+- Mira visual presence with bounded habit-scope posture, updating with conversation state.
 - Measured response language.
 - Local-first weekly digest history.
-- Desktop care-team panel with exceptions, rationale, outcomes, and estimated staff minutes saved.
+- Care-team work queue with status lifecycle (open, contacted, snoozed, resolved), filter/sort, quick actions, and Mira-generated proactive flags.
 - Habit-only coach boundary.
 - Agency Charter for agent permissions.
 - Instrumented funnel through care-team outreach.

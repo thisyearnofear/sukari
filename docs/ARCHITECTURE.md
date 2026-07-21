@@ -5,22 +5,23 @@ Sukari is a React Native Expo app with a local-first adherence loop and optional
 ```text
 live signal, labelled demo pattern, or private local check-in
   -> bounded pattern and approved programme mission
-  -> do now / make easier / later / not practical
+  -> conversation: Mira initiates, patient responds in natural language
+  -> intent parser maps response to mission action (accept, easier, later, done, not_done)
   -> completion
   -> measured response
-  -> care-team exception view
+  -> care-team work queue with Mira flags
 ```
 
 ## Product Surfaces
 
-- `app/index.tsx`: value-first entry and programme home.
-- `components/game/HeroIntro.tsx`: first-run value proposition.
-- `components/game/MainMenu.tsx`: role selection, signal/demo/local check-in choice, and mission card.
+- `app/index.tsx`: entry point; routes to conversation home.
+- `components/home/ConversationHome.tsx`: conversation-first primary patient surface. Mira initiates, patient responds in natural language, mission lifecycle happens in the thread.
+- `components/game/MainMenu.tsx`: home state orchestrator (legacy folder name). Owns role/signal/demo state and renders ConversationHome.
 - `components/agent/MiraOrb.tsx`: lightweight cross-platform visual carrier for Mira's domain-derived posture.
-- `domain/agent/`: Mira presence, patient-visible decision trace, and vetted media brief contracts.
+- `domain/agent/`: Mira presence, decision trace, conversation engine, intent parser, and conversation memory.
 - `components/programme/MissionVisual.tsx`: local visual cue with optional Runware-generated mission illustration.
 - `app/digest/[token].tsx`: patient/care-team digest view.
-- `app/care.tsx`: desktop-first programme-operator surface.
+- `app/care.tsx`: Mira's work queue — active operator surface with status lifecycle, filters, quick actions, and Mira-generated proactive flags.
 
 Retired routes such as `game-selection`, `slowmo`, and the `(game)` route group (battle, onboarding, results) have been removed. They should not regain primary navigation without a deliberate product decision.
 
@@ -29,7 +30,8 @@ Retired routes such as `game-selection`, `slowmo`, and the `(game)` route group 
 ```text
 domain/
   coach/       habit-scope coach and clinical safety boundary
-  agent/       Mira presence, explainable decision trace, and non-sensitive media briefs
+  agent/       Mira presence, decision trace, conversation engine,
+               intent parser, conversation memory, and media briefs
   config/      worker and app URL helpers
   demo/        deterministic Amina demo data
   digest/      weekly summary payloads, publishing, and local history
@@ -38,6 +40,7 @@ domain/
   patterns/    observational pattern types and field state mapping
   programme/   mission templates, mission selection
   signals/     CGM or snapshot abstractions
+  cohort/      operator cohort overview, work queue state, and Mira flags
 ```
 
 Domain code should remain pure TypeScript and should not import React Native or Expo UI.
@@ -70,6 +73,10 @@ Analytics are wrapped through the app's tracking utility and should remain optio
 - `measured_response_to_care_team_exception`
 - `care_panel_opened`
 - `care_outreach_reviewed`
+- `conversation_opened` (with phase and prior-context flag)
+- `conversation_intent` (with intent kind and conversation phase)
+- `care_work_item_updated` (with patient and new status)
+- `care_work_item_snoozed` (with patient and snooze duration)
 
 Supporting events include `agent_trace_opened` and `signal_connection_chosen`. They measure progressive disclosure and connect intent; they do not replace the core completion funnel.
 
@@ -77,9 +84,21 @@ Supporting events include `agent_trace_opened` and `signal_connection_chosen`. T
 
 Do not add new funnel names casually. Prefer extending properties on these events unless a new product boundary is introduced.
 
+## Conversation Architecture
+
+The patient surface is a conversation, not a form. Three domain modules drive it:
+
+- `domain/agent/intentParser.ts`: parses natural language into structured mission intents (accept, decline, make_easier, later, done, not_done, how_was_it, chat). Lightweight pattern matching — no LLM call for mission actions.
+- `domain/agent/conversationMemory.ts`: persists turns and derived facts (barriers, completion count, last action) across sessions in AsyncStorage. Enables Mira to reference past context.
+- `domain/agent/conversationEngine.ts`: state machine that generates opening lines, processes intents deterministically, and escalates free-form chat to the LLM via `useCoach`. Mira's posture updates with each state transition.
+
+The conversation is the primary interface. There are no mission cards, no buttons to tap, and no screens to navigate. The patient opens the app and is already in a conversation with Mira.
+
 ## Care-Team Architecture
 
-The current care panel is local-first and intentionally conservative. It reads stored weekly digests on the device and can open an explicit synthetic demo cohort.
+The care surface is Mira's work queue — an active operator surface, not a passive report. It reads stored weekly digests on the device and can open an explicit synthetic demo cohort. Operators work items through a status lifecycle (open, contacted, snoozed, resolved) with filter/sort and quick actions. Mira generates proactive flags from cohort data + conversation memory.
+
+Work queue state persists in AsyncStorage (`domain/cohort/workQueue.ts`). Mira flags are generated deterministically from cohort summaries + work item status (`domain/cohort/miraFlags.ts`).
 
 A production cohort product needs:
 
