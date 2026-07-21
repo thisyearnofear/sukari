@@ -379,9 +379,7 @@ export const ConversationHome: React.FC<ConversationHomeProps> = ({
               <MessageBubble key={msg.id} message={msg} />
             ))}
             {isLoading && !coach.chatReply ? (
-              <View style={styles.typingIndicator}>
-                <Text style={styles.typingText}>Mira is thinking…</Text>
-              </View>
+              <ThinkingIndicator />
             ) : null}
           </ScrollView>
 
@@ -423,6 +421,40 @@ function MessageBubble({ message }: { message: ThreadMessage }) {
           {message.content}
         </Text>
       </View>
+    </View>
+  );
+}
+
+/**
+ * Variegated phrases Mira "thinks" while waiting for the LLM.
+ * Each pick is random per mount — the patient doesn't see the same
+ * phrase every time. The phrases are in Mira's voice: calm,
+ * observational, never clinical. They hint at what she's doing
+ * (listening, recalling, finding the right words) without breaking
+ * the conversation illusion.
+ */
+const THINKING_PHRASES = [
+  'listening…',
+  'let me find the right words…',
+  'thinking about what you said…',
+  'sitting with that for a moment…',
+  'let me think…',
+  'considering…',
+  'holding that…',
+  'finding the thread…',
+  'let me sit with that…',
+  'turning it over…',
+  'let me gather my thoughts…',
+  'one moment…',
+];
+
+function ThinkingIndicator() {
+  // Pick a random phrase on each mount — variegated per trigger.
+  const phraseRef = useRef(THINKING_PHRASES[Math.floor(Math.random() * THINKING_PHRASES.length)]);
+  return (
+    <View style={styles.typingIndicator}>
+      <MiraOrb posture="inquiry" size={22} />
+      <Text style={styles.typingText}>{phraseRef.current}</Text>
     </View>
   );
 }
@@ -502,7 +534,10 @@ const styles = StyleSheet.create({
     color: P.text,
   },
   typingIndicator: {
-    paddingVertical: 8,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    paddingVertical: 10,
     paddingHorizontal: 4,
   },
   typingText: {
