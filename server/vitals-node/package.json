@@ -1,0 +1,20 @@
+{
+  "name": "sukari-vitals-node",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "description": "Local SmartSpectra vitals service for the sukari web check-in. Frames in over WebSocket, metrics out. Video never leaves the machine.",
+  "scripts": {
+    "smoke:camera": "node src/camera-smoke.mjs",
+    "smoke:file": "node src/file-smoke.mjs",
+    "serve": "node src/server.mjs"
+  },
+  "dependencies": {
+    "@smartspectra/node-sdk": "^3.5.0",
+    "ws": "^8.18.0"
+  },
+  "allowScripts": {
+    "koffi@2.16.4": true,
+    "protobufjs@7.6.6": true
+  }
+}

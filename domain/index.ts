@@ -18,4 +18,5 @@ export * from './demo';
 export * from './coach';
 export * from './digest';
 export * from './invite';
+export * from './atmosphere';
 export * from './config';

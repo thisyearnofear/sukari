@@ -435,7 +435,6 @@ export const MainMenu: React.FC<MainMenuProps> = ({
           track('charter_opened', { from: 'home_topbar' });
           router.push('/charter');
         }}
-        onOpenCareTeamSummary={openCareTeamSummary}
         onAccept={() => {
           setMissionChoice('accept');
           setMissionDeferred(false);
@@ -503,6 +502,7 @@ export const MainMenu: React.FC<MainMenuProps> = ({
         liveSignalAvailable={liveSignalAvailable}
         onChangeSignalSource={beginSignalSourceChange}
         onOpenSignalConnection={openSignalConnection}
+        onOpenCareTeamSummary={openCareTeamSummary}
         onShowSignalAvailability={beginSignalSourceChange}
         privacyMode={progress.privacyMode}
         onSetPrivacyMode={setPrivacyMode}

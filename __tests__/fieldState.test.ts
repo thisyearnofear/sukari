@@ -8,12 +8,14 @@ describe('fieldStateFromPattern', () => {
     expect(state.band).toBe('high');
     expect(state.intensity).toBeGreaterThan(0.5);
     expect(state.intensity).toBeLessThanOrEqual(0.85);
+    expect(state.quality).toBe('charged');
+    expect(state.tempo).toBeGreaterThan(1);
   });
 
   it('settles the field when the mission is completed in real life', () => {
     const pattern = resolvePattern({ useDemo: true, demoDayIndex: 10 });
     const state = fieldStateFromPattern(pattern, { missionCompleted: true });
-    expect(state).toEqual({ band: 'in_range', intensity: 0.4 });
+    expect(state).toEqual({ band: 'in_range', intensity: 0.4, tempo: 0.75, quality: 'settling' });
   });
 
   it('keeps the field calm and unknown when data is insufficient', () => {
@@ -42,6 +44,6 @@ describe('fieldStateFromPattern', () => {
   it('never alarms after completion, even when deferred', () => {
     const pattern = resolvePattern({ useDemo: true, demoDayIndex: 10 });
     const state = fieldStateFromPattern(pattern, { missionCompleted: true, deferred: true });
-    expect(state).toEqual({ band: 'in_range', intensity: 0.4 });
+    expect(state).toEqual({ band: 'in_range', intensity: 0.4, tempo: 0.75, quality: 'settling' });
   });
 });

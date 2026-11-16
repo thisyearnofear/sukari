@@ -13,6 +13,9 @@ export interface Rgb {
 export interface FieldVisual {
   rgb: Rgb;
   intensity: number;
+  /** Drift-speed multiplier — semantic tempo (steady 1.0, charged 1.5,
+      depleted 0.6, settling ~0.75). Lerps like the other channels. */
+  tempo: number;
 }
 
 export function hexToRgb(hex: string): Rgb {
@@ -37,11 +40,25 @@ export function lerpRgb(from: Rgb, to: Rgb, t: number): Rgb {
   };
 }
 
+/** Circadian tint — scale lightness, then nudge warm/cool. */
+export function tintedAccent(
+  rgb: Rgb,
+  tint?: { lightness: number; warm: number },
+): Rgb {
+  if (!tint) return rgb;
+  return {
+    r: rgb.r * tint.lightness + tint.warm * 18,
+    g: rgb.g * tint.lightness + tint.warm * 6,
+    b: rgb.b * tint.lightness - tint.warm * 14,
+  };
+}
+
 /** Exponential approach — the physics of a system settling to equilibrium. */
 export function lerpFieldState(from: FieldVisual, to: FieldVisual, t: number): FieldVisual {
   return {
     rgb: lerpRgb(from.rgb, to.rgb, t),
     intensity: from.intensity + (to.intensity - from.intensity) * t,
+    tempo: from.tempo + (to.tempo - from.tempo) * t,
   };
 }
 
@@ -51,6 +68,7 @@ export function isFieldSettled(a: FieldVisual, b: FieldVisual, epsilon = 1.5): b
     Math.abs(a.rgb.r - b.rgb.r) < epsilon &&
     Math.abs(a.rgb.g - b.rgb.g) < epsilon &&
     Math.abs(a.rgb.b - b.rgb.b) < epsilon &&
-    Math.abs(a.intensity - b.intensity) < 0.01
+    Math.abs(a.intensity - b.intensity) < 0.01 &&
+    Math.abs(a.tempo - b.tempo) < 0.01
   );
 }

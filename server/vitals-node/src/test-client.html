@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>sukari vitals check-in — spike</title>
+<style>
+  body { font-family: system-ui; max-width: 640px; margin: 2rem auto; }
+  video { width: 100%; border-radius: 8px; background: #000; }
+  #log { font: 12px/1.5 ui-monospace, monospace; white-space: pre-wrap;
+         background: #111; color: #8f8; padding: 1rem; border-radius: 8px;
+         height: 240px; overflow-y: auto; }
+  button { font-size: 1rem; padding: .5rem 1.25rem; margin-right: .5rem; }
+</style>
+</head>
+<body>
+<h1>Vitals check-in</h1>
+<video id="cam" autoplay playsinline muted></video>
+<p>
+  <button id="begin">Begin measurement</button>
+  <button id="end" disabled>End</button>
+</p>
+<div id="log"></div>
+<canvas id="grab" hidden></canvas>
+<script>
+const log = (s) => {
+  const el = document.getElementById('log');
+  el.textContent += s + '\n';
+  el.scrollTop = el.scrollHeight;
+};
+
+const W = 480, H = 360, FPS = 15;
+const ws = new WebSocket(`ws://${location.host}`);
+let timer = null;
+
+ws.onmessage = (e) => {
+  const m = JSON.parse(e.data);
+  if (m.type === 'metrics') {
+    const c = m.data?.cardio, b = m.data?.breathing;
+    const pulse = c?.pulseRate?.at(-1), breath = b?.rate?.at(-1);
+    log(`metrics  pulse=${pulse ?? '-'}  breathing=${breath ?? '-'}`);
+  } else {
+    log(JSON.stringify(m));
+  }
+};
+
+const stream = await navigator.mediaDevices.getUserMedia({
+  video: { width: W, height: H, frameRate: FPS }, audio: false,
+});
+document.getElementById('cam').srcObject = stream;
+
+const canvas = document.getElementById('grab');
+canvas.width = W; canvas.height = H;
+const ctx = canvas.getContext('2d', { willReadFrequently: true });
+
+document.getElementById('begin').onclick = () => {
+  ws.send(JSON.stringify({ type: 'begin' }));
+  timer = setInterval(() => {
+    const video = document.getElementById('cam');
+    ctx.drawImage(video, 0, 0, W, H);
+    const { data } = ctx.getImageData(0, 0, W, H);
+    const msg = new ArrayBuffer(16 + data.byteLength);
+    const v = new DataView(msg);
+    v.setUint32(0, W, true);
+    v.setUint32(4, H, true);
+    v.setFloat64(8, performance.timeOrigin * 1e3 + performance.now() * 1e3, true);
+    new Uint8Array(msg, 16).set(data);
+    ws.send(msg);
+  }, 1000 / FPS);
+  document.getElementById('begin').disabled = true;
+  document.getElementById('end').disabled = false;
+  log('measuring…');
+};
+
+document.getElementById('end').onclick = () => {
+  clearInterval(timer); timer = null;
+  ws.send(JSON.stringify({ type: 'end' }));
+  document.getElementById('begin').disabled = false;
+  document.getElementById('end').disabled = true;
+  log('stopped');
+};
+</script>
+</body>
+</html>

@@ -58,6 +58,12 @@ The Amina demo remains deterministic for judging. Mira is the named Famile agent
 | Closed-loop adaptation: past outcomes inform mission selection | Done |
 | Cohort evidence: archetype completion rates + patient-reported response rates on operator surface | Done |
 | Longitudinal outcome trend in clinician digest | Done |
+| Ambient metabolic field on the conversation surface (band/intensity/tempo/quality) | Done |
+| Camera vitals check-in: consent → measure → result, provider seam (SmartSpectra WS + labelled simulated) | Done |
+| Embodied field: live pulse/breath drives heartbeat shimmer + breath swell, post-check-in imprint | Done |
+| Circadian field character (time-of-day lightness/tempo/warmth) + semantic texture per field quality | Done |
+| Dissolution moment on mission acceptance ("Go live it") | Done |
+| Phase-bound suggested replies, MissionCard, compact layout, settings-housed care team | Done |
 | Legacy Web3/NFT/leaderboard/challenge and combat/kingdom game surfaces retired | Done |
 | Jest AsyncStorage mock and TypeScript cleanup | Done |
 

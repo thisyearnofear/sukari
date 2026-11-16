@@ -30,14 +30,22 @@ import {
   Platform,
   Animated,
   Easing,
+  useWindowDimensions,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Svg, { Circle } from 'react-native-svg';
+import { BookOpen, Camera, SlidersHorizontal } from 'lucide-react-native';
 import { COLORS, FONTS } from '@/constants/designSystem';
 import { MiraOrb } from '@/components/agent/MiraOrb';
 import { PressableScale } from '@/components/ui/PressableScale';
 import { WelcomeScene } from '@/components/home/WelcomeScene';
-import { MissionVisual } from '@/components/programme/MissionVisual';
+import { SuggestedReplies } from '@/components/home/SuggestedReplies';
+import { MissionCard } from '@/components/programme/MissionCard';
+import { MetabolicField } from '@/components/atmosphere/MetabolicField';
+import { VitalsCheckIn } from '@/components/checkin/VitalsCheckIn';
+import { fieldStateFromPattern } from '@/domain/patterns/fieldState';
+import { circadianFieldCharacter } from '@/domain/atmosphere';
+import type { VitalsReading } from '@/domain/vitals';
 import {
   processIntent,
   generateOpeningLine,
@@ -45,7 +53,6 @@ import {
   type ConversationState,
   type ConversationPhase,
 } from '@/domain/agent/conversationEngine';
-import { buildMissionMediaBrief } from '@/domain/agent';
 import { useCoach } from '@/hooks/useCoach';
 import { track } from '@/utils/analytics';
 import {
@@ -91,7 +98,6 @@ interface ConversationHomeProps {
   onCaptureOutcome: (outcome: PatientReportedOutcome, reflection?: string) => void;
   onOpenSettings: () => void;
   onOpenCharter: () => void;
-  onOpenCareTeamSummary: () => void;
 }
 
 interface ThreadMessage {
@@ -122,7 +128,6 @@ export const ConversationHome: React.FC<ConversationHomeProps> = ({
   onCaptureOutcome,
   onOpenSettings,
   onOpenCharter,
-  onOpenCareTeamSummary,
 }) => {
   const coach = useCoach();
   const [thread, setThread] = useState<ThreadMessage[]>([]);
@@ -134,7 +139,13 @@ export const ConversationHome: React.FC<ConversationHomeProps> = ({
   const [memory, setMemory] = useState<ConversationMemory | null>(null);
   const [opened, setOpened] = useState(false);
   const [showWelcome, setShowWelcome] = useState(false);
-  const [welcomeDone, setWelcomeDone] = useState(false);
+  const [showVitals, setShowVitals] = useState(false);
+  // Latest check-in reading — drives the field's pulse/breath while the
+  // sheet is open (gain 1), then persists as a faint imprint (gain 0.35).
+  const [liveVitals, setLiveVitals] = useState<VitalsReading | null>(null);
+  // Dissolution moment — after the patient accepts, the interface
+  // exhales: a quiet release line and the field easing toward rest.
+  const [releaseLine, setReleaseLine] = useState(false);
   const fadeOpacity = useRef(new Animated.Value(1)).current;
   const scrollRef = useRef<ScrollView>(null);
   const isProcessingRef = useRef(false);
@@ -143,9 +154,12 @@ export const ConversationHome: React.FC<ConversationHomeProps> = ({
   // isTyping: patient is actively typing → orb shifts to inquiry (listening)
   // idleTimer: patient stopped typing but hasn't sent → orb shifts to watching
   // savedPresence: the presence before typing started, restored when idle/sent
-  const [isTyping, setIsTyping] = useState(false);
   const idleTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const savedPresenceRef = useRef<SukariMiraPresence | null>(null);
+  const { height: viewportH } = useWindowDimensions();
+  // Circadian character — the app keeps the patient's body clock:
+  // pale at dawn, clear midday, warm evening, near-asleep at night.
+  const circadian = useMemo(() => circadianFieldCharacter(new Date().getHours()), []);
   const wasTypingRef = useRef(false);
 
   // Load conversation memory on mount and generate opening line
@@ -213,7 +227,6 @@ export const ConversationHome: React.FC<ConversationHomeProps> = ({
         useNativeDriver: true,
       }).start(() => {
         setShowWelcome(false);
-        setWelcomeDone(true);
         fadeOpacity.setValue(1);
 
         // Now generate the opening line and seed the conversation
@@ -384,8 +397,7 @@ export const ConversationHome: React.FC<ConversationHomeProps> = ({
     [memory, mission, pattern],
   );
 
-  const handleSend = useCallback(async () => {
-    const text = input.trim();
+  const sendText = useCallback(async (text: string) => {
     if (!text || isProcessingRef.current) return;
 
     isProcessingRef.current = true;
@@ -449,6 +461,7 @@ export const ConversationHome: React.FC<ConversationHomeProps> = ({
       switch (response.missionAction.kind) {
         case 'accept':
           onAccept();
+          setReleaseLine(true);
           break;
         case 'make_easier':
           onMakeEasier();
@@ -495,7 +508,6 @@ export const ConversationHome: React.FC<ConversationHomeProps> = ({
 
     isProcessingRef.current = false;
   }, [
-    input,
     convState,
     memory,
     demoMode,
@@ -510,6 +522,45 @@ export const ConversationHome: React.FC<ConversationHomeProps> = ({
     persistTurns,
     restorePresenceAfterSend,
   ]);
+
+  const handleSend = useCallback(() => {
+    sendText(input.trim());
+  }, [input, sendText]);
+
+  // Vitals check-in completes → the reading enters the thread in Mira's
+  // voice (deterministic, no LLM round-trip) with the privacy assurance
+  // restated where it matters.
+  const handleVitalsComplete = useCallback(
+    (reading: VitalsReading) => {
+      const parts = [
+        reading.pulseRate != null ? `pulse ${reading.pulseRate}` : null,
+        reading.breathingRate != null ? `breathing ${reading.breathingRate}` : null,
+      ]
+        .filter(Boolean)
+        .join(' · ');
+      const simulated = reading.source === 'simulated' ? ' (simulated)' : '';
+      const userMsg: ThreadMessage = {
+        id: nextId(),
+        role: 'user',
+        content: `Check-in: ${parts}${simulated}`,
+        timestamp: Date.now(),
+      };
+      const assistantMsg: ThreadMessage = {
+        id: nextId(),
+        role: 'assistant',
+        content:
+          `Noted — ${parts}${simulated}. The video stayed on your device; only the numbers stay. ` +
+          (convState.phase === 'offering'
+            ? "The mission stands whenever you're ready."
+            : "I'll fold it into today's picture."),
+        timestamp: Date.now() + 1,
+      };
+      setThread((prev) => [...prev, userMsg, assistantMsg]);
+      if (memory) persistTurns(userMsg, assistantMsg, 'vitals_checkin');
+      track('vitals_checkin_completed', { source: reading.source });
+    },
+    [convState.phase, memory, persistTurns],
+  );
 
   const isLoading = coach.isLoading || isProcessingRef.current;
 
@@ -545,31 +596,81 @@ export const ConversationHome: React.FC<ConversationHomeProps> = ({
   const earlierMessages = displayThread.slice(0, -recentCount);
   const recentMessages = displayThread.slice(-recentCount);
 
+  // The ambient field is the instrument behind the conversation — band and
+  // intensity follow the live pattern and mission state, never alarm after
+  // completion.
+  const field = fieldStateFromPattern(pattern, {
+    missionCompleted: convState.phase === 'completed',
+    deferred: convState.deferred,
+  });
+
+  // Compact chrome for short viewports — the exchange outranks the stage.
+  const compact = viewportH < 680;
+
+  // The field embodies the last measured signal — pulsing with it live
+  // while the sheet is open, holding it faintly afterward.
+  const fieldSignal = liveVitals
+    ? {
+        pulseBpm: liveVitals.pulseRate,
+        breathPerMin: liveVitals.breathingRate,
+        gain: showVitals ? 1 : 0.35,
+      }
+    : undefined;
+
   return (
     <View style={styles.root}>
+      <MetabolicField
+        band={field.band}
+        intensity={releaseLine ? Math.max(0.18, field.intensity - 0.12) : field.intensity}
+        tempo={releaseLine ? field.tempo * 0.8 : field.tempo}
+        signal={fieldSignal}
+        quality={field.quality}
+        circadian={circadian}
+      />
       <SafeAreaView style={styles.flex}>
         <KeyboardAvoidingView
           style={styles.flex}
           behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         >
-          {/* Minimal header — just settings/care team, no orb */}
+          {/* Header — wordmark left, quiet icon actions right */}
           <View style={styles.header}>
-            <PressableScale onPress={onOpenSettings} style={styles.headerButton} accessibilityRole="button">
-              <Text style={styles.headerButtonText}>Settings</Text>
-            </PressableScale>
-            <PressableScale onPress={onOpenCareTeamSummary} style={styles.headerButton} accessibilityRole="button">
-              <Text style={styles.headerButtonText}>Care team</Text>
-            </PressableScale>
+            <Text style={styles.wordmark}>Sukari</Text>
+            <View style={styles.headerActions}>
+              <PressableScale
+                onPress={onOpenCharter}
+                style={styles.iconButton}
+                accessibilityRole="button"
+                accessibilityLabel="Agency charter"
+              >
+                <BookOpen size={18} color={P.textSoft} strokeWidth={1.7} />
+              </PressableScale>
+              <PressableScale
+                onPress={onOpenSettings}
+                style={styles.iconButton}
+                accessibilityRole="button"
+                accessibilityLabel="Settings"
+              >
+                <SlidersHorizontal size={18} color={P.textSoft} strokeWidth={1.7} />
+              </PressableScale>
+            </View>
           </View>
 
-          {/* Orb — large, central, with loop ring */}
+          {/* Orb — the hero presence, with posture made legible. On
+              short viewports it steps down so the exchange keeps room. */}
           <View style={styles.orbStage}>
-            <LoopRing phase={convState.phase} size={120} />
+            <LoopRing phase={convState.phase} size={compact ? 122 : 168} />
             <MiraOrb
               posture={presence.posture}
               presence={presence}
-              size={90}
+              size={compact ? 92 : 132}
             />
+            <Text style={styles.postureLabel}>{presence.label}</Text>
+            {presence.message && !compact ? (
+              <Text style={styles.postureMessage}>{presence.message}</Text>
+            ) : null}
+            {releaseLine ? (
+              <ReleaseLine onDone={() => setReleaseLine(false)} />
+            ) : null}
           </View>
 
           {/* Conversation — spatial layout */}
@@ -579,7 +680,7 @@ export const ConversationHome: React.FC<ConversationHomeProps> = ({
             contentContainerStyle={styles.threadContent}
             showsVerticalScrollIndicator={false}
           >
-            {/* Earlier messages — faded, compressed */}
+            {/* Earlier messages — receded but readable */}
             {earlierMessages.length > 0 && (
               <View style={styles.earlierSection}>
                 {earlierMessages.map((msg) => (
@@ -594,15 +695,13 @@ export const ConversationHome: React.FC<ConversationHomeProps> = ({
                 <MessageBubble key={msg.id} message={msg} />
               ))}
 
-              {/* Mission visual — appears inline when a mission is
-                  being offered or is active. The glyph gives the
-                  mission visual weight in the conversation — it's not
-                  just text, it's an artifact. */}
-              {convState.mission && convState.pattern &&
-                (convState.phase === 'offering' || convState.phase === 'accepted' || convState.phase === 'adapted') && (
-                  <MissionVisual
-                    brief={buildMissionMediaBrief(convState.pattern, convState.mission)}
-                  />
+              {/* Mission card — the mission as a first-class artifact in
+                  the thread, with its state legible in the footer. On
+                  short viewports it becomes a pinned strip below so the
+                  exchange keeps the room. */}
+              {!compact && convState.mission && convState.pattern &&
+                (convState.phase === 'offering' || convState.phase === 'accepted' || convState.phase === 'adapted' || convState.phase === 'completed') && (
+                  <MissionCard mission={convState.mission} phase={convState.phase} />
                 )}
 
               {isLoading && !coach.chatReply ? (
@@ -611,8 +710,31 @@ export const ConversationHome: React.FC<ConversationHomeProps> = ({
             </View>
           </ScrollView>
 
+          {/* Pinned mission strip on short viewports — glanceable state
+              without spending the exchange's space. */}
+          {compact && convState.mission && convState.pattern &&
+            (convState.phase === 'offering' || convState.phase === 'accepted' || convState.phase === 'adapted' || convState.phase === 'completed') && (
+              <MissionCard mission={convState.mission} phase={convState.phase} compact />
+            )}
+
+          {/* Suggested replies — scaffold the next turn; labels parse to
+              real intents, so tapping is never a dead end. */}
+          <SuggestedReplies
+            phase={convState.phase}
+            disabled={isLoading}
+            onPick={sendText}
+          />
+
           {/* Input bar */}
           <View style={styles.inputBar}>
+            <PressableScale
+              onPress={() => setShowVitals(true)}
+              style={styles.cameraButton}
+              accessibilityRole="button"
+              accessibilityLabel="Take a vitals check-in"
+            >
+              <Camera size={18} color={P.textSoft} strokeWidth={1.7} />
+            </PressableScale>
             <TextInput
               style={styles.input}
               value={input}
@@ -636,6 +758,13 @@ export const ConversationHome: React.FC<ConversationHomeProps> = ({
           </View>
         </KeyboardAvoidingView>
       </SafeAreaView>
+
+      <VitalsCheckIn
+        visible={showVitals}
+        onClose={() => setShowVitals(false)}
+        onComplete={handleVitalsComplete}
+        onReading={setLiveVitals}
+      />
     </View>
   );
 };
@@ -724,7 +853,6 @@ function FadedMessage({ message }: { message: ThreadMessage }) {
           isUser ? styles.bubbleTextUser : styles.bubbleTextAssistant,
           fadedStyles.text,
         ]}
-        numberOfLines={3}
       >
         {message.content}
       </Text>
@@ -734,7 +862,7 @@ function FadedMessage({ message }: { message: ThreadMessage }) {
 
 const fadedStyles = StyleSheet.create({
   row: {
-    opacity: 0.4,
+    opacity: 0.62,
     marginBottom: 10,
   },
   text: {
@@ -764,6 +892,42 @@ function MessageBubble({ message }: { message: ThreadMessage }) {
     <View style={styles.messageRowAssistant}>
       <Text style={styles.bubbleTextAssistant}>{message.content}</Text>
     </View>
+  );
+}
+
+/**
+ * ReleaseLine — the dissolution moment. After the patient accepts a
+ * mission, the interface exhales: a quiet line appears, holds, and
+ * dissolves while the field eases toward rest (intensity/tempo dip is
+ * applied by the parent for the same window).
+ */
+function ReleaseLine({ onDone }: { onDone: () => void }) {
+  const opacity = useRef(new Animated.Value(0)).current;
+  useEffect(() => {
+    const anim = Animated.sequence([
+      Animated.timing(opacity, {
+        toValue: 1,
+        duration: 650,
+        easing: Easing.out(Easing.quad),
+        useNativeDriver: true,
+      }),
+      Animated.delay(3400),
+      Animated.timing(opacity, {
+        toValue: 0,
+        duration: 950,
+        easing: Easing.in(Easing.quad),
+        useNativeDriver: true,
+      }),
+    ]);
+    anim.start(({ finished }) => {
+      if (finished) onDone();
+    });
+    return () => anim.stop();
+  }, [opacity, onDone]);
+  return (
+    <Animated.Text style={[styles.releaseLine, { opacity }]}>
+      Go live it — I&apos;ll be here.
+    </Animated.Text>
   );
 }
 
@@ -813,23 +977,54 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingVertical: 8,
+    paddingHorizontal: 20,
+    paddingVertical: 10,
   },
-  headerButton: {
-    paddingHorizontal: 12,
-    paddingVertical: 8,
+  wordmark: {
+    fontFamily: FONTS.display,
+    color: P.text,
+    fontSize: 20,
+    letterSpacing: -0.2,
   },
-  headerButtonText: {
-    fontFamily: FONTS.bodyMedium,
-    color: P.textSoft,
-    fontSize: 13,
+  headerActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  iconButton: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   orbStage: {
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 12,
+    paddingTop: 8,
+    paddingBottom: 6,
     position: 'relative',
+  },
+  postureLabel: {
+    fontFamily: FONTS.bodyMedium,
+    color: P.textSoft,
+    fontSize: 13,
+    marginTop: 10,
+  },
+  postureMessage: {
+    fontFamily: FONTS.body,
+    color: P.textMuted,
+    fontSize: 12,
+    marginTop: 3,
+    fontStyle: 'italic',
+  },
+  releaseLine: {
+    fontFamily: FONTS.display,
+    color: P.accent,
+    fontSize: 14,
+    marginTop: 10,
+    fontStyle: 'italic',
+    letterSpacing: 0.2,
   },
   threadScroll: {
     flex: 1,
@@ -919,6 +1114,16 @@ const styles = StyleSheet.create({
     borderTopColor: P.line,
     gap: 10,
   },
+  cameraButton: {
+    width: 44,
+    height: 44,
+    borderRadius: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: P.line,
+    backgroundColor: 'rgba(180, 210, 195, 0.06)',
+  },
   input: {
     flex: 1,
     fontFamily: FONTS.body,
@@ -931,13 +1136,13 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(180, 210, 195, 0.06)',
     borderWidth: 1,
     borderColor: P.line,
-    borderRadius: 4,
+    borderRadius: 14,
   },
   sendButton: {
     backgroundColor: P.accent,
     paddingHorizontal: 20,
     paddingVertical: 12,
-    borderRadius: 4,
+    borderRadius: 14,
     minHeight: 44,
     justifyContent: 'center',
   },

@@ -2,7 +2,6 @@ import React from 'react';
 import { View, Text, Animated, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { MainMenu } from '@/components/game/MainMenu';
-import { HeroIntro } from '@/components/game/HeroIntro';
 import { usePlayerProgressContext } from '@/context/PlayerProgressContext';
 import { track } from '@/utils/analytics';
 import { COLORS, FONTS } from '@/constants/designSystem';
@@ -17,16 +16,13 @@ function getAmbientColor(): string {
 
 export default function MenuScreen() {
   const { progress, hydrated } = usePlayerProgressContext();
-  const [showIntro, setShowIntro] = React.useState(false);
 
   React.useEffect(() => {
     if (!hydrated) return;
-    // Show intro only on very first visit (no games played, no mode selected)
-    if (progress.gamesPlayed === 0 && !progress.userMode) {
-      setShowIntro(true);
-    }
     track('screen_view', { screen: 'main_menu', privacy_mode: progress.privacyMode });
-  }, [hydrated, progress.privacyMode, progress.gamesPlayed, progress.userMode]);
+    // First-ever open is handled inside ConversationHome's WelcomeScene —
+    // it is the one cinematic moment; there is no separate intro screen.
+  }, [hydrated, progress.privacyMode]);
 
   const ambientBg = getAmbientColor();
 
@@ -35,15 +31,6 @@ export default function MenuScreen() {
       <View style={{ flex: 1, backgroundColor: ambientBg, justifyContent: 'center', alignItems: 'center' }}>
         <QuietLoader />
       </View>
-    );
-  }
-
-  if (showIntro) {
-    return (
-      <HeroIntro onComplete={(source) => {
-        setShowIntro(false);
-        track('value_proposition_completed', { source, privacy_mode: progress.privacyMode });
-      }} />
     );
   }
 

@@ -66,8 +66,10 @@ domain/
     team.ts             care team roster (TeamMember) + AsyncStorage
     teamReport.ts       weekly team report aggregation + shareable summary + CSV export
   digest/              weekly digest client/types + longitudinal outcome trend
+  atmosphere/          circadian field character (time-of-day → lightness/tempo/warmth)
   patterns/            signal patterns and field state
   programme/           mission templates, outcome-informed selection, PatientReportedOutcome
+  vitals/              provider seam: VitalsReading types, WebSocket provider, simulated provider
 hooks/
   usePlayerProgress.ts local progress, programme persistence, outcome capture
   useCoach.ts          LLM streaming for free-form conversation
@@ -81,6 +83,23 @@ PostHog is optional and configured through:
 - `EXPO_PUBLIC_POSTHOG_HOST`
 
 Keep event names stable for funnel continuity. Current key events are documented in [Architecture](ARCHITECTURE.md).
+
+## Vitals check-in
+
+`components/checkin/VitalsCheckIn.tsx` is the camera check-in: consent →
+measuring → result. Readings flow through a `VitalsProvider` selected by
+env:
+
+- `EXPO_PUBLIC_VITALS_SIMULATED=1` — labelled simulated provider (no
+  camera or API key needed; the demo works offline).
+- `EXPO_PUBLIC_VITALS_WS_URL` — SmartSpectra service URL, defaults to
+  `ws://localhost:8765`. Served by `server/vitals-node` (`npm run serve`
+  there, plus `smoke:camera` / `smoke:file`); frames go in over
+  WebSocket, vitals come out. Video never leaves the machine.
+
+Note: Metro's transform cache inlines `EXPO_PUBLIC_*` at build time —
+after changing these vars, rebuild with `expo export --clear` or they
+won't take effect.
 
 ## Worker
 

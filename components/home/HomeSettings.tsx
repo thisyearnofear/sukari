@@ -39,6 +39,9 @@ interface HomeSettingsProps {
   onOpenSignalConnection: (provider: CGMProvider) => void;
   onShowSignalAvailability: () => void;
 
+  // Care team
+  onOpenCareTeamSummary: () => void;
+
   // Privacy
   privacyMode: PrivacyMode;
   onSetPrivacyMode: (mode: PrivacyMode) => void;
@@ -59,6 +62,7 @@ export const HomeSettings: React.FC<HomeSettingsProps> = ({
   onChangeSignalSource,
   onOpenSignalConnection,
   onShowSignalAvailability,
+  onOpenCareTeamSummary,
   privacyMode,
   onSetPrivacyMode,
   privacySettings,
@@ -164,6 +168,19 @@ export const HomeSettings: React.FC<HomeSettingsProps> = ({
                     </Text>
                   </>
                 )}
+              </SettingsSection>
+
+              <SettingsSection title="Care team">
+                <SheetButton
+                  label="Weekly care team summary"
+                  onPress={() => {
+                    onOpenCareTeamSummary();
+                    onClose();
+                  }}
+                />
+                <Text style={styles.sheetMuted}>
+                  The operator surface — what your care team sees when attention is needed.
+                </Text>
               </SettingsSection>
 
               <SettingsSection title="Privacy">
